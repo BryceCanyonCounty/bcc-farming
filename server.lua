@@ -78,12 +78,13 @@ end)
 
 ---------------------------------------- Watering Bucket Check -------------------------------------
 RegisterServerEvent('bcc-farming:WateringBucketCheck')
-AddEventHandler('bcc-farming:WateringBucketCheck', function()
+AddEventHandler('bcc-farming:WateringBucketCheck', function(blip, timer, reward, amount, plantcoords, object, plantid)
   local _source = source
   local itemCount = VorpInv.getItemCount(_source, Config.FullWaterBucket) --Checks if you have the watering bucket and how many you have
   if itemCount > 0 then -- if you have more than 0 then
-    TriggerClientEvent('bcc-farming:WaterCrop', _source) --triggers the client event and passes hadbucket variable for client side catch
+    TriggerClientEvent('bcc-farming:WaterCrop', _source, blip, timer, reward, amount, plantcoords, object, plantid) --triggers the client event and passes hadbucket variable for client side catch
   else --else its not more than 0 then
+    TriggerClientEvent('bcc-farming:WaterPlantMain', _source, plantcoords, timer, reward, amount, object, plantid)
     VORPcore.NotifyRightTip(_source, Config.Language.Nowaterbucket) --notifies in right side of screen you dont have the item
   end
 end)
