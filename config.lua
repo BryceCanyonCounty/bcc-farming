@@ -1,7 +1,5 @@
 Config = {}
 
-Config.Debug = false --If true this will skip the animations that play (Set false on live server)
-
 -------------------------------------------------Farming Setup!--------------------------------------------------------------
 Config.FullWaterBucket = 'wateringcan' --This is the database name of the full Water Bucket(you will need this item to water your crops)
 Config.EmptyWaterBucket = 'wateringcan_empty' --This is the database name of the empty Water Bucket(You will be able to refill this bucket)
@@ -36,7 +34,7 @@ Config.Farming = {
         SeedsRequired = 2, --Amount of seeds required to plant
         HarvestItem = 'hop', --This is the database name of the item you will recieve when you harvest the plant
         HarvestAmount = 5, --This is the amount you will recieve when harvesting the plant
-        TimetoGrow = 300000, --The time in ms it will take the plant to grow (60000 is one minute)
+        TimetoGrow = 30000, --The time in ms it will take the plant to grow (60000 is one minute)
         Joblock = false, --If you want to joblock this plant set true, if not then set false
         Jobs = {
             {
