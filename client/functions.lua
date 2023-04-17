@@ -106,3 +106,15 @@ AddEventHandler('bcc-farming:WaitUntilHarvest', function(blip, timer, reward, am
         end
     end
 end)
+
+--function to see if player is near any placed objects listed in config
+function IsAnyPlantPropNearPed()
+    for k,v in pairs(Config.Farming) do
+        local x,y,z = table.unpack(GetOffsetFromEntityInWorldCoords(PlayerPedId(), 0.0, 2.5, 0))
+        local Entity = (GetClosestObjectOfType(x,y,z, 2.5, GetHashKey(v.PlantProp), false, false, false))
+        if Entity ~= 0 then
+            return true
+        end
+    end
+    return false
+end
