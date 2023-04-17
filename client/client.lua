@@ -114,6 +114,11 @@ AddEventHandler('bcc-farming:IsPLayerNearTownCheck', function(_source, v)
             end
         end
     end
+    local nearotherplant = IsAnyPlantPropNearPed()
+    Wait(100)
+    if nearotherplant then
+        VORPcore.NotifyRightTip(Config.Language.TooCloseToPlant, 4000) return
+    end
     if isoutsideoftown == true then --after all the above code runs if outside of town = true then
         TriggerServerEvent('bcc-farming:PlayerNotNearTown', _source, v, isoutsideoftown) --trigger server event to continue planting
     end
