@@ -65,7 +65,8 @@ Config.Language = {
     CropWatered = 'You watered the crop',
     Notinwater = 'You are not near water',
     BucketFilled = 'You filled a Water Bucket',
-    Tooclosetotown = 'You are too close to a town'
+    Tooclosetotown = 'You are too close to a town',
+    TooCloseToPlant = 'Too Close To another plant!'
 }
 
 --------------------------------- Town Locations ------------------------------------------------------------------------------------
