@@ -1,23 +1,24 @@
 --This will handle planting the crop!
 RegisterNetEvent('bcc-farming:plantcrop') --Registers a client event for the server to trigger
 AddEventHandler('bcc-farming:plantcrop', function(prop, reward, amount, timer, isoutsideoftown, type) --Makes the event have code to run and catches those 5 variables from the server
+    local plyPed = PlayerPedId()
     ---------------------------PLANTING ANIMATION SETUP----------------------------------------------
     if isoutsideoftown == true then -- if variable is true (you are out of town or config = true then)
-        FreezeEntityPosition(PlayerPedId(), true) --freezes player
         TaskStartScenarioInPlace(PlayerPedId(), GetHashKey('WORLD_HUMAN_FARMER_RAKE'), 12000, true, false, false, false) --triggers anim
+        FreezeEntityPosition(plyPed, true) --freezes player
         VORPcore.NotifyRightTip(Config.Language.Raking,16000) --Prints on the players screen what is set in config.language table
         Wait(12000) --waits 12 seconds (until anim is over)
-        ClearPedTasksImmediately(PlayerPedId()) --clears anims
+        ClearPedTasksImmediately(plyPed) --clears anims
         Wait(500) --waits half a second
         VORPcore.NotifyRightTip(Config.Language.Weeding,16000) --Prints on the players screen what is set in config.language table
         TaskStartScenarioInPlace(PlayerPedId(), GetHashKey('WORLD_HUMAN_FARMER_WEEDING'), 9000, true, false, false, false) --triggers anim
         Wait(9000) --waits 9 seconds(until anim is over)
-        ClearPedTasksImmediately(PlayerPedId()) --clears anim
-        FreezeEntityPosition(PlayerPedId(), false) --unfreezes player
+        ClearPedTasksImmediately(plyPed) --clears anim
+        FreezeEntityPosition(plyPed, false) --unfreezes player
         VORPcore.NotifyRightTip(Config.Language.PlantFinished,16000) --Prints on the players screen what is set in config.language table
         
         -----------------------------CROP SPAWN SETUP----------------------------------
-        local plcoord = GetEntityCoords(PlayerPedId()) --gets player coords as soon as the plant is planted
+        local plcoord = GetEntityCoords(plyPed) --gets player coords as soon as the plant is planted
         local object = CreateObject(prop, plcoord.x, plcoord.y, plcoord.z, true, true, false) --creates a networked object at the players coords
         Citizen.InvokeNative(0x9587913B9E772D29, object, true) --places entity on the ground properly
         local plantcoords = GetEntityCoords(object) --Gets the plants coordinates once the plant is planted
@@ -47,10 +48,7 @@ RegisterNetEvent('bcc-farming:clientspawnplantsinitload')
 AddEventHandler('bcc-farming:clientspawnplantsinitload', function(HasPlants) --catches var from server
     for k, v in pairs(HasPlants) do --opens up the table
         --Detection Variables
-        local notwateredtimer --var used to store the timer if not watered
-        local reward
-        local amount
-        local blip
+        local notwateredtimer, reward, amount, blip
         --Crop Detection Setup
         for e, a in pairs(Config.Farming) do --creates for loop
             if a.Type == v['planttype'] then --if a.type = HasPlants type in db then
@@ -83,13 +81,14 @@ end)
 --------------------------- Is Ped Currently In Water Check -------------------------------------------------
 RegisterNetEvent('bcc-farming:PedInWaterClientCatch')
 AddEventHandler('bcc-farming:PedInWaterClientCatch', function(_source)
-    local inwater = IsEntityInWater(PlayerPedId()) --gets if the player is in water 1 if is false if not
+    local plyPed = PlayerPedId()
+    local inwater = IsEntityInWater(plyPed) --gets if the player is in water 1 if is false if not
     if inwater == 1 then --if you are in water then
-        FreezeEntityPosition(PlayerPedId(), true) --freezes player in place
-        TaskStartScenarioInPlace(PlayerPedId(), GetHashKey("WORLD_CAMP_JACK_ES_BUCKET_FILL"), 7000, true, false, false, false) --triggers anim
+        FreezeEntityPosition(plyPed, true) --freezes player in place
+        TaskStartScenarioInPlace(plyPed, GetHashKey("WORLD_CAMP_JACK_ES_BUCKET_FILL"), 7000, true, false, false, false) --triggers anim
         Wait(7000) --waits 7 seconds(until anim is over)
-        ClearPedTasksImmediately(PlayerPedId()) --stops animation
-        FreezeEntityPosition(PlayerPedId(), false) --unfreezes player
+        ClearPedTasksImmediately(plyPed) --stops animation
+        FreezeEntityPosition(plyPed, false) --unfreezes player
         TriggerServerEvent('bcc-farming:RefillWateringCan', _source) --triggers server event to add the item(goes regardless of debug)
     elseif inwater == false then --elseif not in water then
         VORPcore.NotifyRightTip(Config.Language.Notinwater) --print not in water
