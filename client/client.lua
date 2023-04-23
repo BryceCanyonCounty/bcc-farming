@@ -4,14 +4,14 @@ AddEventHandler('bcc-farming:plantcrop', function(prop, reward, amount, timer, i
     local plyPed = PlayerPedId()
     ---------------------------PLANTING ANIMATION SETUP----------------------------------------------
     if isoutsideoftown == true then -- if variable is true (you are out of town or config = true then)
-        TaskStartScenarioInPlace(PlayerPedId(), GetHashKey('WORLD_HUMAN_FARMER_RAKE'), 12000, true, false, false, false) --triggers anim
         FreezeEntityPosition(plyPed, true) --freezes player
+        TaskStartScenarioInPlace(plyPed, joaat('WORLD_HUMAN_FARMER_RAKE'), 12000, true, false, false, false) --triggers anim
         VORPcore.NotifyRightTip(Config.Language.Raking,16000) --Prints on the players screen what is set in config.language table
         Wait(12000) --waits 12 seconds (until anim is over)
         ClearPedTasksImmediately(plyPed) --clears anims
         Wait(500) --waits half a second
         VORPcore.NotifyRightTip(Config.Language.Weeding,16000) --Prints on the players screen what is set in config.language table
-        TaskStartScenarioInPlace(PlayerPedId(), GetHashKey('WORLD_HUMAN_FARMER_WEEDING'), 9000, true, false, false, false) --triggers anim
+        TaskStartScenarioInPlace(plyPed, joaat('WORLD_HUMAN_FARMER_WEEDING'), 9000, true, false, false, false) --triggers anim
         Wait(9000) --waits 9 seconds(until anim is over)
         ClearPedTasksImmediately(plyPed) --clears anim
         FreezeEntityPosition(plyPed, false) --unfreezes player
