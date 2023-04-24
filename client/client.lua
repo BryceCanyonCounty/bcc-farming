@@ -104,7 +104,7 @@ AddEventHandler('bcc-farming:IsPLayerNearTownCheck', function(_source, v)
     elseif Config.Plantintowns == false then --elseif config is false then
         for k, e in pairs(Config.Towns) do --opens up the town table and creates a for loop
             local pl = GetEntityCoords(PlayerPedId()) --gets your coords once per loop run
-            local dist = #(pl.xy - e.coordinates.xy)
+            local dist = #(vec2(pl.x, pl.y) - vec2(e.coordinates.x, e.coordinates.y))
             if dist > e.range then --if dist is more htan 150 then
                 isoutsideoftown = true --set to true
             elseif dist < e.range then --if its less then
