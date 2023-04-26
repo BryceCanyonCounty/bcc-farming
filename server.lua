@@ -41,8 +41,8 @@ AddEventHandler('bcc-farming:PlayerNotNearTown', function(_source, v, isoutsideo
     local itemCount = VorpInv.getItemCount(_source, v.Seedname) --checks to see how many of the seed you have
     ------------------------------- Item Removal / Client Event Trigger --------------------------------------------
     if itemCount and (itemCount >= v.SeedsRequired) then --if you have more than is required then
-      if v.FertName then
-        local fertCount = VorpInv.getItemCount(_source, v.FertName) --checks to see how many of the seed you have
+      if v.SoilName then
+        local fertCount = VorpInv.getItemCount(_source, v.SoilName) --checks to see how many of the seed you have
         if not (fertCount and (fertCount > 0)) then
           VORPcore.NotifyRightTip(_source, Config.Language.NoFert, 10000) --prints on screen
           return
