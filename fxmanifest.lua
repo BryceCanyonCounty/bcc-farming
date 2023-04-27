@@ -4,6 +4,7 @@ rdr3_warning 'I acknowledge that this is a prerelease build of RedM, and I am aw
 
 lua54 'yes'
 author 'Jake2k4'
+description 'bcc-farming'
 
 server_scripts {
     'server.lua',

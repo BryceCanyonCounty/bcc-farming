@@ -26,42 +26,36 @@ AddEventHandler('bcc-farming:PlayerNotNearTown', function(_source, v, isoutsideo
   local Character = VORPcore.getUser(_source).getUsedCharacter --gets the character the player is using
   if itemCount2 > 0 then --if you have one or more of the needed plant item then
     ------------------------------------------- Job Lock True Setup ------------------------------------------------      
-    if v.Joblock == true then --if the config job lock is true
+    if v.Joblock then --if the config job lock is true
       for y, e in pairs(v.Jobs) do --creates a for loop in the job table
         if Character.job == e.JobName then --if your job matches one of the jobs in the table then
           charjob = true --sets the job catch variable to true allowing the removal of items
         end
       end
-      if charjob == true then --if charjob is true(you had a job listed in the table) then
-        ------------------------- Job Lock Item Removal / Item Count Check / Client Event Trigger --------------------------------
-        local itemCount = VorpInv.getItemCount(_source, v.Seedname) --checks to see how many of the seed you have
-        if itemCount >= v.SeedsRequired then --if you have more than is required then
-          VorpInv.subItem(_source, v.Seedname, v.SeedsRequired) --removes the seeds from your inventory
-          local prop = v.PlantProp --setst this variable to the model set in the config
-          local reward = v.HarvestItem --sets this variable to the reward item set in the config
-          local amount = v.HarvestAmount --sets this variable to the amount of the rewards you get set in the config
-          local timer = v.TimetoGrow --ssets the variable to the config option
-          local type = v.Type
-          TriggerClientEvent('bcc-farming:plantcrop', _source, prop, reward, amount, timer, isoutsideoftown, type) --triggers the client event and passes the 4 variables
-          charjob = false --resets the variable so the code runs properly next time its used
-        end
-      else --else your job was not listed in the table then
+      if not charjob then
         VORPcore.NotifyRightTip(_source, Config.Language.Wrongjob, 10000) --prints on players screen
-        charjob = false --resets the variable so the code works properly next time its used
+        return
       end
-      -------------------------------- Job Lock False Setup --------------------------------------
-    elseif v.Joblock == false then
-      local itemCount = VorpInv.getItemCount(_source, v.Seedname) --checks to see how many of the seed you have
-      ------------------------------- Item Removal / Client Event Trigger --------------------------------------------
-      if itemCount >= v.SeedsRequired then --if you have more than is required then
-        VorpInv.subItem(_source, v.Seedname, v.SeedsRequired) --removes the seeds from your inventory
-        local prop = v.PlantProp --setst this variable to the model set in the config
-        local reward = v.HarvestItem --sets this variable to the reward item set in the config
-        local amount = v.HarvestAmount --sets this variable to the amount of the rewards you get set in the config
-        local timer = v.TimetoGrow --ssets the variable to the config option
-        local type = v.Type
-        TriggerClientEvent('bcc-farming:plantcrop', _source, prop, reward, amount, timer, isoutsideoftown, type) --triggers the client event and passes the 4 variables
+    end
+
+    local itemCount = VorpInv.getItemCount(_source, v.Seedname) --checks to see how many of the seed you have
+    ------------------------------- Item Removal / Client Event Trigger --------------------------------------------
+    if itemCount and (itemCount >= v.SeedsRequired) then --if you have more than is required then
+      if v.SoilName then
+        local fertCount = VorpInv.getItemCount(_source, v.SoilName) --checks to see how many of the seed you have
+        if not (fertCount and (fertCount > 0)) then
+          VORPcore.NotifyRightTip(_source, Config.Language.NoSoil, 10000) --prints on screen
+          return
+        end
+        VorpInv.subItem(_source, v.SoilName, 1) --removes the soil from your inventory
       end
+      VorpInv.subItem(_source, v.Seedname, v.SeedsRequired) --removes the seeds from your inventory
+      local prop = v.PlantProp --setst this variable to the model set in the config
+      local reward = v.HarvestItem --sets this variable to the reward item set in the config
+      local amount = v.HarvestAmount --sets this variable to the amount of the rewards you get set in the config
+      local timer = v.TimetoGrow --ssets the variable to the config option
+      local type = v.Type
+      TriggerClientEvent('bcc-farming:plantcrop', _source, prop, reward, amount, timer, isoutsideoftown, type) --triggers the client event and passes the 4 variables
     end
   else --else you dont have one then
     VORPcore.NotifyRightTip(_source, Config.Language.NoTool, 10000) --prints on screen
