@@ -60,6 +60,7 @@ Config.Language = {
     HarvestPrompt = 'Harvest Crop',
     Harvestingcrop = 'You are harvesting the crop',
     HarvestComplete = 'You harvested the crop',
+    NoSoil = 'You do not have the correct soil to plant this crop',
     NoTool = 'You do not have the correct tool to plant this crop',
     Wrongjob = 'You do not have the correct job needed to plant this crop',
     WaterCropPrompt = 'Water Crop',

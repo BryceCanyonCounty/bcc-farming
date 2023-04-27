@@ -44,9 +44,10 @@ AddEventHandler('bcc-farming:PlayerNotNearTown', function(_source, v, isoutsideo
       if v.SoilName then
         local fertCount = VorpInv.getItemCount(_source, v.SoilName) --checks to see how many of the seed you have
         if not (fertCount and (fertCount > 0)) then
-          VORPcore.NotifyRightTip(_source, Config.Language.NoFert, 10000) --prints on screen
+          VORPcore.NotifyRightTip(_source, Config.Language.NoSoil, 10000) --prints on screen
           return
         end
+        VorpInv.subItem(_source, v.SoilName, 1) --removes the soil from your inventory
       end
       VorpInv.subItem(_source, v.Seedname, v.SeedsRequired) --removes the seeds from your inventory
       local prop = v.PlantProp --setst this variable to the model set in the config
