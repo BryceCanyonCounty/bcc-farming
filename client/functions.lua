@@ -26,7 +26,7 @@ function DrawText3D(x, y, z, text)
 end
 
 RegisterNetEvent('bcc-farming:WaterPlantMain')
-AddEventHandler('bcc-farming:WaterPlantMain', function(plantcoords, timer, reward, amount, object, plantid)
+AddEventHandler('bcc-farming:WaterPlantMain', function(plantcoords, timer, reward, amount, object, plantid, ferttime, fertitem)
     local blip --creates a variable for the blip to set on and be removed later o
     local PromptGroup2 = VORPutils.Prompts:SetupPromptGroup() --registers a prompt group using vorp_utils
     local firstprompt2 = PromptGroup2:RegisterPrompt(Config.Language.WaterCropPrompt, 0x760A9C6F, 1, 1, true, 'hold', {timedeventhash = "MEDIUM_TIMED_EVENT"})
@@ -42,23 +42,51 @@ AddEventHandler('bcc-farming:WaterPlantMain', function(plantcoords, timer, rewar
             DrawText3D(plantcoords.x, plantcoords.y, plantcoords.z, Config.Language.WaterCropPrompt) --draws text saying to water crop
             if firstprompt2:HasCompleted() then --if you do  the prompt then
                 firstprompt2:DeletePrompt() --delets the prompt group once you water the plant
-                TriggerServerEvent('bcc-farming:WateringBucketCheck', blip, timer, reward, amount, plantcoords, object, plantid) break --triggers the server event to check if you have the watering item
+                TriggerServerEvent('bcc-farming:WateringBucketCheck', blip, timer, reward, amount, plantcoords, object, plantid, ferttime, fertitem) break --triggers the server event to check if you have the watering item
             end
         end
     end
 end)
 
 RegisterNetEvent('bcc-farming:WaterCrop') --registers a client event for the above server event to trigger
-AddEventHandler('bcc-farming:WaterCrop', function(blip, timer, reward, amount, plantcoords, object, plantid) --makes the event have code and catches the hadbucket variable from the server
-    TriggerServerEvent('bcc-farming:watereddbset', plantid)
-    FreezeEntityPosition(PlayerPedId(), true) --freezes player
-    TaskStartScenarioInPlace(PlayerPedId(), GetHashKey('WORLD_HUMAN_BUCKET_POUR_LOW'), 7000, true, false, false, false) --plays an animation of watering the crop
-    Wait(7000) --waits 7 seconds (until anim ends)
-    ClearPedTasksImmediately(PlayerPedId()) --ends the animation
-    FreezeEntityPosition(PlayerPedId(), false) --unfreezes player
-    TriggerServerEvent('bcc-farming:RemoveWaterBucket') --Triggers server event and passes source
-    VORPcore.NotifyRightTip(Config.Language.CropWatered, 4000) --places text on screen
-    TriggerEvent('bcc-farming:WaitUntilHarvest', blip, timer, reward, amount, plantcoords, object, plantid)
+AddEventHandler('bcc-farming:WaterCrop', function(type, blip, timer, reward, amount, plantcoords, object, plantid, fertime, fertitem) --makes the event have code and catches the hadbucket variable from the server
+    if type == 'water' then
+        TriggerServerEvent('bcc-farming:watereddbset', plantid)
+        FreezeEntityPosition(PlayerPedId(), true) --freezes player
+        TaskStartScenarioInPlace(PlayerPedId(), GetHashKey('WORLD_HUMAN_BUCKET_POUR_LOW'), 7000, true, false, false, false) --plays an animation of watering the crop
+        Wait(7000) --waits 7 seconds (until anim ends)
+        ClearPedTasksImmediately(PlayerPedId()) --ends the animation
+        FreezeEntityPosition(PlayerPedId(), false) --unfreezes player
+        TriggerServerEvent('bcc-farming:RemoveWaterBucket') --Triggers server event and passes source
+        VORPcore.NotifyRightTip(Config.Language.CropWatered, 4000) --places text on screen
+        type = 'fert'
+    end
+    
+    if type == 'fert' then
+        local PromptGroup2 = VORPutils.Prompts:SetupPromptGroup() --registers a prompt group using vorp_utils    
+        local firstprompt2 = PromptGroup2:RegisterPrompt(Config.Language.PlantWithFertilizer, 0x760A9C6F, 1, 1, true, 'hold', {timedeventhash = "MEDIUM_TIMED_EVENT"})
+        local firstprompt3 = PromptGroup2:RegisterPrompt(Config.Language.DoNotUseFertilizer, 0xCEFD9220, 1, 1, true, 'hold', {timedeventhash = "MEDIUM_TIMED_EVENT"})
+        if fertime > 0 then
+            while true do
+                Citizen.Wait(10)
+                local plcoord2 = GetEntityCoords(PlayerPedId())
+                if GetDistanceBetweenCoords(plcoord2.x, plcoord2.y, plcoord2.z, plantcoords.x, plantcoords.y, plantcoords.z, true) < 2 then --Gets the distance between the player and the plant
+                    DrawText3D(plantcoords.x, plantcoords.y, plantcoords.z, Config.Language.UseFert)
+                    PromptGroup2:ShowGroup(Config.Language.UseFert)
+                    if firstprompt2:HasCompleted() then
+                        TriggerServerEvent('bcc-farming:FertCheck', blip, timer, reward, amount, plantcoords, object, plantid, fertime, fertitem) break
+                    end
+                    if firstprompt3:HasCompleted() then
+                        TriggerEvent('bcc-farming:WaitUntilHarvest', blip, timer, reward, amount, plantcoords, object, plantid) break
+                    end
+                end
+            end
+        end
+    end
+
+    if fertime <= 0 then
+        TriggerEvent('bcc-farming:WaitUntilHarvest', blip, timer, reward, amount, plantcoords, object, plantid)
+    end
 end)
 
 

@@ -5,6 +5,10 @@ local VORPcore = {}
 TriggerEvent("getCore", function(core)
   VORPcore = core
 end)
+local BccUtils = {}
+TriggerEvent('bcc:getUtils', function(bccutils)
+  BccUtils = bccutils
+end)
 --ends pulling inv and core
 
 -------------------------------------- Main Setup -------------------------------------------------------------------------------
@@ -20,7 +24,6 @@ end)
 
 RegisterServerEvent('bcc-farming:PlayerNotNearTown') --Creates a server event
 AddEventHandler('bcc-farming:PlayerNotNearTown', function(_source, v, isoutsideoftown) --makes the event have code and catches _source from client
-  local psource = _source
   local charjob= false
   local itemCount2 = VorpInv.getItemCount(_source, v.PlantingTool) --Checks if you have the planting tool and how many you have
   local Character = VORPcore.getUser(_source).getUsedCharacter --gets the character the player is using
@@ -55,7 +58,9 @@ AddEventHandler('bcc-farming:PlayerNotNearTown', function(_source, v, isoutsideo
       local amount = v.HarvestAmount --sets this variable to the amount of the rewards you get set in the config
       local timer = v.TimetoGrow --ssets the variable to the config option
       local type = v.Type
-      TriggerClientEvent('bcc-farming:plantcrop', _source, prop, reward, amount, timer, isoutsideoftown, type) --triggers the client event and passes the 4 variables
+      local fertime = v.FertTimeRemove
+      local fertitem = v.FertName
+      TriggerClientEvent('bcc-farming:plantcrop', _source, prop, reward, amount, timer, isoutsideoftown, type, fertime, fertitem) --triggers the client event and passes the 4 variables
     end
   else --else you dont have one then
     VORPcore.NotifyRightTip(_source, Config.Language.NoTool, 10000) --prints on screen
@@ -72,14 +77,28 @@ end)
 
 ---------------------------------------- Watering Bucket Check -------------------------------------
 RegisterServerEvent('bcc-farming:WateringBucketCheck')
-AddEventHandler('bcc-farming:WateringBucketCheck', function(blip, timer, reward, amount, plantcoords, object, plantid)
+AddEventHandler('bcc-farming:WateringBucketCheck', function(blip, timer, reward, amount, plantcoords, object, plantid,ferttime, fertitem)
   local _source = source
   local itemCount = VorpInv.getItemCount(_source, Config.FullWaterBucket) --Checks if you have the watering bucket and how many you have
   if itemCount > 0 then -- if you have more than 0 then
-    TriggerClientEvent('bcc-farming:WaterCrop', _source, blip, timer, reward, amount, plantcoords, object, plantid) --triggers the client event and passes hadbucket variable for client side catch
+    TriggerClientEvent('bcc-farming:WaterCrop', _source, 'water', blip, timer, reward, amount, plantcoords, object, plantid, ferttime, fertitem) --triggers the client event and passes hadbucket variable for client side catch
   else --else its not more than 0 then
-    TriggerClientEvent('bcc-farming:WaterPlantMain', _source, plantcoords, timer, reward, amount, object, plantid)
+    TriggerClientEvent('bcc-farming:WaterPlantMain', _source, plantcoords, timer, reward, amount, object, plantid, ferttime, fertitem)
     VORPcore.NotifyRightTip(_source, Config.Language.Nowaterbucket) --notifies in right side of screen you dont have the item
+  end
+end)
+
+-------------------------------------- Fert Check --------------------------------
+RegisterServerEvent('bcc-farming:FertCheck', function(blip, timer, reward, amount, plantcoords, object, plantid, ferttime, fertitem)
+  local _source = source
+  local itemCount = VorpInv.getItemCount(_source, fertitem) --Checks if you have the watering bucket and how many you have
+  if itemCount > 0 then -- if you have more than 0 then
+    timer = timer - ferttime
+    TriggerClientEvent('bcc-farming:WaitUntilHarvest', _source, blip, timer, reward, amount, plantcoords, object, plantid)
+    VorpInv.subItem(_source, fertitem, 1)
+  else --else its not more than 0 then
+    TriggerClientEvent('bcc-farming:WaterCrop', _source, 'fert', blip, timer, reward, amount, plantcoords, object, plantid, ferttime, fertitem) --triggers the client event and passes hadbucket variable for client side catch
+    VORPcore.NotifyRightTip(_source, Config.Language.NoFerti, 4000) --notifies in right side of screen you dont have the item
   end
 end)
 
@@ -142,7 +161,7 @@ end)
 
 --Will be used to insert the plant into the databasetype, plantcoords, timer, prop, psource, timer, reward, amount, object
 RegisterServerEvent('bcc-farming:dbinsert')
-AddEventHandler('bcc-farming:dbinsert', function(type, plantcoords, prop, timer, reward, amount, object) --catches all the data from client
+AddEventHandler('bcc-farming:dbinsert', function(type, plantcoords, prop, timer, reward, amount, object, ferttime,fertitem) --catches all the data from client
   local _source = source
   local Character = VORPcore.getUser(_source).getUsedCharacter --checks the char used
   local charidentifier = Character.charIdentifier              --This is the static id of your character
@@ -160,7 +179,7 @@ AddEventHandler('bcc-farming:dbinsert', function(type, plantcoords, prop, timer,
   exports.oxmysql:execute('SELECT * FROM farming WHERE identifier=@identifier AND charidentifier=@charidentifier AND x=@x AND y=@y AND z=@z', param, function(Plants2Id) --gets the data from farming table where the params match(uses x y z coords as a verify to make sure it gets the right id)
     if Plants2Id[1] then --if it is not nil then
       local plantid = Plants2Id[1].plantid --sets the var to = the id
-      TriggerClientEvent('bcc-farming:plantcrop2', _source, plantcoords, timer, reward, amount, object, plantid) --triggers the client event and passes the data too it
+      TriggerClientEvent('bcc-farming:plantcrop2', _source, plantcoords, timer, reward, amount, object, plantid, ferttime,fertitem) --triggers the client event and passes the data too it
     end
   end)
 end)
@@ -187,6 +206,4 @@ AddEventHandler('bcc-farming:RemoveDBRow', function(plantid) --catches var from 
 end)
 
 --This handles the version check
-local versioner = exports['bcc-versioner'].initiate()
-local repo = 'https://github.com/BryceCanyonCounty/bcc-farming'
-versioner.checkRelease(GetCurrentResourceName(), repo)
+BccUtils.Versioner.checkRelease(GetCurrentResourceName(), 'https://github.com/BryceCanyonCounty/bcc-farming')

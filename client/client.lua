@@ -1,6 +1,6 @@
 --This will handle planting the crop!
 RegisterNetEvent('bcc-farming:plantcrop') --Registers a client event for the server to trigger
-AddEventHandler('bcc-farming:plantcrop', function(prop, reward, amount, timer, isoutsideoftown, type) --Makes the event have code to run and catches those 5 variables from the server
+AddEventHandler('bcc-farming:plantcrop', function(prop, reward, amount, timer, isoutsideoftown, type, ferttime, fertitem) --Makes the event have code to run and catches those 5 variables from the server
     local plyPed = PlayerPedId()
     ---------------------------PLANTING ANIMATION SETUP----------------------------------------------
     if isoutsideoftown == true then -- if variable is true (you are out of town or config = true then)
@@ -22,7 +22,7 @@ AddEventHandler('bcc-farming:plantcrop', function(prop, reward, amount, timer, i
         local object = CreateObject(prop, plcoord.x, plcoord.y, plcoord.z, true, true, false) --creates a networked object at the players coords
         Citizen.InvokeNative(0x9587913B9E772D29, object, true) --places entity on the ground properly
         local plantcoords = GetEntityCoords(object) --Gets the plants coordinates once the plant is planted
-        TriggerServerEvent('bcc-farming:dbinsert', type, plantcoords, prop, timer, reward, amount, object) --this triggers the server event which inserts the plant into database and returns the database table too the client
+        TriggerServerEvent('bcc-farming:dbinsert', type, plantcoords, prop, timer, reward, amount, object, ferttime, fertitem) --this triggers the server event which inserts the plant into database and returns the database table too the client
     elseif isoutsideoftown == false then
         VORPcore.NotifyRightTip(Config.Language.Tooclosetotown, 4000)
     end
@@ -30,11 +30,10 @@ end)
 
 --Event Used to catch plant id from server, and trigger the event to plant the plant
 RegisterNetEvent('bcc-farming:plantcrop2')
-AddEventHandler('bcc-farming:plantcrop2', function(plantcoords, timer, reward, amount, object, plantid) --catches all from server
-    TriggerEvent('bcc-farming:WaterPlantMain', plantcoords, timer, reward, amount, object, plantid) --passes all to function
+AddEventHandler('bcc-farming:plantcrop2', function(plantcoords, timer, reward, amount, object, plantid, fertime, fertitem) --catches all from server
+    TriggerEvent('bcc-farming:WaterPlantMain', plantcoords, timer, reward, amount, object, plantid, fertime,fertitem) --passes all to function
 end)
 
---TODO still sometimes takes double input on prompt groups, but once pressed 2nd time no issue no double remove or anything so not really a big issue
 
 --This will be used to spawn the plants the player has planted in the database--
 --This is used to run the server event for loading the plants after the char has been chosen(if ran before char is chosen it wont work as the db query requires charid)
@@ -122,5 +121,3 @@ AddEventHandler('bcc-farming:IsPLayerNearTownCheck', function(_source, v)
         TriggerServerEvent('bcc-farming:PlayerNotNearTown', _source, v, isoutsideoftown) --trigger server event to continue planting
     end
 end)
-
--- TODO Setup distance check between all plants and do not allow anyone to plant if they are near any crop they planted
