@@ -12,6 +12,8 @@ Config.Farming = {
         PlantingTool = 'hoe', --This is the database name of the item that you have to have in your inventory in order to plant the crop
         PlantProp = 'yarrow01_p', --The prop model this is what will spawn in game when you plant.
         SoilName = 'soil', -- This is the database name of the soil required to plant the seed.  [false for none]
+        FertName = 'fertilizer', --This is the item that will be used to fertilize the plant
+        FertTimeRemove = 0, --amount of time in ms the fertilizer will take off the TimetoGrow (if you do not want to use fertilizer for the plant set this too 0 and the option wont show)
         Seedname = 'Yarrow_Seed', --This is the database name of the seed that will be used to plant the plant
         SeedsRequired = 2, --Amount of seeds required to plant
         HarvestItem = 'Yarrow', --This is the database name of the item you will recieve when you harvest the plant
@@ -32,6 +34,8 @@ Config.Farming = {
         PlantingTool = 'hoe', --This is the database name of the item that you have to have in your inventory in order to plant the crop
         PlantProp = 'rdr2_bush_snakeweedflower', --The prop model this is what will spawn in game when you plant.
         SoilName = false, -- This is the database name of the soil required to plant the seed. [false for none]
+        FertName = 'fertilizer', --This is the item that will be used to fertilize the plant
+        FertTimeRemove = 5000, --amount of time in ms the fertilizer will take off the TimetoGrow (if you do not want to use fertilizer for the plant set this too 0 and the option wont show)
         Seedname = 'hop_seed', --This is the database name of the seed that will be used to plant the plant
         SeedsRequired = 2, --Amount of seeds required to plant
         HarvestItem = 'hop', --This is the database name of the item you will recieve when you harvest the plant
@@ -69,7 +73,11 @@ Config.Language = {
     Notinwater = 'You are not near water',
     BucketFilled = 'You filled a Water Bucket',
     Tooclosetotown = 'You are too close to a town',
-    TooCloseToPlant = 'Too Close To another plant!'
+    TooCloseToPlant = 'Too Close To another plant!',
+    PlantWithFertilizer = 'Use Fertilizer?',
+    UseFert = 'Fertilize',
+    DoNotUseFertilizer = 'Do Not Use Fertilizer',
+    NoFerti = 'You do not have fertilizer'
 }
 
 --------------------------------- Town Locations ------------------------------------------------------------------------------------

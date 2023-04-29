@@ -25,7 +25,7 @@ dependencies {
     'vorp_character',
     'vorp_inventory',
     'vorp_utils',
-    'bcc-versioner'
+    'bcc-utils'
 }
 
 version '1.0.1'

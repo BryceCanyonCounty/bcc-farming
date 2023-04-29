@@ -18,6 +18,8 @@
 - Saves if they are watered or not aswell!
 - Script automatically makes the database table no need to run an sql!
 - Version Checker to help you keep informed on updates!
+- Option to require soil to plant!
+- Option to allow use of fertilizer!
 
 ## How it works
 - When you have the required amount of seed items set in the config, and you have the planting tool set in the config. Just use the item seed item in your inventory! Wait for it too grow, then harvest it!
@@ -32,18 +34,16 @@
 - VORP Inventory
 - VORP Utils
 - VORP Character
-- bcc-versioner
+- bcc-utils
 
 ## Installation Steps
 - Add the file to your resource file
 - Add ensure 'bcc-farming' to your resources.cfg
 
 ## Side notes
-- Do not plant 2 plants in the same exact spot, move atleast a step or 2 if you do not it will break the 2 plants in the database and they will not be harvestable and will always spawn. You will have to go manually remove them from the database to fix it.
 - Stealing plants is not implemented yes
 - Support will be provided
 - Make sure all items set exist in your database
-- There is a known bug with the watering prompts. Causes no real issue you just have to do the prompt twice. Looking into a fix!
 - This script is written from scratch, but took a heavy inspiration from prp_farming.
 - You can edit the code obviously. All I ask is that you release the edits to the community freely.
 - I really hope you enjoy the script thanks for trying it!
