@@ -48,15 +48,15 @@ AddEventHandler('bcc-farming:WaterPlantMain', function(plantcoords, timer, rewar
     end
 end)
 
-RegisterNetEvent('bcc-farming:WaterCrop') --registers a client event for the above server event to trigger
-AddEventHandler('bcc-farming:WaterCrop', function(type, blip, timer, reward, amount, plantcoords, object, plantid, fertime, fertitem) --makes the event have code and catches the hadbucket variable from the server
+RegisterNetEvent('bcc-farming:WaterCrop', function(type, blip, timer, reward, amount, plantcoords, object, plantid, fertime, fertitem) --makes the event have code and catches the hadbucket variable from the server
+    local pl = PlayerPedId() --This is done here to avoid calling the native so many times hence optimizing the code
     if type == 'water' then
         TriggerServerEvent('bcc-farming:watereddbset', plantid)
-        FreezeEntityPosition(PlayerPedId(), true) --freezes player
-        TaskStartScenarioInPlace(PlayerPedId(), GetHashKey('WORLD_HUMAN_BUCKET_POUR_LOW'), 7000, true, false, false, false) --plays an animation of watering the crop
+        FreezeEntityPosition(pl, true) --freezes player
+        TaskStartScenarioInPlace(pl, joaat('WORLD_HUMAN_BUCKET_POUR_LOW'), 7000, true, false, false, false) --plays an animation of watering the crop
         Wait(7000) --waits 7 seconds (until anim ends)
-        ClearPedTasksImmediately(PlayerPedId()) --ends the animation
-        FreezeEntityPosition(PlayerPedId(), false) --unfreezes player
+        ClearPedTasksImmediately(pl) --ends the animation
+        FreezeEntityPosition(pl, false) --unfreezes player
         TriggerServerEvent('bcc-farming:RemoveWaterBucket') --Triggers server event and passes source
         VORPcore.NotifyRightTip(Config.Language.CropWatered, 4000) --places text on screen
         type = 'fert'
@@ -92,6 +92,7 @@ end)
 
 RegisterNetEvent('bcc-farming:WaitUntilHarvest')
 AddEventHandler('bcc-farming:WaitUntilHarvest', function(blip, timer, reward, amount, plantcoords, object, plantid)
+    local pl = PlayerPedId()
     local dbcatch = timer --this is used to detect how long it has been since last back up
     local PromptGroup = VORPutils.Prompts:SetupPromptGroup() --registers a prompt group using vorp_utils
     local firstprompt = PromptGroup:RegisterPrompt(Config.Language.HarvestPrompt, 0x760A9C6F, 1, 1, true, 'hold', {timedeventhash = "MEDIUM_TIMED_EVENT"})
@@ -117,12 +118,12 @@ AddEventHandler('bcc-farming:WaitUntilHarvest', function(blip, timer, reward, am
                 PromptGroup:ShowGroup(Config.Language.HarvestPrompt) --Names the prompt
                 if firstprompt:HasCompleted() then --if you do the prompt then
                     firstprompt:DeletePrompt() --deletes the prompt
-                    FreezeEntityPosition(PlayerPedId(), true) --freezes player
+                    FreezeEntityPosition(pl, true) --freezes player
                     VORPcore.NotifyRightTip(Config.Language.Harvestingcrop, 10000) --Notifies in the right side of screen
-                    TaskStartScenarioInPlace(PlayerPedId(), GetHashKey('WORLD_HUMAN_CROUCH_INSPECT'), 10000, true, false, false, false) --Triggers an animation to play for 10 seconds
+                    TaskStartScenarioInPlace(pl, joaat('WORLD_HUMAN_CROUCH_INSPECT'), 10000, true, false, false, false) --Triggers an animation to play for 10 seconds
                     Wait(10000) --waits 10 seconds(until anim is over) then allows the rest of code to run
-                    ClearPedTasksImmediately(PlayerPedId()) --ends the animation
-                    FreezeEntityPosition(PlayerPedId(), false) --unfreezes player
+                    ClearPedTasksImmediately(pl) --ends the animation
+                    FreezeEntityPosition(pl, false) --unfreezes player
                     DeleteObject(object) --deletes the object regardless of if debug is on or not
                     if Config.PlantBlips then --if you have blipsset true then
                         VORPutils.Blips.RemoveBlip(blip.rawblip) --removes the blip have to use this not just blip:RemoveBlip as that wont work
@@ -139,7 +140,7 @@ end)
 function IsAnyPlantPropNearPed()
     for k,v in pairs(Config.Farming) do
         local x,y,z = table.unpack(GetOffsetFromEntityInWorldCoords(PlayerPedId(), 0.0, 2.5, 0))
-        local Entity = (GetClosestObjectOfType(x,y,z, 2.5, GetHashKey(v.PlantProp), false, false, false))
+        local Entity = (GetClosestObjectOfType(x,y,z, 2.5, joaat(v.PlantProp), false, false, false))
         if Entity ~= 0 then
             return true
         end
