@@ -20,6 +20,7 @@
 - Version Checker to help you keep informed on updates!
 - Option to require soil to plant!
 - Option to allow use of fertilizer!
+- Individual plant webhooking!
 
 ## How it works
 - When you have the required amount of seed items set in the config, and you have the planting tool set in the config. Just use the item seed item in your inventory! Wait for it too grow, then harvest it!
