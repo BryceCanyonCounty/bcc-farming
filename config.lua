@@ -5,9 +5,11 @@ Config.FullWaterBucket = 'wateringcan' --This is the database name of the full W
 Config.EmptyWaterBucket = 'wateringcan_empty' --This is the database name of the empty Water Bucket(You will be able to refill this bucket)
 Config.PlantBlips = true --True if you want a blip to show on the map where the plant is, false for no blips
 Config.Plantintowns = false --Set this true if you want players to be able to plant in towns
+Config.WebhookLink = '' --insert your webhook link here
 
 Config.Farming = {
     {
+        Webhooked = false, --if true when someone plants this a webhook will be sent
         Type = 'Yarrow', --Set this has to be unique to each plant, once set once do not change it will break the database
         PlantingTool = 'hoe', --This is the database name of the item that you have to have in your inventory in order to plant the crop
         PlantProp = 'yarrow01_p', --The prop model this is what will spawn in game when you plant.
@@ -30,6 +32,7 @@ Config.Farming = {
         },
     }, -- too add more plants just copy and paste the table and change what you need
     {
+        Webhooked = true, --if true when someone plants this a webhook will be sent
         Type = 'Hop', --Set this has to be unique to each plant, once set once do not change it will break the database
         PlantingTool = 'hoe', --This is the database name of the item that you have to have in your inventory in order to plant the crop
         PlantProp = 'rdr2_bush_snakeweedflower', --The prop model this is what will spawn in game when you plant.
@@ -77,7 +80,9 @@ Config.Language = {
     PlantWithFertilizer = 'Use Fertilizer?',
     UseFert = 'Fertilize',
     DoNotUseFertilizer = 'Do Not Use Fertilizer',
-    NoFerti = 'You do not have fertilizer'
+    NoFerti = 'You do not have fertilizer',
+    WebhookTitle = 'Character Static Id: ',
+    Webhook_desc = 'Has planted: '
 }
 
 --------------------------------- Town Locations ------------------------------------------------------------------------------------

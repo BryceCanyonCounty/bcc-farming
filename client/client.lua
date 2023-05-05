@@ -1,23 +1,15 @@
 --This will handle planting the crop!
 RegisterNetEvent('bcc-farming:plantcrop', function(prop, reward, amount, timer, isoutsideoftown, type, ferttime, fertitem)
-    local plyPed = PlayerPedId()
     ---------------------------PLANTING ANIMATION SETUP----------------------------------------------
     if isoutsideoftown then -- if variable is true (you are out of town or config = true then)
-        FreezeEntityPosition(plyPed, true) --freezes player
-        TaskStartScenarioInPlace(plyPed, joaat('WORLD_HUMAN_FARMER_RAKE'), 12000, true, false, false, false) --triggers anim
-        VORPcore.NotifyRightTip(Config.Language.Raking,16000) --Prints on the players screen what is set in config.language table
-        Wait(12000) --waits 12 seconds (until anim is over)
-        ClearPedTasksImmediately(plyPed) --clears anims
-        Wait(500) --waits half a second
+        VORPcore.NotifyRightTip(Config.Language.Raking,16000)
+        ScenarioInPlace('WORLD_HUMAN_FARMER_RAKE', 12000)
         VORPcore.NotifyRightTip(Config.Language.Weeding,16000) --Prints on the players screen what is set in config.language table
-        TaskStartScenarioInPlace(plyPed, joaat('WORLD_HUMAN_FARMER_WEEDING'), 9000, true, false, false, false) --triggers anim
-        Wait(9000) --waits 9 seconds(until anim is over)
-        ClearPedTasksImmediately(plyPed) --clears anim
-        FreezeEntityPosition(plyPed, false) --unfreezes player
+        ScenarioInPlace('WORLD_HUMAN_FARMER_WEEDING', 9000)
         VORPcore.NotifyRightTip(Config.Language.PlantFinished,16000) --Prints on the players screen what is set in config.language table
         
         -----------------------------CROP SPAWN SETUP----------------------------------
-        local plcoord = GetEntityCoords(plyPed) --gets player coords as soon as the plant is planted
+        local plcoord = GetEntityCoords(PlayerPedId())
         local object = CreateObject(prop, plcoord.x, plcoord.y, plcoord.z, true, true, false) --creates a networked object at the players coords
         Citizen.InvokeNative(0x9587913B9E772D29, object, true) --places entity on the ground properly
         local plantcoords = GetEntityCoords(object) --Gets the plants coordinates once the plant is planted
@@ -71,14 +63,8 @@ end)
 
 --------------------------- Is Ped Currently In Water Check -------------------------------------------------
 RegisterNetEvent('bcc-farming:PedInWaterClientCatch', function(_source)
-    local plyPed = PlayerPedId()
-    local inwater = IsEntityInWater(plyPed) --gets if the player is in water 1 if is false if not
-    if inwater then --if you are in water then
-        FreezeEntityPosition(plyPed, true) --freezes player in place
-        TaskStartScenarioInPlace(plyPed, joaat("WORLD_CAMP_JACK_ES_BUCKET_FILL"), 7000, true, false, false, false) --triggers anim
-        Wait(7000) --waits 7 seconds(until anim is over)
-        ClearPedTasksImmediately(plyPed) --stops animation
-        FreezeEntityPosition(plyPed, false) --unfreezes player
+    if IsEntityInWater(PlayerPedId()) then
+        ScenarioInPlace('WORLD_CAMP_JACK_ES_BUCKET_FILL', 7000)
         TriggerServerEvent('bcc-farming:RefillWateringCan', _source) --triggers server event to add the item(goes regardless of debug)
     else
         VORPcore.NotifyRightTip(Config.Language.Notinwater) --print not in water
@@ -91,12 +77,12 @@ RegisterNetEvent('bcc-farming:IsPLayerNearTownCheck', function(_source, v)
     if Config.Plantintowns then --if the config value is set to true (allowed to plant in town then)
         isoutsideoftown = true --sets variable to true to allow if statement to trigger server event
     else
+        local pl2 = PlayerPedId()
         for k, e in pairs(Config.Towns) do --opens up the town table and creates a for loop
-            local pl = GetEntityCoords(PlayerPedId()) --gets your coords once per loop run
-            local dist = #(vec2(pl.x, pl.y) - vec2(e.coordinates.x, e.coordinates.y))
-            if dist > e.range then --if dist is more htan 150 then
+            local pl = GetEntityCoords(pl2)
+            if #(vec2(pl.x, pl.y) - vec2(e.coordinates.x, e.coordinates.y)) > e.range then
                 isoutsideoftown = true --set to true
-            elseif dist < e.range then --if its less then
+            else
                 VORPcore.NotifyRightTip(Config.Language.Tooclosetotown, 4000)
                 isoutsideoftown = false break --sets it too false and breaks the for loop
             end
@@ -105,7 +91,7 @@ RegisterNetEvent('bcc-farming:IsPLayerNearTownCheck', function(_source, v)
     if IsAnyPlantPropNearPed() then
         VORPcore.NotifyRightTip(Config.Language.TooCloseToPlant, 4000) return
     end
-    if isoutsideoftown == true then --after all the above code runs if outside of town = true then
+    if isoutsideoftown then
         TriggerServerEvent('bcc-farming:PlayerNotNearTown', _source, v, isoutsideoftown) --trigger server event to continue planting
     end
 end)
