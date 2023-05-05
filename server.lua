@@ -9,6 +9,7 @@ local BccUtils = {}
 TriggerEvent('bcc:getUtils', function(bccutils)
   BccUtils = bccutils
 end)
+local discord = BccUtils.Discord.setup(Config.WebhookLink, 'BCC Farming', 'https://gamespot.com/a/uploads/original/1179/11799911/3383938-duck.jpg')
 
 -------------------------------------- Main Setup -------------------------------------------------------------------------------
 --Registering it usuable has to be done in a seperate thread other wise it will cause a removing dupe bug
@@ -50,6 +51,9 @@ RegisterServerEvent('bcc-farming:PlayerNotNearTown', function(_source, v, isouts
         VorpInv.subItem(_source, v.SoilName, 1) --removes the soil from your inventory
       end
       VorpInv.subItem(_source, v.Seedname, v.SeedsRequired) --removes the seeds from your inventory
+      if v.Webhooked then
+        discord:sendMessage(Config.Language.WebhookTitle .. tostring(Character.charIdentifier), Config.Language.Webhook_desc .. v.Type)
+      end
       TriggerClientEvent('bcc-farming:plantcrop', _source, v.PlantProp, v.HarvestItem, v.HarvestAmount, v.TimetoGrow, isoutsideoftown, v.Type, v.FertTimeRemove, v.FertName) --triggers the client event and passes the 4 variables
     end
   else --else you dont have one then
