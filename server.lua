@@ -61,6 +61,27 @@ RegisterServerEvent('bcc-farming:PlayerNotNearTown', function(_source, v, isouts
   end
 end)
 
+------------------------------------------- Item Metadata -----------------------------------------------
+RegisterServerEvent("bcc-farmin:metdata", function(name, uses)
+	local _source = source
+	local tool = VorpInv.getItem(_source, name)
+	meta = tool["metadata"]
+	if next(meta) == nil then
+		VorpInv.subItem(_source, name, 1, {})
+		VorpInv.addItem(_source, name, 1, { description = "Uses Left: " .. uses - 1, durability = uses - 1 })
+	else
+		local durability = meta.durability - 1
+		local description = "Uses Left: "
+		VorpInv.subItem(_source, name, 1, meta)
+		if 0 >= durability then
+			VORPcore.NotifyRightTip(_source, "You're out of uses", 4000)
+		else
+			VorpInv.addItem(_source, name, 1,
+				{ description = description .. durability, durability = durability })
+		end
+	end
+end)
+
 ------------------------------------------- Crop Harvested Setup -----------------------------------------------
 RegisterServerEvent('bcc-farming:CropHarvested', function(reward, amount)
   local _source = source
