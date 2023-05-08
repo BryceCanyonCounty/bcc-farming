@@ -54,10 +54,40 @@ RegisterServerEvent('bcc-farming:PlayerNotNearTown', function(_source, v, isouts
       if v.Webhooked then
         discord:sendMessage(Config.Language.WebhookTitle .. tostring(Character.charIdentifier), Config.Language.Webhook_desc .. v.Type)
       end
+      TriggerEvent('bcc-farming:metadata', _source, v.PlantingTool, v.PlantingToolDurability, v.PlantingToolUsage)
       TriggerClientEvent('bcc-farming:plantcrop', _source, v.PlantProp, v.HarvestItem, v.HarvestAmount, v.TimetoGrow, isoutsideoftown, v.Type, v.FertTimeRemove, v.FertName) --triggers the client event and passes the 4 variables
     end
   else --else you dont have one then
     VORPcore.NotifyRightTip(_source, Config.Language.NoTool, 10000) --prints on screen
+  end
+end)
+
+------------------------------------------- Item Metadata -----------------------------------------------
+RegisterServerEvent("bcc-farming:metadata", function(source, name, uses, usages)
+  print(source)
+  print('gotthisfar')
+  local PlantingToolDurability = uses
+  local PlantingToolUsage = usages
+  local _source = source
+  local tool = VorpInv.getItem(_source, name)
+  meta = tool["metadata"]
+  if next(meta) == nil then
+    VorpInv.subItem(_source, name, 1, {})
+    VorpInv.addItem(_source, name, 1,
+      {
+        description = "Uses Left: " .. PlantingToolDurability - PlantingToolUsage,
+        durability = PlantingToolDurability - PlantingToolUsage
+      })
+  else
+    local durability = meta.durability - PlantingToolUsage
+    local description = "Uses Left: "
+    VorpInv.subItem(_source, name, 1, meta)
+    if 0 >= durability then
+      VORPcore.NotifyRightTip(_source, Config.Language.OutOfUses, 4000)
+    else
+      VorpInv.addItem(_source, name, 1,
+        { description = description .. durability, durability = durability })
+    end
   end
 end)
 
