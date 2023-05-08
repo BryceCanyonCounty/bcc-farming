@@ -86,7 +86,8 @@ Config.Language = {
     DoNotUseFertilizer = 'Do Not Use Fertilizer',
     NoFerti = 'You do not have fertilizer',
     WebhookTitle = 'Character Static Id: ',
-    Webhook_desc = 'Has planted: '
+    Webhook_desc = 'Has planted: ',
+    OutOfUses = 'You have run out of uses'
 }
 
 --------------------------------- Town Locations ------------------------------------------------------------------------------------
