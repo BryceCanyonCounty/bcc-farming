@@ -7,6 +7,7 @@ Config.PlantBlips = true --True if you want a blip to show on the map where the 
 Config.Plantintowns = false --Set this true if you want players to be able to plant in towns
 Config.WebhookLink = '' --insert your webhook link here
 
+Config.DeleteAfterDays = 2 --If a plant is planted and is not harvested within this many days it will be deleted from the database
 Config.Farming = {
     {
         Webhooked = false, --if true when someone plants this a webhook will be sent
