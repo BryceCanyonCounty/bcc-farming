@@ -8,6 +8,7 @@ description 'bcc-farming'
 
 server_scripts {
     'server.lua',
+    '@oxmysql/lib/MySQL.lua',
 }
 
 shared_scripts {
@@ -28,4 +29,4 @@ dependencies {
     'bcc-utils'
 }
 
-version '1.0.2'
+version '1.0.3'
