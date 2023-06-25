@@ -1,6 +1,6 @@
 local MiniGame = exports['bcc-minigames'].initiate()
 local object
-local UseWagon, UsePump = false, false
+local UseWagon = false
 ------- Planting Crop Handler -------------
 RegisterNetEvent('bcc-farming:plantcrop', function(v, isoutsideoftown)
     local Minigameresult
@@ -83,28 +83,6 @@ AddEventHandler('bcc-farming:clientspawnplantsinitload', function(HasPlants)
             Citizen.InvokeNative(0x9587913B9E772D29, object, true)
             local plantcoords = GetEntityCoords(object)
             TriggerEvent('bcc-farming:WaterPlantMain', plantcoords, table, object, v['plantid'], false)
-        end
-    end
-end)
-
-CreateThread(function()
-    local PromptGroup = VORPutils.Prompts:SetupPromptGroup()
-    local firstprompt = PromptGroup:RegisterPrompt(Config.Language.FillBucket, 0x760A9C6F, 1, 1, true,
-        'hold', { timedeventhash = "MEDIUM_TIMED_EVENT" })
-    while true do
-        Wait(5)
-        for k, v in pairs(Config.pumps) do
-            local playercoords = GetEntityCoords(PlayerPedId())
-            local waterpump = GetClosestObjectOfType(playercoords, 2.0, joaat(v), false, false, false)
-            local waterpumpcoords = GetEntityCoords(waterpump)
-            local pumpdist = GetDistanceBetweenCoords(playercoords, waterpumpcoords, true)
-            if 2.5 > pumpdist and not UsePump then
-                PromptGroup:ShowGroup(Config.Language.FillBucket)
-                if firstprompt:HasCompleted() then
-                    TriggerServerEvent('bcc-farming:RefillWateringCanPump')
-                    UsePump = true
-                end
-            end
         end
     end
 end)
