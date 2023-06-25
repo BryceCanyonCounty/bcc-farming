@@ -187,20 +187,6 @@ RegisterServerEvent('bcc-farming:RefillWateringCan', function(source)
   end
 end)
 
-RegisterServerEvent('bcc-farming:RefillWateringCanPump', function()
-  local _source = source
-  local itemCount = VorpInv.getItemCount(_source, Config.EmptyWaterBucket)
-  if itemCount >= 1 then
-    TriggerClientEvent('bcc-farming:pumpbucket', _source)
-    Wait(10000)
-    VORPcore.NotifyRightTip(_source, Config.Language.BucketFilled)
-    VorpInv.subItem(_source, Config.EmptyWaterBucket, 1)
-    VorpInv.addItem(_source, Config.FullWaterBucket, 1)
-  else
-    VORPcore.NotifyRightTip(_source, Config.Language.Nowaterbucket)
-  end
-end)
-
 RegisterServerEvent('bcc-farming:RemoveWaterBucket', function(source)
   local _source = source
   VorpInv.subItem(_source, Config.FullWaterBucket, 1)
@@ -295,7 +281,6 @@ RegisterServerEvent('bcc-farming:AffectWaterWagon', function(type, wagonmodel)
             TriggerClientEvent('bcc-farming:PedUsingWagon', _source, 'empty')
           else
             VORPcore.NotifyRightTip(_source, Config.Language.Nowater)
-            TriggerClientEvent('bcc-farming:SetWagon', _source, false)
           end
         end
       end
