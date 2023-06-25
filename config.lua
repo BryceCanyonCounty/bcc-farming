@@ -10,7 +10,6 @@ Config.Plantintowns = false --Set this true if you want players to be able to pl
 Config.WebhookLink = ''     --insert your webhook link here
 Config.MaxPlants = true
 Config.MaxPlantsNumber = 5
-Config.pumps = { 'p_waterpump01x', 'p_wellpumpnbx01x' }
 Config.wagons = { 'oilWagon01x', 'oilWagon02x' }
 
 
@@ -46,19 +45,22 @@ Config.Farming = {
     },                                           -- too add more plants just copy and paste the table and change what you need
     {
         Webhooked = true,                        --if true when someone plants this a webhook will be sent
-        Type = 'Hop',                            --Set this has to be unique to each plant, once set once do not change it will break the database
-        PlantingTool = 'hoe',                    --This is the database name of the item that you have to have in your inventory in order to plant the crop
-        PlantingToolDurability = '100',          --This is the amount of hit points the planting tool has
-        PlantingToolUsage = '1',                 --This is the amount of hit points the planting tool takes per plant
-        PlantProp = 'rdr2_bush_snakeweedflower', --The prop model this is what will spawn in game when you plant.
-        SoilName = false,                        -- This is the database name of the soil required to plant the seed. [false for none]
-        FertName = 'fertilizer',                 --This is the item that will be used to fertilize the plant
-        FertTimeRemove = 5000,                   --amount of time in ms the fertilizer will take off the TimetoGrow (if you do not want to use fertilizer for the plant set this too 0 and the option wont show)
-        Seedname = 'Package_Bayleaf_Seeds',      --This is the database name of the seed that will be used to plant the plant
-        SeedsRequired = 1,                       --Amount of seeds required to plant
-        HarvestItem = 'hop',                     --This is the database name of the item you will recieve when you harvest the plant
-        HarvestAmount = 5,                       --This is the amount you will recieve when harvesting the plant
-        TimetoGrow = 30000,                      --The time in ms it will take the plant to grow (60000 is one minute)
+        Type = 'Hop',                  --Set this has to be unique to each plant, once set once do not change it will break the database
+        PlantingTool = 'hoe',             --This is the database name of the item that you have to have in your inventory in order to plant the crop
+        PlantingToolDurability = '100',   --This is the amount of hit points the planting tool has
+        PlantingToolUsage = '1',          --This is the amount of hit points the planting tool takes per plant
+        PlantProp = 'yarrow01_p',         --The prop model this is what will spawn in game when you plant.
+        SoilName = false,                 -- This is the database name of the soil required to plant the seed.  [false for none]
+        FertName = 'fertilizer',          --This is the item that will be used to fertilize the plant
+        FertTimeRemove = 60000 *2,      --amount of time in ms the fertilizer will take off the TimetoGrow (if you do not want to use fertilizer for the plant set this too 0 and the option wont show)
+        Seedname = 'Package_Hop_Seeds', --This is the database name of the seed that will be used to plant the plant
+        SeedsRequired = 1,                --Amount of seeds required to plant
+        HarvestItem = 'consumable_hops', --This is the database name of the item you will recieve when you harvest the plant
+        HarvestAmount = 5,                --This is the amount you will recieve when harvesting the plant
+        TrimTool = 'planttrimmer',        --This is the database name of the item that you have to have in your inventory in order to plant the crop
+        TrimmedAmount = 10,               --This is the database name of the item that you have to have in your inventory in order to plant the crop
+
+        TimetoGrow = 60000*5,               --The time in ms it will take the plant to grow (60000 is one minute)
         Joblock = false,                         --If you want to joblock this plant set true, if not then set false
         Jobs = {
             {
