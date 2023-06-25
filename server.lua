@@ -9,24 +9,40 @@ local BccUtils = {}
 TriggerEvent('bcc:getUtils', function(bccutils)
   BccUtils = bccutils
 end)
-local discord = BccUtils.Discord.setup(Config.WebhookLink, 'BCC Farming', 'https://gamespot.com/a/uploads/original/1179/11799911/3383938-duck.jpg')
+local discord = BccUtils.Discord.setup(Config.WebhookLink, 'BCC Farming',
+  'https://gamespot.com/a/uploads/original/1179/11799911/3383938-duck.jpg')
+local PlantNumber
 
 -------------------------------------- Main Setup -------------------------------------------------------------------------------
 --Registering it usuable has to be done in a seperate thread other wise it will cause a removing dupe bug
 CreateThread(function()
   for key, v in pairs(Config.Farming) do
     VorpInv.RegisterUsableItem(v.Seedname, function(data)
-      TriggerClientEvent('bcc-farming:IsPLayerNearTownCheck', data.source, data.source, v)
+      if Config.MaxPlants then
+        TriggerEvent('bcc-farming:getplantnumber', data.source)
+        Wait(250)
+        if PlantNumber < Config.MaxPlantsNumber then
+          TriggerClientEvent('bcc-farming:IsPLayerNearTownCheck', data.source, data.source, v)
+          VorpInv.CloseInv(data.source)
+        else
+          VORPcore.NotifyRightTip(data.source, Config.Language.TooManyPlants, 6000)
+        end
+      else
+        TriggerClientEvent('bcc-farming:IsPLayerNearTownCheck', data.source, data.source, v)
+        VorpInv.CloseInv(data.source)
+      end
     end)
   end
 end)
+
+
 
 RegisterServerEvent('bcc-farming:PlayerNotNearTown', function(_source, v, isoutsideoftown)
   local charjob = false
   local itemCount2 = VorpInv.getItemCount(_source, v.PlantingTool)
   local Character = VORPcore.getUser(_source).getUsedCharacter
   if itemCount2 > 0 then
-    ------------------------------------------- Job Lock True Setup ------------------------------------------------      
+    ------------------------------------------- Job Lock True Setup ------------------------------------------------
     if v.Joblock then
       for y, e in pairs(v.Jobs) do
         if Character.job == e.JobName then
@@ -51,12 +67,14 @@ RegisterServerEvent('bcc-farming:PlayerNotNearTown', function(_source, v, isouts
         VorpInv.subItem(_source, v.SoilName, 1)
       end
       VorpInv.subItem(_source, v.Seedname, v.SeedsRequired)
+      VORPcore.NotifyRightTip(_source, Config.Language.OpenedSeeds, 10000)
+
+
       if v.Webhooked then
-        discord:sendMessage(Config.Language.WebhookTitle .. tostring(Character.charIdentifier), Config.Language.Webhook_desc .. v.Type)
+        discord:sendMessage(Config.Language.WebhookTitle .. tostring(Character.charIdentifier),
+          Config.Language.Webhook_desc .. v.Type)
       end
-      TriggerEvent('bcc-farming:metadata', _source, v.PlantingTool, v.PlantingToolDurability, v.PlantingToolUsage)
       TriggerClientEvent('bcc-farming:plantcrop', _source, v, isoutsideoftown)
-      --TriggerClientEvent('bcc-farming:plantcrop', _source, v.PlantProp, v.HarvestItem, v.HarvestAmount, v.TimetoGrow, isoutsideoftown, v.Type, v.FertTimeRemove, v.FertName)
     end
   else
     VORPcore.NotifyRightTip(_source, Config.Language.NoTool, 10000)
@@ -64,17 +82,18 @@ RegisterServerEvent('bcc-farming:PlayerNotNearTown', function(_source, v, isouts
 end)
 
 ------------------------------------------- Item Metadata -----------------------------------------------
-RegisterServerEvent("bcc-farming:metadata", function(source, name, uses, usages)
+RegisterServerEvent("bcc-farming:metadata", function(source, name, uses, hits)
   local PlantingToolDurability = uses
-  local PlantingToolUsage = usages
+  local PlantingToolUsage = hits
   local _source = source
   local tool = VorpInv.getItem(_source, name)
-  meta = tool["metadata"]
+  local meta = tool["metadata"]
   if next(meta) == nil then
     VorpInv.subItem(_source, name, 1, {})
     VorpInv.addItem(_source, name, 1,
       {
-        description = "Uses Left: " .. PlantingToolDurability - PlantingToolUsage, durability = PlantingToolDurability - PlantingToolUsage
+        description = "Uses Left: " .. PlantingToolDurability - PlantingToolUsage,
+        durability = PlantingToolDurability - PlantingToolUsage
       })
   else
     local durability = meta.durability - PlantingToolUsage
@@ -89,35 +108,62 @@ RegisterServerEvent("bcc-farming:metadata", function(source, name, uses, usages)
 end)
 
 ------------------------------------------- Crop Harvested Setup -----------------------------------------------
-RegisterServerEvent('bcc-farming:CropHarvested', function(reward, amount)
+RegisterServerEvent('bcc-farming:CropHarvested', function(reward, amount, trimmed, trimmedamount)
   local _source = source
-  VorpInv.addItem(_source, reward, amount)
+  if trimmed then
+    VorpInv.addItem(_source, reward, trimmedamount)
+  else
+    VorpInv.addItem(_source, reward, amount)
+  end
   VORPcore.NotifyRightTip(_source, Config.Language.HarvestComplete, 10000)
 end)
 
 ---------------------------------------- Watering Bucket Check -------------------------------------
-RegisterServerEvent('bcc-farming:WateringBucketCheck', function(blip, v, plantcoords, object, plantid)
+RegisterServerEvent('bcc-farming:WateringBucketCheck', function()
   local _source = source
   local itemCount = VorpInv.getItemCount(_source, Config.FullWaterBucket)
   if itemCount > 0 then
-    TriggerClientEvent('bcc-farming:WaterCrop', _source, 'water', blip, v, plantcoords, object, plantid)
+    TriggerClientEvent('bcc-farming:GotBucket', _source)
+    TriggerEvent('bcc-farming:metadata', _source, Config.FullWaterBucket, 5, 1)
   else
-    TriggerClientEvent('bcc-farming:WaterPlantMain', _source, plantcoords, v, object, plantid)
     VORPcore.NotifyRightTip(_source, Config.Language.Nowaterbucket)
   end
 end)
 
 -------------------------------------- Fert Check --------------------------------
-RegisterServerEvent('bcc-farming:FertCheck', function(blip, v, plantcoords, object, plantid)
+RegisterServerEvent('bcc-farming:TrimPlant', function(blip, v, plantcoords, object, plantid, timer, fertilized)
+  local _source = source
+  local itemCount = VorpInv.getItemCount(_source, v.TrimTool)
+  local timer = timer
+  if itemCount > 0 then
+    TriggerEvent('bcc-farming:metadata', _source, v.TrimTool, 5, 1)
+    TriggerClientEvent('bcc-farming:WaitUntilHarvest', _source, blip, timer, v, plantcoords, object, plantid, fertilized,
+      true)
+    TriggerEvent('bcc-farming:trimmeddbset', plantid)
+  else
+    TriggerClientEvent('bcc-farming:WaitUntilHarvest', _source, blip, timer, v, plantcoords, object, plantid, fertilized,
+      false)
+    VORPcore.NotifyRightTip(_source, Config.Language.NoTrim, 4000)
+  end
+end)
+
+-------------------------------------- Fert Check --------------------------------
+RegisterServerEvent('bcc-farming:FertCheck', function(blip, v, plantcoords, object, plantid, watered)
   local _source = source
   local itemCount = VorpInv.getItemCount(_source, v.FertName)
   local timer = v.TimetoGrow
+  local fertilized
   if itemCount > 0 then
     timer = timer - v.FertTimeRemove
-    TriggerClientEvent('bcc-farming:WaitUntilHarvest', _source, blip, timer, v, plantcoords, object, plantid)
+    fertilized = true
+    TriggerClientEvent('bcc-farming:WaitUntilHarvest', _source, blip, timer, v, plantcoords, object, plantid, fertilized,
+      watered)
     VorpInv.subItem(_source, v.FertName, 1)
+    TriggerEvent('bcc-farming:fertilizerdbset', plantid)
   else
-    TriggerClientEvent('bcc-farming:WaterCrop', _source, 'fert', blip, v, plantcoords, object, plantid)
+    fertilized = false
+    TriggerClientEvent('bcc-farming:WaitUntilHarvest', _source, blip, timer, v, plantcoords, object, plantid, fertilized,
+      watered)
     VORPcore.NotifyRightTip(_source, Config.Language.NoFerti, 4000)
   end
 end)
@@ -129,13 +175,33 @@ CreateThread(function()
   end)
 end)
 
-RegisterServerEvent('bcc-farming:RefillWateringCan', function(_source)
-  VORPcore.NotifyRightTip(_source, Config.Language.BucketFilled)
-  VorpInv.subItem(_source, Config.EmptyWaterBucket, 1)
-  VorpInv.addItem(_source, Config.FullWaterBucket, 1)
+RegisterServerEvent('bcc-farming:RefillWateringCan', function(source)
+  local _source = source
+  local itemCount = VorpInv.getItemCount(_source, Config.EmptyWaterBucket)
+  if itemCount >= 1 then
+    VORPcore.NotifyRightTip(_source, Config.Language.BucketFilled)
+    VorpInv.subItem(_source, Config.EmptyWaterBucket, 1)
+    VorpInv.addItem(_source, Config.FullWaterBucket, 1)
+  else
+    VORPcore.NotifyRightTip(_source, Config.Language.Nowaterbucket)
+  end
 end)
 
-RegisterServerEvent('bcc-farming:RemoveWaterBucket', function()
+RegisterServerEvent('bcc-farming:RefillWateringCanPump', function()
+  local _source = source
+  local itemCount = VorpInv.getItemCount(_source, Config.EmptyWaterBucket)
+  if itemCount >= 1 then
+    TriggerClientEvent('bcc-farming:pumpbucket', _source)
+    Wait(10000)
+    VORPcore.NotifyRightTip(_source, Config.Language.BucketFilled)
+    VorpInv.subItem(_source, Config.EmptyWaterBucket, 1)
+    VorpInv.addItem(_source, Config.FullWaterBucket, 1)
+  else
+    VORPcore.NotifyRightTip(_source, Config.Language.Nowaterbucket)
+  end
+end)
+
+RegisterServerEvent('bcc-farming:RemoveWaterBucket', function(source)
   local _source = source
   VorpInv.subItem(_source, Config.FullWaterBucket, 1)
   VorpInv.addItem(_source, Config.EmptyWaterBucket, 1)
@@ -174,28 +240,104 @@ CreateThread(function()
   end)
 end)
 
+------- Get Plants Number -----
+RegisterServerEvent('bcc-farming:getplantnumber', function(source)
+  local _source = source
+  local Character = VORPcore.getUser(_source).getUsedCharacter
+  local Parameters = { ['@identifier'] = Character.identifier, ['@charid'] = Character.charIdentifier }
+  exports.oxmysql:execute('SELECT * FROM farming WHERE identifier = @identifier AND charidentifier = @charid', Parameters,
+    function(HasPlants)
+      PlantNumber = #HasPlants
+    end)
+end)
+
+------- Fill Water Wagon -----
+RegisterServerEvent('bcc-farming:AffectWaterWagon', function(type, wagonmodel)
+  local _source = source
+  local Character = VORPcore.getUser(_source).getUsedCharacter
+  local water
+  local emptybucket = VorpInv.getItemCount(_source, Config.EmptyWaterBucket)
+  local fullbucket = VorpInv.getItemCount(_source, Config.FullWaterBucket)
+
+  local Parameters = {
+    ['@identifier'] = Character.identifier,
+    ['@charid'] = Character.charIdentifier,
+    ['@model'] = wagonmodel,
+  }
+  exports.oxmysql:execute(
+    'SELECT water FROM wagons WHERE identifier = @identifier AND charid = @charid AND model = @model', Parameters,
+    function(result)
+      print(result[1].water)
+      if result[1].water then
+        water = result[1].water
+        local Parameters2 = {
+          ['@identifier'] = Character.identifier,
+          ['@charid'] = Character.charIdentifier,
+          ['@model'] = wagonmodel,
+          ['@water'] = water
+        }
+        if type == 'fill' then
+          if fullbucket >= 1 then
+            exports.oxmysql:execute(
+              "UPDATE wagons SET `water`= @water+1 WHERE identifier = @identifier AND charid = @charid AND model = @model",
+              Parameters2)
+            TriggerEvent('bcc-farming:RemoveWaterBucket', _source)
+            TriggerClientEvent('bcc-farming:PedUsingWagon', _source, 'fill')
+          else
+            VORPcore.NotifyRightTip(_source, Config.Language.Nowaterbucket)
+          end
+        else
+          if water > 0 and emptybucket >= 1 then
+            exports.oxmysql:execute(
+              "UPDATE wagons SET `water`= @water-1 WHERE identifier = @identifier AND charid = @charid AND model = @model",
+              Parameters2)
+            TriggerEvent('bcc-farming:RefillWateringCan', _source)
+            TriggerClientEvent('bcc-farming:PedUsingWagon', _source, 'empty')
+          else
+            VORPcore.NotifyRightTip(_source, Config.Language.Nowater)
+            TriggerClientEvent('bcc-farming:SetWagon', _source, false)
+          end
+        end
+      end
+    end)
+end)
+
 ------- Load Plants on join setup -----
 RegisterServerEvent('bcc-farming:loadplants', function()
   local _source = source
   local Character = VORPcore.getUser(_source).getUsedCharacter
   local Parameters = { ['@identifier'] = Character.identifier, ['@charid'] = Character.charIdentifier }
-  exports.oxmysql:execute('SELECT * FROM farming WHERE identifier = @identifier AND charidentifier = @charid', Parameters, function(HasPlants)
-    if HasPlants[1] then --if it is valid info then
-      TriggerClientEvent("bcc-farming:clientspawnplantsinitload", _source, HasPlants)
-    end
-  end)
+  exports.oxmysql:execute('SELECT * FROM farming WHERE identifier = @identifier AND charidentifier = @charid', Parameters,
+    function(HasPlants)
+      if HasPlants[1] then --if it is valid info then
+        TriggerClientEvent("bcc-farming:clientspawnplantsinitload", _source, HasPlants)
+      end
+    end)
 end)
 
 ------------ Inserting Plants into DB ----------------
-RegisterServerEvent('bcc-farming:dbinsert', function(v, plantcoords, object)
+RegisterServerEvent('bcc-farming:dbinsert', function(v, plantcoords, object, isoutsideoftown)
   local _source = source
   local Character = VORPcore.getUser(_source).getUsedCharacter
   local time = os.time()
-  local param = { ['charidentifier'] = Character.charIdentifier, ['identifier'] = Character.identifier, ['planttype'] = v.Type, ['plantcoords'] = json.encode(plantcoords), ['timeleft'] = v.TimetoGrow, ['prop'] = v.PlantProp, ['plant_on'] = time }
+  local param = {
+    ['charidentifier'] = Character.charIdentifier,
+    ['identifier'] = Character.identifier,
+    ['planttype'] = v.Type,
+    ['plantcoords'] = json.encode(plantcoords),
+    ['timeleft'] = v.TimetoGrow,
+    ['prop'] = v.PlantProp,
+    ['plant_on'] = time
+  }
   --------The if you exist in db code was pulled from vorp_banking and modified ----------------
-  MySQL.query.await("INSERT INTO farming ( `charidentifier`,`identifier`,`planttype`,`plantcoords`,`timeleft`,`prop`,`planted_on` ) VALUES ( @charidentifier,@identifier,@planttype,@plantcoords,@timeleft,@prop,@plant_on )", param)
+  MySQL.query.await(
+    "INSERT INTO farming ( `charidentifier`,`identifier`,`planttype`,`plantcoords`,`timeleft`,`prop`,`planted_on` ) VALUES ( @charidentifier,@identifier,@planttype,@plantcoords,@timeleft,@prop,@plant_on )",
+    param)
 
-  local result = MySQL.query.await('SELECT * FROM farming WHERE identifier=@identifier AND charidentifier=@charidentifier AND planted_on=@plant_on', param)
+  local result = MySQL.query.await(
+    'SELECT * FROM farming WHERE identifier=@identifier AND charidentifier=@charidentifier AND planted_on=@plant_on',
+    param)
+  TriggerEvent('bcc-farming:metadata', _source, v.PlantingTool, v.PlantingToolDurability, v.PlantingToolUsage)
   TriggerClientEvent('bcc-farming:WaterPlantMain', _source, plantcoords, v, object, result[1].plantid)
 end)
 
@@ -209,6 +351,28 @@ end)
 RegisterServerEvent('bcc-farming:watereddbset', function(plantid)
   local param = { ['watered'] = 'true', ['plantid'] = plantid }
   exports.oxmysql:execute("UPDATE farming SET `watered`=@watered WHERE plantid=@plantid", param)
+end)
+
+RegisterServerEvent('bcc-farming:trimmeddbset', function(plantid)
+  local param = { ['trimmed'] = 'true', ['plantid'] = plantid }
+  exports.oxmysql:execute("UPDATE farming SET `trimmed`=@trimmed WHERE plantid=@plantid", param)
+end)
+
+RegisterServerEvent('bcc-farming:fertilizerdbset', function(plantid)
+  local param = { ['fertilized'] = 'true', ['plantid'] = plantid }
+  exports.oxmysql:execute("UPDATE farming SET `fertilized`=@fertilized WHERE plantid=@plantid", param)
+end)
+
+RegisterServerEvent('bcc-farming:raindbset', function()
+  local _source = source
+  local Character = VORPcore.getUser(_source).getUsedCharacter
+  local Parameters = {
+    ['@identifier'] = Character.identifier,
+    ['@charid'] = Character.charIdentifier,
+    ['watered'] = 'true'
+  }
+  exports.oxmysql:execute("UPDATE farming SET `watered`=@watered WHERE identifier=@identifier AND charid = @charid",
+    Parameters)
 end)
 
 ------ Delete DB entry --------
