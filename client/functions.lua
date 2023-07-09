@@ -64,7 +64,7 @@ AddEventHandler('bcc-farming:WaterPlantMain', function(plantcoords, v, object, p
             if minigameDoneCatch then break end
             if GetRainLevel() >= 0.5 then
                 TriggerEvent('bcc-farming:WaitUntilHarvest', blip, v.TimetoGrow, v, plantcoords, object, plantid,
-                    false, true)
+                    false, false)
                 TriggerServerEvent('bcc-farming:raindbset')
                 break
             end
@@ -136,19 +136,20 @@ end)
 RegisterNetEvent('bcc-farming:WaitUntilHarvest')
 AddEventHandler('bcc-farming:WaitUntilHarvest',
     function(blip, timer, v, plantcoords, object, plantid, fertilized, trimed)
-        local Minigameresult = false
+        print('Fertilied:', fertilized)
+        print('trimmed:', trimed)
+
+        local Minigameresult, minigameDoneCatch = false, false
         local dbcatch = timer --this is used to detect how long it has been since last back up
         local PromptGroup = VORPutils.Prompts:SetupPromptGroup()
         local PromptGroup2 = VORPutils.Prompts:SetupPromptGroup()
         local PromptGroup3 = VORPutils.Prompts:SetupPromptGroup()
+        local thirdprompt = nil
 
         local firstprompt = PromptGroup:RegisterPrompt(Config.Language.HarvestPrompt .. v.Type, 0x760A9C6F, 1, 1, true,
             'hold', { timedeventhash = "MEDIUM_TIMED_EVENT" })
         local secondprompt = PromptGroup2:RegisterPrompt(Config.Language.PlantWithFertilizer, 0x760A9C6F, 1, 1, true,
             'hold', { timedeventhash = "MEDIUM_TIMED_EVENT" })
-        local thirdprompt = PromptGroup3:RegisterPrompt(Config.Language.TrimPlant .. v.Type, 0x760A9C6F, 1, 1, true,
-            'hold',
-            { timedeventhash = "MEDIUM_TIMED_EVENT" })
 
         while true do
             Wait(5)
@@ -173,7 +174,7 @@ AddEventHandler('bcc-farming:WaitUntilHarvest',
                     --This function will trigger if the player leaves the game and if so then11
                     if not Minigameresult then
                         if fertilized and trimed then
-                            PromptGroup3:ShowGroup(tostring(roundedtimer2) ..
+                            PromptGroup:ShowGroup(tostring(roundedtimer2) ..
                                 ' ' .. Config.Language.TimerText .. v.Type ..
                                 [[
 
@@ -181,7 +182,11 @@ AddEventHandler('bcc-farming:WaitUntilHarvest',
                                 Trimmed: true
                                 ]])
                         elseif fertilized and not trimed then
-                            PromptGroup2:ShowGroup(tostring(roundedtimer2) ..
+                            thirdprompt = PromptGroup3:RegisterPrompt(Config.Language.TrimPlant .. v.Type, 0x760A9C6F, 1,
+                                1, true,
+                                'hold',
+                                { timedeventhash = "MEDIUM_TIMED_EVENT" })
+                            PromptGroup3:ShowGroup(tostring(roundedtimer2) ..
                                 ' ' .. Config.Language.TimerText .. v.Type ..
                                 [[
 
@@ -198,7 +203,7 @@ AddEventHandler('bcc-farming:WaitUntilHarvest',
                                     Trimmed: True
                                     ]])
                             else
-                                PromptGroup:ShowGroup(tostring(roundedtimer2) ..
+                                PromptGroup2:ShowGroup(tostring(roundedtimer2) ..
                                     ' ' .. Config.Language.TimerText .. v.Type ..
                                     [[
 
@@ -207,7 +212,11 @@ AddEventHandler('bcc-farming:WaitUntilHarvest',
                                          ]])
                             end
                         else
-                            PromptGroup3:ShowGroup(tostring(roundedtimer2) ..
+                            thirdprompt = PromptGroup2:RegisterPrompt(Config.Language.TrimPlant .. v.Type, 0x760A9C6F, 1,
+                                1, true,
+                                'hold',
+                                { timedeventhash = "MEDIUM_TIMED_EVENT" })
+                            PromptGroup2:ShowGroup(tostring(roundedtimer2) ..
                                 ' ' .. Config.Language.TimerText .. v.Type ..
                                 [[
 
@@ -215,13 +224,13 @@ AddEventHandler('bcc-farming:WaitUntilHarvest',
                             Trimmed: false
                                  ]])
                         end
-
                         if secondprompt:HasCompleted() then
                             MiniGame.Start('skillcheck', PlantingMinigame, function(result)
                                 Minigameresult = result.passed
                                 if Minigameresult then
                                     TriggerServerEvent('bcc-farming:FertCheck', blip, v, plantcoords, object, plantid)
                                     secondprompt:DeletePrompt()
+                                    minigameDoneCatch = true
                                 end
                             end)
                         end
@@ -232,9 +241,12 @@ AddEventHandler('bcc-farming:WaitUntilHarvest',
                                     TriggerServerEvent('bcc-farming:TrimPlant', blip, v, plantcoords, object, plantid,
                                         timer, fertilized)
                                     thirdprompt:DeletePrompt()
+                                    minigameDoneCatch = true
                                 end
                             end)
                         end
+
+                        if minigameDoneCatch then break end
                     end
                     --triggers the server event and passes the plant id and timer(time left) to database
                 elseif timer <= 0 then --elseif the timer is less than or is 0 then (if the timer has finished/ has reached 0)
@@ -246,6 +258,10 @@ AddEventHandler('bcc-farming:WaitUntilHarvest',
                                 Trimmed: true
                                  ]])
                     elseif fertilized and not trimed then
+                        thirdprompt = PromptGroup2:RegisterPrompt(Config.Language.TrimPlant .. v.Type, 0x760A9C6F, 1, 1,
+                            true,
+                            'hold',
+                            { timedeventhash = "MEDIUM_TIMED_EVENT" })
                         PromptGroup:ShowGroup(Config.Language.HarvestPrompt ..
                             [[
 
@@ -260,12 +276,16 @@ AddEventHandler('bcc-farming:WaitUntilHarvest',
                                         Trimmed: True
                                          ]])
                     else
+                        thirdprompt = PromptGroup2:RegisterPrompt(Config.Language.TrimPlant .. v.Type, 0x760A9C6F, 1, 1,
+                            true,
+                            'hold',
+                            { timedeventhash = "MEDIUM_TIMED_EVENT" })
                         PromptGroup:ShowGroup(Config.Language.HarvestPrompt ..
                             [[
 
-                                    Fertilized: False
-                                    Trimmed: false
-                                     ]])
+                                        Fertilized: False
+                                        Trimmed: False
+                                         ]])
                     end
                     if firstprompt:HasCompleted() then
                         firstprompt:DeletePrompt()
@@ -330,3 +350,25 @@ function ScenarioInPlace(hash, time)
     ClearPedTasksImmediately(pl)
     FreezeEntityPosition(pl, false)
 end
+
+RegisterNetEvent('bcc-farming:pumpbucket')
+AddEventHandler('bcc-farming:pumpbucket', function()
+    local DataStruct = DataView.ArrayBuffer(256 * 4)
+    local is_data_exists = Citizen.InvokeNative(0x345EC3B7EBDE1CB5, GetEntityCoords(PlayerPedId()), 2.0,
+        DataStruct:Buffer(), 10)
+    if is_data_exists ~= false then
+        for i = 1, 1 do
+            local scenario = DataStruct:GetInt32(8 * i)
+            local scenario_hash = Citizen.InvokeNative(0xA92450B5AE687AAF, scenario)
+            if GetHashKey("PROP_HUMAN_PUMP_WATER") == scenario_hash or GetHashKey("PROP_HUMAN_PUMP_WATER_BUCKET") == scenario_hash then
+                ClearPedTasksImmediately(PlayerPedId())
+                Citizen.InvokeNative(0xFCCC886EDE3C63EC, PlayerPedId(), false, true)
+                TaskUseScenarioPoint(PlayerPedId(), scenario, "", -1.0, true, false, 0, false, -1.0, true)
+                Wait(10000)
+                break
+            end
+        end
+    end
+    ClearPedTasks(PlayerPedId())
+    UsePump = false
+end)
