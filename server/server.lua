@@ -217,9 +217,13 @@ RegisterServerEvent('bcc-farming:RemoveDBRow', function(plantid)
 end)
 
 ------ Giveback Seed if Maxplants reached --------
-RegisterServerEvent('bcc-farming:givebackseed', function(seed, seedamount)
+RegisterServerEvent('bcc-farming:givebackseed', function(seed, seedamount, soil)
   local _source = source
   VorpInv.addItem(_source, seed, seedamount)
+
+  if soil ~= false then
+    VorpInv.addItem(_source, soil, 1)
+  end
 end)
 
 

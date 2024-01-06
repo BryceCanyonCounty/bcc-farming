@@ -1,8 +1,4 @@
 local Plants = 1
-local LastSeed = {
-    name = '',
-    amount = 0
-}
 
 ------- Planting Crop Handler -------------
 RegisterNetEvent('bcc-farming:plantcrop', function(v, isoutsideoftown)
@@ -20,8 +16,7 @@ RegisterNetEvent('bcc-farming:plantcrop', function(v, isoutsideoftown)
             TriggerServerEvent('bcc-farming:dbinsert', v, plantcoords, object)
             Plants = Plants + 1
         else
-            -- TODO: Give back soil and fertalizer
-            TriggerServerEvent('bcc-farming:givebackseed', v.Seedname, v.SeedsRequired)
+            TriggerServerEvent('bcc-farming:givebackseed', v.Seedname, v.SeedsRequired, v.SoilName)
             VORPcore.NotifyRightTip(_U('Maxplants'), 4000)
         end
     else
