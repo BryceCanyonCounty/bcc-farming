@@ -13,12 +13,13 @@ local discord = BccUtils.Discord.setup(Config.WebhookLink, 'BCC Farming', 'https
 CreateThread(function()
   for key, v in pairs(Config.Farming) do
     VorpInv.RegisterUsableItem(v.Seedname, function(data)
-      TriggerClientEvent('bcc-farming:IsPLayerNearTownCheck', data.source, data.source, v)
+      TriggerClientEvent('bcc-farming:IsPLayerNearTownCheck', data.source, v)
     end)
   end
 end)
 
-RegisterServerEvent('bcc-farming:PlayerNotNearTown', function(_source, v, isoutsideoftown)
+RegisterServerEvent('bcc-farming:PlayerNotNearTown', function(v, isoutsideoftown)
+  local _source = source
   local charjob = false
   local itemCount2 = VorpInv.getItemCount(_source, v.PlantingTool)
   local Character = VORPcore.getUser(_source).getUsedCharacter
@@ -122,11 +123,12 @@ end)
 --------------------------- Refill Bucket In Water Setup / Removing full bucket and adding empty after watering plant--------------------------------------
 CreateThread(function()
   VorpInv.RegisterUsableItem(Config.EmptyWaterBucket, function(data)
-    TriggerClientEvent('bcc-farming:PedInWaterClientCatch', data.source, data.source)
+    TriggerClientEvent('bcc-farming:PedInWaterClientCatch', data.source)
   end)
 end)
 
-RegisterServerEvent('bcc-farming:RefillWateringCan', function(_source)
+RegisterServerEvent('bcc-farming:RefillWateringCan', function()
+  local _source = source
   VORPcore.NotifyRightTip(_source, _U('BucketFilled'))
   VorpInv.subItem(_source, Config.EmptyWaterBucket, 1)
   VorpInv.addItem(_source, Config.FullWaterBucket, 1)

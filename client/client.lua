@@ -51,7 +51,7 @@ local function checkFarmingLocations(v, isoutsideoftown)
     end
 
     if isinsidefarminglocation then
-        TriggerServerEvent('bcc-farming:PlayerNotNearTown', _source, v, isoutsideoftown)
+        TriggerServerEvent('bcc-farming:PlayerNotNearTown', v, isoutsideoftown)
     else
         VORPcore.NotifyRightTip(_U('NotInFarmingLocation'), 4000)
     end
@@ -96,17 +96,17 @@ AddEventHandler('bcc-farming:clientspawnplantsinitload', function(HasPlants)
 end)
 
 --------------------------- Is Ped Currently In Water Check -------------------------------------------------
-RegisterNetEvent('bcc-farming:PedInWaterClientCatch', function(_source)
+RegisterNetEvent('bcc-farming:PedInWaterClientCatch', function()
     if IsEntityInWater(PlayerPedId()) then
         ScenarioInPlace('WORLD_CAMP_JACK_ES_BUCKET_FILL', 7000)
-        TriggerServerEvent('bcc-farming:RefillWateringCan', _source)
+        TriggerServerEvent('bcc-farming:RefillWateringCan')
     else
         VORPcore.NotifyRightTip(_U('Notinwater'))
     end
 end)
 
 ----------------------- Distance Check for player to town coordinates --------------------------------
-RegisterNetEvent('bcc-farming:IsPLayerNearTownCheck', function(_source, v)
+RegisterNetEvent('bcc-farming:IsPLayerNearTownCheck', function(v)
     local isoutsideoftown = false
     if Config.Plantintowns then
         isoutsideoftown = true
@@ -128,12 +128,12 @@ RegisterNetEvent('bcc-farming:IsPLayerNearTownCheck', function(_source, v)
         return
     end
     if isoutsideoftown and Config.UseFarmingLocations == false then
-        TriggerServerEvent('bcc-farming:PlayerNotNearTown', _source, v, isoutsideoftown)
+        TriggerServerEvent('bcc-farming:PlayerNotNearTown', v, isoutsideoftown)
     elseif isoutsideoftown and Config.UseFarmingLocations == true then
         checkFarmingLocations(v, isoutsideoftown)
     end
 end)
 
-RegisterNetEvent('bcc-farming:PlantHarvested', function(_source)
+RegisterNetEvent('bcc-farming:PlantHarvested', function()
     Plants = Plants - 1
 end)
