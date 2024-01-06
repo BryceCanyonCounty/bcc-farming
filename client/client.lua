@@ -31,7 +31,7 @@ RegisterNetEvent('bcc-farming:plantcrop', function(v, isoutsideoftown)
 end)
 
 local function createLocationBlips()
-    if Config.UseLocationBlips == true then
+    if Config.UseLocationBlips == true and Config.UseFarmingLocations == true then
         for k, b in pairs(Config.FarmingLocations) do
             BccUtils.Blips:SetBlip(b.blipname, b.blipsprite, 0.2, b.location.x, b.location.y,
                 b.location.z)
