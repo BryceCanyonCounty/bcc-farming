@@ -56,7 +56,6 @@ RegisterServerEvent('bcc-farming:PlayerNotNearTown', function(_source, v, isouts
       end
       TriggerEvent('bcc-farming:metadata', _source, v.PlantingTool, v.PlantingToolDurability, v.PlantingToolUsage)
       TriggerClientEvent('bcc-farming:plantcrop', _source, v, isoutsideoftown)
-      --TriggerClientEvent('bcc-farming:plantcrop', _source, v.PlantProp, v.HarvestItem, v.HarvestAmount, v.TimetoGrow, isoutsideoftown, v.Type, v.FertTimeRemove, v.FertName)
     end
   else
     VORPcore.NotifyRightTip(_source, Config.Language.NoTool, 10000)
@@ -69,7 +68,7 @@ RegisterServerEvent("bcc-farming:metadata", function(source, name, uses, usages)
   local PlantingToolUsage = usages
   local _source = source
   local tool = VorpInv.getItem(_source, name)
-  meta = tool["metadata"]
+  local meta = tool["metadata"]
   if next(meta) == nil then
     VorpInv.subItem(_source, name, 1, {})
     VorpInv.addItem(_source, name, 1,
@@ -93,6 +92,7 @@ RegisterServerEvent('bcc-farming:CropHarvested', function(reward, amount)
   local _source = source
   VorpInv.addItem(_source, reward, amount)
   VORPcore.NotifyRightTip(_source, Config.Language.HarvestComplete, 10000)
+  TriggerClientEvent('bcc-farming:PlantHarvested', _source)
 end)
 
 ---------------------------------------- Watering Bucket Check -------------------------------------
@@ -216,6 +216,13 @@ RegisterServerEvent('bcc-farming:RemoveDBRow', function(plantid)
   local params = { ['plantid'] = plantid }
   exports.oxmysql:execute("DELETE FROM farming WHERE plantid=@plantid", params)
 end)
+
+------ Giveback Seed if Maxplants reached --------
+RegisterServerEvent('bcc-farming:givebackseed', function(seed,seedamount)
+  local _source = source
+  VorpInv.addItem(_source, seed, seedamount)
+end)
+
 
 ---------- Version Check ---------------
 BccUtils.Versioner.checkRelease(GetCurrentResourceName(), 'https://github.com/BryceCanyonCounty/bcc-farming')
