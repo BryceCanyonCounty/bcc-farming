@@ -13,8 +13,6 @@ RegisterNetEvent('bcc-farming:plantcrop', function(v, isoutsideoftown)
             VORPcore.NotifyRightTip(_U('Weeding'), 16000)
             ScenarioInPlace('WORLD_HUMAN_FARMER_WEEDING', 9000)
             VORPcore.NotifyRightTip(_U('PlantFinished'), 16000)
-            LastSeed.name = v.Seedname
-            LastSeed.amount = v.SeedsRequired
             local plcoord = GetEntityCoords(PlayerPedId())
             local object = CreateObject(v.PlantProp, plcoord.x, plcoord.y, plcoord.z, true, true, false)
             Citizen.InvokeNative(0x9587913B9E772D29, object, true)
@@ -22,7 +20,8 @@ RegisterNetEvent('bcc-farming:plantcrop', function(v, isoutsideoftown)
             TriggerServerEvent('bcc-farming:dbinsert', v, plantcoords, object)
             Plants = Plants + 1
         else
-            TriggerServerEvent('bcc-farming:givebackseed', LastSeed.name, LastSeed.amount)
+            -- TODO: Give back soil and fertalizer
+            TriggerServerEvent('bcc-farming:givebackseed', v.Seedname, v.SeedsRequired)
             VORPcore.NotifyRightTip(_U('Maxplants'), 4000)
         end
     else
