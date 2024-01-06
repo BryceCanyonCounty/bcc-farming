@@ -13,6 +13,8 @@ server_scripts {
 
 shared_scripts {
     'config.lua',
+    'shared/locale.lua',
+    'languages/*.lua'
 }
 
 

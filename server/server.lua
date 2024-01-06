@@ -31,7 +31,7 @@ RegisterServerEvent('bcc-farming:PlayerNotNearTown', function(_source, v, isouts
         end
       end
       if not charjob then
-        VORPcore.NotifyRightTip(_source, Config.Language.Wrongjob, 10000)
+        VORPcore.NotifyRightTip(_source, _U('Wrongjob'), 10000)
         return
       end
     end
@@ -42,20 +42,20 @@ RegisterServerEvent('bcc-farming:PlayerNotNearTown', function(_source, v, isouts
       if v.SoilName then
         local fertCount = VorpInv.getItemCount(_source, v.SoilName)
         if not (fertCount and (fertCount > 0)) then
-          VORPcore.NotifyRightTip(_source, Config.Language.NoSoil, 10000)
+          VORPcore.NotifyRightTip(_source, _U('NoSoil'), 10000)
           return
         end
         VorpInv.subItem(_source, v.SoilName, 1)
       end
       VorpInv.subItem(_source, v.Seedname, v.SeedsRequired)
       if v.Webhooked then
-        discord:sendMessage(Config.Language.WebhookTitle .. tostring(Character.charIdentifier), Config.Language.Webhook_desc .. v.Type)
+        discord:sendMessage(_U('WebhookTitle') .. tostring(Character.charIdentifier), _U('Webhook_desc') .. v.Type)
       end
       TriggerEvent('bcc-farming:metadata', _source, v.PlantingTool, v.PlantingToolDurability, v.PlantingToolUsage)
       TriggerClientEvent('bcc-farming:plantcrop', _source, v, isoutsideoftown)
     end
   else
-    VORPcore.NotifyRightTip(_source, Config.Language.NoTool, 10000)
+    VORPcore.NotifyRightTip(_source, _U('NoTool'), 10000)
   end
 end)
 
@@ -77,7 +77,7 @@ RegisterServerEvent("bcc-farming:metadata", function(source, name, uses, usages)
     local description = "Uses Left: "
     VorpInv.subItem(_source, name, 1, meta)
     if 0 >= durability then
-      VORPcore.NotifyRightTip(_source, Config.Language.OutOfUses, 4000)
+      VORPcore.NotifyRightTip(_source, _U('OutOfUses'), 4000)
     else
       VorpInv.addItem(_source, name, 1, { description = description .. durability, durability = durability })
     end
@@ -88,7 +88,7 @@ end)
 RegisterServerEvent('bcc-farming:CropHarvested', function(reward, amount)
   local _source = source
   VorpInv.addItem(_source, reward, amount)
-  VORPcore.NotifyRightTip(_source, Config.Language.HarvestComplete, 10000)
+  VORPcore.NotifyRightTip(_source, _U('HarvestComplete'), 10000)
   TriggerClientEvent('bcc-farming:PlantHarvested', _source)
 end)
 
@@ -100,7 +100,7 @@ RegisterServerEvent('bcc-farming:WateringBucketCheck', function(blip, v, plantco
     TriggerClientEvent('bcc-farming:WaterCrop', _source, 'water', blip, v, plantcoords, object, plantid)
   else
     TriggerClientEvent('bcc-farming:WaterPlantMain', _source, plantcoords, v, object, plantid)
-    VORPcore.NotifyRightTip(_source, Config.Language.Nowaterbucket)
+    VORPcore.NotifyRightTip(_source, _U('Nowaterbucket'))
   end
 end)
 
@@ -115,7 +115,7 @@ RegisterServerEvent('bcc-farming:FertCheck', function(blip, v, plantcoords, obje
     VorpInv.subItem(_source, v.FertName, 1)
   else
     TriggerClientEvent('bcc-farming:WaterCrop', _source, 'fert', blip, v, plantcoords, object, plantid)
-    VORPcore.NotifyRightTip(_source, Config.Language.NoFerti, 4000)
+    VORPcore.NotifyRightTip(_source, _U('NoFerti'), 4000)
   end
 end)
 
@@ -127,7 +127,7 @@ CreateThread(function()
 end)
 
 RegisterServerEvent('bcc-farming:RefillWateringCan', function(_source)
-  VORPcore.NotifyRightTip(_source, Config.Language.BucketFilled)
+  VORPcore.NotifyRightTip(_source, _U('BucketFilled'))
   VorpInv.subItem(_source, Config.EmptyWaterBucket, 1)
   VorpInv.addItem(_source, Config.FullWaterBucket, 1)
 end)

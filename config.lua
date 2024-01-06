@@ -1,7 +1,8 @@
 Config = {}
 
--------------------------------------------------Farming Setup!--------------------------------------------------------------
+----- General Setup
 Config.WebhookLink = '' --insert your webhook link here
+Config.defaultlang = "en_lang" -- Set Language (Current Languages: "en_lang" English, "de_lang" German)
 
 ----- Watering Cans Setup
 Config.FullWaterBucket = 'wateringcan' --This is the database name of the full Water Bucket(you will need this item to water your crops)
@@ -922,71 +923,6 @@ Config.Farming = {
         },
     }, -- too add more plants just copy and paste the table and change what you need
 }
-
-
-------------------------------------------------TRANSLATE HERE!---------------------------------------------------------------
-Config.Language = { ---- English
-    Raking = 'Tilling the soil',
-    Weeding = 'Planting the seeds',
-    PlantFinished = 'You have finished planting the seeds',
-    TimerText = 'Minutes until crop is Ready',
-    ReadytoHarvest = 'Crop is ready to harvest',
-    HarvestPrompt = 'Harvest Crop',
-    Harvestingcrop = 'You are harvesting the crop',
-    HarvestComplete = 'You harvested the crop',
-    NoSoil = 'You do not have the correct soil to plant this crop',
-    NoTool = 'You do not have the correct tool to plant this crop',
-    Wrongjob = 'You do not have the correct job needed to plant this crop',
-    WaterCropPrompt = 'Water Crop',
-    Nowaterbucket = 'You do not have a Water Bucket',
-    CropWatered = 'You watered the crop',
-    Notinwater = 'You are not near water',
-    BucketFilled = 'You filled a Water Bucket',
-    Tooclosetotown = 'You are too close to a town',
-    TooCloseToPlant = 'Too Close To another plant!',
-    PlantWithFertilizer = 'Use Fertilizer?',
-    UseFert = 'Fertilize',
-    DoNotUseFertilizer = 'Do Not Use Fertilizer',
-    NoFerti = 'You do not have fertilizer',
-    WebhookTitle = 'Character Static Id: ',
-    Webhook_desc = 'Has planted: ',
-    OutOfUses = 'You have run out of uses',
-    Maxplants = 'Max plant limit reached',
-    NotInFarmingLocation = 'You are not near the Farm!',
-    PlantBlip = "Your Plant"
-}
-
-
---[[Config.Language = {  ----- German
-    Raking = 'Den Boden bearbeiten',
-    Weeding = 'Die Samen pflanzen',
-    PlantFinished = 'Sie haben die Samen gepflanzt',
-    TimerText = 'Es dauert nur wenige Minuten, bis die Ernte fertig ist',
-    ReadytoHarvest = 'Die Ernte ist zur Ernte bereit',
-    HarvestPrompt = 'Ernte Pflanze',
-    Harvestingcrop = 'Sie ernten die Pflanze',
-    HarvestComplete = 'Sie haben die Pflanze geerntet',
-    NoSoil = 'Sie verfügen nicht über den richtigen Boden, um diese Pflanze anzupflanzen',
-    NoTool = 'Sie verfügen nicht über das richtige Werkzeug, um diese Pflanze anzupflanzen',
-    Wrongjob = 'Sie verfügen nicht über den richtigen Job, um diese Pflanze anzupflanzen',
-    WaterCropPrompt = 'Pflanze Wässern',
-    Nowaterbucket = 'Du hast keinen Wassereimer',
-    CropWatered = 'Du hast die Plfanze gewässert',
-    Notinwater = 'Du bist nicht in der nähe von Wasser',
-    BucketFilled = 'Du hast einen Eimer gefüllt',
-    Tooclosetotown = 'Du bist zu nah an einer Stadt',
-    TooCloseToPlant = 'Zu nah an einer anderen Pflanze!',
-    PlantWithFertilizer = 'Benutze Dünger ?',
-    UseFert = 'Dünge',
-    DoNotUseFertilizer = 'Benutze keinen Dünger',
-    NoFerti = 'Du hast keinen Dünger',
-    WebhookTitle = 'Character Static Id: ',
-    Webhook_desc = 'Has planted: ',
-    OutOfUses = 'Sie haben keine Verwendungsmöglichkeiten mehr',
-    Maxplants = 'Sie haben die Maximale anzahl an Pflanzen erreicht',
-    NotInFarmingLocation = 'Du bist Außerhalb der Farm!',
-    PlantBlip = "Deine Pflanze"
-}]]--
 
 --------------------------------- Town Locations ------------------------------------------------------------------------------------
 ------------Ignore This for the most part. Unless you want to change the range of a town, or add more towns -------------------------

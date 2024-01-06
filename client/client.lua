@@ -8,11 +8,11 @@ local LastSeed = {
 RegisterNetEvent('bcc-farming:plantcrop', function(v, isoutsideoftown)
     if isoutsideoftown then
         if Plants <= Config.Maxplants or Config.Maxplants == 0 then
-            VORPcore.NotifyRightTip(Config.Language.Raking, 16000)
+            VORPcore.NotifyRightTip(_U('Raking'), 16000)
             ScenarioInPlace('WORLD_HUMAN_FARMER_RAKE', 12000)
-            VORPcore.NotifyRightTip(Config.Language.Weeding, 16000)
+            VORPcore.NotifyRightTip(_U('Weeding'), 16000)
             ScenarioInPlace('WORLD_HUMAN_FARMER_WEEDING', 9000)
-            VORPcore.NotifyRightTip(Config.Language.PlantFinished, 16000)
+            VORPcore.NotifyRightTip(_U('PlantFinished'), 16000)
             LastSeed.name = v.Seedname
             LastSeed.amount = v.SeedsRequired
             local plcoord = GetEntityCoords(PlayerPedId())
@@ -23,10 +23,10 @@ RegisterNetEvent('bcc-farming:plantcrop', function(v, isoutsideoftown)
             Plants = Plants + 1
         else
             TriggerServerEvent('bcc-farming:givebackseed', LastSeed.name, LastSeed.amount)
-            VORPcore.NotifyRightTip(Config.Language.Maxplants, 4000)
+            VORPcore.NotifyRightTip(_U('Maxplants'), 4000)
         end
     else
-        VORPcore.NotifyRightTip(Config.Language.Tooclosetotown, 4000)
+        VORPcore.NotifyRightTip(_U('Tooclosetotown'), 4000)
     end
 end)
 
@@ -53,7 +53,7 @@ local function checkFarmingLocations(v, isoutsideoftown)
     if isinsidefarminglocation then
         TriggerServerEvent('bcc-farming:PlayerNotNearTown', _source, v, isoutsideoftown)
     else
-        VORPcore.NotifyRightTip(Config.Language.NotInFarmingLocation, 4000)
+        VORPcore.NotifyRightTip(_U('NotInFarmingLocation'), 4000)
     end
 end
 
@@ -81,7 +81,7 @@ AddEventHandler('bcc-farming:clientspawnplantsinitload', function(HasPlants)
             Citizen.InvokeNative(0x9587913B9E772D29, object, true)
             local plantcoords = GetEntityCoords(object)
             if Config.PlantBlips then
-                blip = BccUtils.Blips:SetBlip(Config.Language.PlantBlip, 'blip_mp_spawnpoint', 0.2, plantcoords.x, plantcoords.y,
+                blip = BccUtils.Blips:SetBlip(_U('PlantBlip'), 'blip_mp_spawnpoint', 0.2, plantcoords.x, plantcoords.y,
                     plantcoords.z)
             end
             TriggerEvent('bcc-farming:WaitUntilHarvest', blip, v['timeleft'], table, plantcoords, object, v['plantid'])
@@ -101,7 +101,7 @@ RegisterNetEvent('bcc-farming:PedInWaterClientCatch', function(_source)
         ScenarioInPlace('WORLD_CAMP_JACK_ES_BUCKET_FILL', 7000)
         TriggerServerEvent('bcc-farming:RefillWateringCan', _source)
     else
-        VORPcore.NotifyRightTip(Config.Language.Notinwater)
+        VORPcore.NotifyRightTip(_U('Notinwater'))
     end
 end)
 
@@ -117,14 +117,14 @@ RegisterNetEvent('bcc-farming:IsPLayerNearTownCheck', function(_source, v)
             if #(vec2(pl.x, pl.y) - vec2(e.coordinates.x, e.coordinates.y)) > e.range then
                 isoutsideoftown = true
             else
-                VORPcore.NotifyRightTip(Config.Language.Tooclosetotown, 4000)
+                VORPcore.NotifyRightTip(_U('Tooclosetotown'), 4000)
                 isoutsideoftown = false
                 break
             end
         end
     end
     if IsAnyPlantPropNearPed() then
-        VORPcore.NotifyRightTip(Config.Language.TooCloseToPlant, 4000)
+        VORPcore.NotifyRightTip(_U('TooCloseToPlant'), 4000)
         return
     end
     if isoutsideoftown and Config.UseFarmingLocations == false then
