@@ -3,23 +3,17 @@ VORPcore = {}
 TriggerEvent("getCore", function(core)
     VORPcore = core
 end)
-VORPutils = {}
-TriggerEvent("getUtils", function(utils)
-    VORPutils = utils
-end)
-BccUtils = {}
-TriggerEvent('bcc:getUtils', function(bccutils)
-  BccUtils = bccutils
-end)
+
+BccUtils = exports['bcc-utils'].initiate()
 
 ---------- Main Watering Plant Setup ------------
 RegisterNetEvent('bcc-farming:WaterPlantMain')
 AddEventHandler('bcc-farming:WaterPlantMain', function(plantcoords, v, object, plantid)
     local blip --creates a variable for the blip to set on and be removed later o
-    local PromptGroup2 = VORPutils.Prompts:SetupPromptGroup()
+    local PromptGroup2 = BccUtils.Prompts:SetupPromptGroup()
     local firstprompt2 = PromptGroup2:RegisterPrompt(Config.Language.WaterCropPrompt, 0x760A9C6F, 1, 1, true, 'hold', {timedeventhash = "MEDIUM_TIMED_EVENT"})
     if Config.PlantBlips then
-        blip = VORPutils.Blips:SetBlip('Your Plant', 'blip_mp_spawnpoint', 0.2, plantcoords.x, plantcoords.y, plantcoords.z)
+        blip = BccUtils.Blips:SetBlip('Your Plant', 'blip_mp_spawnpoint', 0.2, plantcoords.x, plantcoords.y, plantcoords.z)
     end
     while true do
         Wait(5)
@@ -48,7 +42,7 @@ RegisterNetEvent('bcc-farming:WaterCrop', function(type, blip, v, plantcoords, o
     end
     
     if type == 'fert' then
-        local PromptGroup2 = VORPutils.Prompts:SetupPromptGroup()
+        local PromptGroup2 = BccUtils.Prompts:SetupPromptGroup()
         local firstprompt2 = PromptGroup2:RegisterPrompt(Config.Language.PlantWithFertilizer, 0x760A9C6F, 1, 1, true, 'hold', {timedeventhash = "MEDIUM_TIMED_EVENT"})
         local firstprompt3 = PromptGroup2:RegisterPrompt(Config.Language.DoNotUseFertilizer, 0xCEFD9220, 1, 1, true, 'hold', {timedeventhash = "MEDIUM_TIMED_EVENT"})
         if v.FertTimeRemove > 0 then
@@ -81,7 +75,7 @@ end)
 RegisterNetEvent('bcc-farming:WaitUntilHarvest')
 AddEventHandler('bcc-farming:WaitUntilHarvest', function(blip, timer, v, plantcoords, object, plantid)
     local dbcatch = timer --this is used to detect how long it has been since last back up
-    local PromptGroup = VORPutils.Prompts:SetupPromptGroup()
+    local PromptGroup = BccUtils.Prompts:SetupPromptGroup()
     local firstprompt = PromptGroup:RegisterPrompt(Config.Language.HarvestPrompt, 0x760A9C6F, 1, 1, true, 'hold', {timedeventhash = "MEDIUM_TIMED_EVENT"})
     while true do
         Wait(5)
@@ -110,7 +104,7 @@ AddEventHandler('bcc-farming:WaitUntilHarvest', function(blip, timer, v, plantco
                     ScenarioInPlace('WORLD_HUMAN_CROUCH_INSPECT', 10000)
                     DeleteObject(object)
                     if Config.PlantBlips then
-                        VORPutils.Blips.RemoveBlip(blip.rawblip)
+                        BccUtils.Blips.RemoveBlip(blip.rawblip)
                     end
                     TriggerServerEvent('bcc-farming:RemoveDBRow', plantid)
                     TriggerServerEvent('bcc-farming:CropHarvested', v.HarvestItem, v.HarvestAmount) break

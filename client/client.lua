@@ -33,7 +33,7 @@ end)
 local function createLocationBlips()
     if Config.UseLocationBlips == true then
         for k, b in pairs(Config.FarmingLocations) do
-            VORPutils.Blips:SetBlip(b.blipname, b.blipsprite, 0.2, b.location.x, b.location.y,
+            BccUtils.Blips:SetBlip(b.blipname, b.blipsprite, 0.2, b.location.x, b.location.y,
                 b.location.z)
         end
     end
@@ -81,7 +81,7 @@ AddEventHandler('bcc-farming:clientspawnplantsinitload', function(HasPlants)
             Citizen.InvokeNative(0x9587913B9E772D29, object, true)
             local plantcoords = GetEntityCoords(object)
             if Config.PlantBlips then
-                blip = VORPutils.Blips:SetBlip(Config.Language.PlantBlip, 'blip_mp_spawnpoint', 0.2, plantcoords.x, plantcoords.y,
+                blip = BccUtils.Blips:SetBlip(Config.Language.PlantBlip, 'blip_mp_spawnpoint', 0.2, plantcoords.x, plantcoords.y,
                     plantcoords.z)
             end
             TriggerEvent('bcc-farming:WaitUntilHarvest', blip, v['timeleft'], table, plantcoords, object, v['plantid'])
