@@ -7,12 +7,14 @@ author 'Jake2k4'
 description 'bcc-farming'
 
 server_scripts {
-    'server.lua',
+    '/server/server.lua',
     '@oxmysql/lib/MySQL.lua',
 }
 
 shared_scripts {
     'config.lua',
+    'shared/locale.lua',
+    'languages/*.lua'
 }
 
 
@@ -25,8 +27,7 @@ dependencies {
     'vorp_core',
     'vorp_character',
     'vorp_inventory',
-    'vorp_utils',
     'bcc-utils'
 }
 
-version '1.0.3'
+version '1.0.4'
