@@ -103,9 +103,11 @@ AddEventHandler('bcc-farming:WaitUntilHarvest', function(blip, timer, v, plantco
                     VORPcore.NotifyRightTip(_U('Harvestingcrop'), 10000)
                     ScenarioInPlace('WORLD_HUMAN_CROUCH_INSPECT', 10000)
                     DeleteObject(object)
+
                     if Config.PlantBlips then
-                        BccUtils.Blips.RemoveBlip(blip.rawblip)
+                        blip:Remove()
                     end
+
                     TriggerServerEvent('bcc-farming:RemoveDBRow', plantid)
                     TriggerServerEvent('bcc-farming:CropHarvested', v.HarvestItem, v.HarvestAmount) break
                 end
