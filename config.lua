@@ -17,26 +17,15 @@ Config.UseFarmingLocations = true  --- if true you can only plant in radius arou
 Config.UseLocationBlips = true --- if set to true the farming locations will get a blip
 Config.FarmingLocations = {   ----- if you add more farm / fields make sure you are in the middle of it bcs the radius is surrounding the coords
     {
-        location = {x = 1151.45, y = -962.16, z = 67.74}, ----------- Farm Near Rhodes
-        radius = 55,
-        blipname = 'Farm',   ------------- Name of the blip
-        blipsprite = 'blip_plant',
-    },
-    {
-        location = {x = 1030.43, y = -1979.46, z = 46.15}, ---------- Big Farm Near Braithworth Maner
-        radius = 120,
-        blipname = 'Farm',   ------------- Name of the blip
-        blipsprite = 'blip_plant',
-    },
-    {
-        location = {x = 1868.65, y = -1524.12, z = 45.0},  ---------- Big Tobacco Farm Calliga Hall
-        radius = 120,
-        blipname = 'Farm',   ------------- Name of the blip
-        blipsprite = 'blip_plant',
-    },
-    {
-        location = {x = 1140.07, y = 461.83, z = 96.98},    ------ Small Farm Next to Emerald Ranch under the A
-        radius = 45,
+        location = {x = 1151.45, y = -962.16, z = 67.74}, ----------- Now for Blip only
+        coords = { --multiple coords for fields (polyzone)
+            {2620.0439, -826.2837, 42.3321},
+            {2602.7253, -786.4534, 42.3146},
+            {2594.4009, -781.5143, 42.3100},
+            {2589.3086, -790.5925, 42.3213},
+            {2584.7495, -814.1309, 42.4199},
+            {2594.7727, -840.0839, 42.2575},
+        },----------- Farm behind Saint denis
         blipname = 'Farm',   ------------- Name of the blip
         blipsprite = 'blip_plant',
     },
