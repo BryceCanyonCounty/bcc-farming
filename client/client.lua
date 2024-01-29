@@ -37,10 +37,17 @@ end
 local function checkFarmingLocations(v, isoutsideoftown)
     local isinsidefarminglocation = false
     local pl2 = PlayerPedId()
+    local player = GetEntityCoords(pl2)
     for k, e in pairs(Config.FarmingLocations) do
-        local pl = GetEntityCoords(pl2)
-        if #(vec2(pl.x, pl.y) - vec2(e.location.x, e.location.y)) < e.radius then
-            isinsidefarminglocation = true
+        local field = e.coords
+        local j = #e.coords
+        for i = 1, #e.coords do
+            if (field[i][2] < player.y and field[j][2] >= player.y or field[j][2] < player.y and field[i][2] >= player.y) then
+                if (field[i][1] + ( player.y - field[i][2] ) / (field[j][2] - field[i][2]) * (field[j][1] - field[i][1]) < player.x) then
+                    isinsidefarminglocation = not isinsidefarminglocation;
+                end
+            end
+            j = i;
         end
     end
 
