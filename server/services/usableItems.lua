@@ -78,7 +78,4 @@ CreateThread(function()
             end
         end)
     end
-    VorpInv.RegisterUsableItem(Config.emptyWaterBucketItem, function(data)
-        --check if player is near water source and if so fill the bucket and remove empty add full bucket
-    end)
 end)
