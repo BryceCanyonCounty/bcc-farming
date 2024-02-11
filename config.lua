@@ -1,5 +1,4 @@
 Config = {
-    webhookLink = "", -- Your webhook link here (leave empty if you don't want to use it)
     defaultlang = "en_lang", -- Language file to use
 
     fullWaterBucketItem = "wateringcan", -- Item name for the full water bucket
@@ -73,19 +72,6 @@ Config = {
             {
                 coords = vector3(-5498.97, -2950.61, -1.62), -- Tumbleweed
                 townRange = 150 -- Range where the town will be considered
-            }
-        }
-    },
-
-    farmsSetup = {
-        useFarmingLocations = false, -- If true, players will only be able to plant seeds in the farming locations (Will override the townSetup)
-        useFarmingLocationsBlips = true, -- If true, it will create blips for the farming locations
-        farmLocations = {
-            {
-                coords = vector3(1151.45, -962.16, 67.74), -- Farm near Rhodes
-                farmRange = 150, -- Range where the farm will be considered
-                blipName = "Rhodes Farm", -- Blip name for the farm
-                blipSprite = "blip_plant" -- Blip sprite for the farm
             }
         }
     }
