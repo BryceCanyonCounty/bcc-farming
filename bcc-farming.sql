@@ -1,14 +1,10 @@
-CREATE TABLE `farming` (
-	`identifier` VARCHAR(50) NOT NULL COLLATE 'utf8_general_ci',
-	`charidentifier` INT(11) NOT NULL,
-	`planttype` VARCHAR(50) NOT NULL COLLATE 'utf8_general_ci',
-	`plantcoords` LONGTEXT NOT NULL COLLATE 'utf8_general_ci',
-	`timeleft` INT(50) NOT NULL DEFAULT '0',
-	`prop` VARCHAR(50) NOT NULL COLLATE 'utf8_general_ci',
-	`plantid` INT(11) NOT NULL AUTO_INCREMENT,
-	`planted_on` VARCHAR(50) NOT NULL COLLATE 'utf8_general_ci',
-	`watered` VARCHAR(50) NOT NULL DEFAULT '0' COLLATE 'utf8_general_ci',
-	PRIMARY KEY (`plantid`) USING BTREE
-)
-COLLATE='utf8_general_ci'
-ENGINE=InnoDB;
+CREATE TABLE IF NOT EXISTS `bcc_farming` (
+	`plant_id` INT(40) NOT NULL AUTO_INCREMENT,
+    `plant_coords` LONGTEXT NOT NULL,
+    `plant_type` VARCHAR(40) NOT NULL,
+    `plant_watered` char(6) NOT NULL DEFAULT 'false',
+    `time_left` varchar(100) NOT NULL,
+    `plant_time` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `plant_owner` INT(40) NOT NULL,
+	PRIMARY KEY (`plant_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
