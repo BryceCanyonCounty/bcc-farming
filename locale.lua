@@ -1,4 +1,4 @@
-Locales = {} --Creadit to bcc-boats for this
+Locales = {} --Credit to bcc-boats for this
 
 function _(str, ...) -- Translate string
 

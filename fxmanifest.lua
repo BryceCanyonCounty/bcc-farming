@@ -7,27 +7,31 @@ author 'Jake2k4'
 description 'bcc-farming'
 
 server_scripts {
-    '/server/server.lua',
     '@oxmysql/lib/MySQL.lua',
+    '/server/helpers/functions.lua',
+    '/server/helpers/*.lua',
+    '/server/services/*.lua',
+    '/server/*.lua'
 }
 
 shared_scripts {
     'config.lua',
-    'shared/locale.lua',
+    'locale.lua',
     'languages/*.lua'
 }
 
 
 client_scripts {
-    '/client/client.lua',
-    '/client/functions.lua',
+    '/client/helpers/functions.lua',
+    '/client/helpers/*.lua',
+    '/client/*.lua',
+    '/client/services/*.lua'
 }
 
 dependencies {
-    'vorp_core',
     'vorp_character',
     'vorp_inventory',
     'bcc-utils'
 }
 
-version '1.0.4'
+version '2.0.0'
