@@ -8,6 +8,12 @@ local plantsPlantedOnClient = {}
 ---@param source integer
 RegisterNetEvent('bcc-farming:PlantPlanted', function(plantId, plandData, plantCoords, timeLeft, watered, source)
     local plantObj = BccUtils.Objects:Create(plandData.plantProp, plantCoords.x, plantCoords.y, plantCoords.z, 0, false, 'standard')
+
+    plantObj:PlaceOnGround(true)
+    if plandData.plantOffset ~= 0 then
+        SetEntityCoords(plantObj:GetObj(), plantCoords.x, plantCoords.y, plantCoords.z - plandData.plantOffset)
+    end
+
     plantsPlantedOnClient[plantId] = { plantId = plantId, removePlant = false, watered = tostring(watered)}
     local blip = nil
     if Config.plantSetup.blips then -- Make a check on server to only have blip show for planter not everyone otherwise blips would be for everyone if its not locked to planter
@@ -66,7 +72,7 @@ RegisterNetEvent('bcc-farming:PlantPlanted', function(plantId, plandData, plantC
                         harvestPromptGroup:ShowGroup(_U("plant"))
                         if harvestPrompt:HasCompleted() then
                             if tonumber(timeLeft) <= 0 then
-                                ScenarioInPlace('WORLD_HUMAN_CROUCH_INSPECT', 10000)
+                                PlayAnim("mech_pickup@plant@berries", "base", 2500)
                                 if blip then
                                     blip:Remove()
                                 end
@@ -80,6 +86,7 @@ RegisterNetEvent('bcc-farming:PlantPlanted', function(plantId, plandData, plantC
                             if blip then
                                 blip:Remove()
                             end
+                            PlayAnim("amb_camp@world_camp_fire@stomp@male_a@wip_base", "wip_base", 10000)
                             TriggerServerEvent('bcc-farming:HarvestPlant', plantId, plandData, true)
                         end
                     end
@@ -99,6 +106,7 @@ RegisterNetEvent('bcc-farming:PlantPlanted', function(plantId, plandData, plantC
                         if blip then
                             blip:Remove()
                         end
+                        PlayAnim("amb_camp@world_camp_fire@stomp@male_a@wip_base", "wip_base", 10000)
                         TriggerServerEvent('bcc-farming:HarvestPlant', plantId, plandData, true)
                     end
                 end

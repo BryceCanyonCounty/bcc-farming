@@ -3,28 +3,16 @@ CreateThread(function()
         VorpInv.RegisterUsableItem(v.seedName, function(data)
             local playerCoords = GetEntityCoords(GetPlayerPed(data.source))
             local allowPlant, dontAllowAgain = true, false -- dontAllowAgain is for the item count checks so if we dont have one we can set it true and keep allowPlant false
-            if Config.farmsSetup.useFarmingLocations then
-                for u, e in pairs(Config.farmsSetup.farmLocations) do
-                    if #(playerCoords - e.coords) < e.farmRange then
-                        VORPcore.NotifyRightTip(data.source, _U("notNearFarm"), 4000)
+            if Config.townSetup.canPlantInTowns then
+                allowPlant = true
+            else
+                for u, e in pairs(Config.townSetup.townLocations) do
+                    if #(playerCoords - e.coords) < e.townRange then
+                        VORPcore.NotifyRightTip(data.source, _U("tooCloseToTown"), 4000)
                         dontAllowAgain = true
                         allowPlant = false break
                     else
                         allowPlant = true
-                    end
-                end
-            else
-                if Config.townSetup.canPlantInTowns then
-                    allowPlant = true
-                else
-                    for u, e in pairs(Config.townSetup.townLocations) do
-                        if #(playerCoords - e.coords) < e.townRange then
-                            VORPcore.NotifyRightTip(data.source, _U("tooCloseToTown"), 4000)
-                            dontAllowAgain = true
-                            allowPlant = false break
-                        else
-                            allowPlant = true
-                        end
                     end
                 end
             end

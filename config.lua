@@ -17,13 +17,14 @@ Config = {
                 plantingToolDurability = 100, -- Durability of the tool required to plant the seed
                 plantingToolUsage = 1, -- Durability usage of the tool required to plant the seed
                 seedName = "Agarita_Seed", -- Item name for the seed
-                plantProp = "yarrow01_p", -- Prop for the plant to be spawned
+                plantProp = "p_tree_orange_01", -- Prop for the plant to be spawned
                 soilRequired = false, -- If true, the seed will require soil to be planted
                 soilAmount = 1, -- Amount of soil required to plant the seed
                 soilName = "soil", -- Item name for the soil required to plant the seed
                 fertilizerName = "fertilizer", -- Item name for the fertilizer to fertilize the seed
                 fertTimeReduction = 30, -- Time reduction in seconds when using fertilizer
                 timeToGrow = 180, -- Time in seconds for the plant to grow
+                plantOffset = 2, -- If the plant is not on the ground properly you can use this setting
                 jobLocked = false, -- If true, only players with the job will be able to harvest the plant
                 rewards = {
                     {

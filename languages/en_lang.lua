@@ -3,7 +3,6 @@ Locales["en_lang"] = {
     noSeed = "You do not have enough seeds to plant",
     noPlantingTool = "You need a planting tool to plant the seed",
     tooCloseToTown = "You are too close to a town to plant the seed",
-    notNearFarm = "You are not near a farm, must be near a farm to plant the seed",
     incorrectJob = "You are not the correct job to plant the seed",
     maxPlantsReached = "You have reached the maximum amount of plants",
     raking = "You are raking the soil",
