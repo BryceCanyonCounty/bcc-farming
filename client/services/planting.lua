@@ -12,9 +12,7 @@ RegisterNetEvent('bcc-farming:PlantingCrop', function(plantData, fertCount)
     end
     if not stop then
         VORPcore.NotifyRightTip(_U("raking"), 16000)
-        ScenarioInPlace("WORLD_HUMAN_FARMER_RAKE", 12000)
-        VORPcore.NotifyRightTip(_U("weeding"), 16000)
-        ScenarioInPlace("WORLD_HUMAN_FARMER_WEEDING", 9000)
+        PlayAnim("amb_work@world_human_farmer_rake@male_a@idle_a", "idle_a", 16000, true, true)
         VORPcore.NotifyRightTip(_U("plantingDone"), 16000)
         if not IsEntityDead(PlayerPedId()) then
             local PromptGroup = BccUtils.Prompt:SetupPromptGroup()

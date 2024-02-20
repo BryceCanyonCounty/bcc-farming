@@ -47,7 +47,9 @@ RegisterNetEvent('bcc-farming:PlantPlanted', function(plantId, plandData, plantC
         if plantsPlantedOnClient[plantId].removePlant then
             plantsPlantedOnClient[plantId] = false
             if Config.plantSetup.blips then
-                blip:Remove()
+                if blip then
+                    blip:Remove()
+                end
             end
             plantObj:Remove() break
         end
@@ -60,7 +62,7 @@ RegisterNetEvent('bcc-farming:PlantPlanted', function(plantId, plandData, plantC
         local dist = GetDistanceBetweenCoords(plantCoords.x, plantCoords.y, plantCoords.z, playerCoords.x, playerCoords.y, playerCoords.z, true)
         if tostring(watered) ~= "false" then
             if doWaterAnim and plantsPlantedOnClient[plantId].watered == "true" then
-                ScenarioInPlace('WORLD_HUMAN_BUCKET_POUR_LOW', 7000)
+                ScenarioInPlace('WORLD_HUMAN_BUCKET_POUR_LOW', 5000)
                 doWaterAnim = false
             end
             if dist < 50 then
@@ -68,7 +70,7 @@ RegisterNetEvent('bcc-farming:PlantPlanted', function(plantId, plandData, plantC
                     if tonumber(timeLeft) > 0 then
                         local minutes = math.floor(timeLeft / 60)
                         local seconds = timeLeft % 60
-                        DrawText3D(plantCoords.x, plantCoords.y, plantCoords.z, _U("secondsUntilharvest") .. string.format("%02d:%02d", minutes, seconds)))
+                        DrawText3D(plantCoords.x, plantCoords.y, plantCoords.z, _U("secondsUntilharvest") .. string.format("%02d:%02d", minutes, seconds))
                     end
                     if dist < 1 then
                         harvestPromptGroup:ShowGroup(_U("plant") .. " " .. plandData.plantName)
