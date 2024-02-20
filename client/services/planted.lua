@@ -66,10 +66,12 @@ RegisterNetEvent('bcc-farming:PlantPlanted', function(plantId, plandData, plantC
             if dist < 50 then
                 if dist < 5 then
                     if tonumber(timeLeft) > 0 then
-                        DrawText3D(plantCoords.x, plantCoords.y, plantCoords.z, _U("secondsUntilharvest") .. timeLeft)
+                        local minutes = math.floor(timeLeft / 60)
+                        local seconds = timeLeft % 60
+                        DrawText3D(plantCoords.x, plantCoords.y, plantCoords.z, _U("secondsUntilharvest") .. string.format("%02d:%02d", minutes, seconds)))
                     end
                     if dist < 1 then
-                        harvestPromptGroup:ShowGroup(_U("plant"))
+                        harvestPromptGroup:ShowGroup(_U("plant") .. " " .. plandData.plantName)
                         if harvestPrompt:HasCompleted() then
                             if tonumber(timeLeft) <= 0 then
                                 PlayAnim("mech_pickup@plant@berries", "base", 2500)
