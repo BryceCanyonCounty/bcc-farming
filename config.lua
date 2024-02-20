@@ -11,11 +11,13 @@ Config = {
         maxPlants = 10, -- Maximum amount of plants a player can have
         plants = {
             {
+
                 webhooked = false, -- If true, it will send a message to the webhook when the plant is planted, and when it's harvested
                 plantingToolRequired = true, -- If true, the player will need a tool to plant the seed
                 plantingTool = "hoe", -- Item name for the tool required to plant the seed
                 plantingToolDurability = 100, -- Durability of the tool required to plant the seed
                 plantingToolUsage = 1, -- Durability usage of the tool required to plant the seed
+                plantName = "Agarita", -- Name of the plant
                 seedName = "Agarita_Seed", -- Item name for the seed
                 plantProp = "p_tree_orange_01", -- Prop for the plant to be spawned
                 soilRequired = false, -- If true, the seed will require soil to be planted
@@ -24,7 +26,7 @@ Config = {
                 fertilizerName = "fertilizer", -- Item name for the fertilizer to fertilize the seed
                 fertTimeReduction = 30, -- Time reduction in seconds when using fertilizer
                 timeToGrow = 180, -- Time in seconds for the plant to grow
-                plantOffset = 2, -- If the plant is not on the ground properly you can use this setting
+                plantOffset = 1, -- If the plant is not on the ground properly you can use this setting
                 jobLocked = false, -- If true, only players with the job will be able to harvest the plant
                 rewards = {
                     {
