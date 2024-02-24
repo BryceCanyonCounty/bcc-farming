@@ -68,7 +68,7 @@ RegisterNetEvent('bcc-farming:PlantPlanted', function(plantId, plandData, plantC
                     if tonumber(timeLeft) > 0 then
                         local minutes = math.floor(timeLeft / 60)
                         local seconds = timeLeft % 60
-                        DrawText3D(plantCoords.x, plantCoords.y, plantCoords.z, _U("secondsUntilharvest") .. string.format("%02d:%02d", minutes, seconds)))
+                        DrawText3D(plantCoords.x, plantCoords.y, plantCoords.z, _U("secondsUntilharvest") .. string.format("%02d:%02d", minutes, seconds))
                     end
                     if dist < 1 then
                         harvestPromptGroup:ShowGroup(_U("plant") .. " " .. plandData.plantName)
