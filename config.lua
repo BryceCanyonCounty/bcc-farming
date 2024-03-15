@@ -8,37 +8,48 @@ Config = {
         blips = false, -- If true, it will create blips for the plants
         deleteAfterDays = 3, -- Days after the plant will be deleted if not harvested (0 will disable, but it's not recommended)
         lockedToPlanter = false, -- If true, only the player who planted the seed will be able to harvest it
-        maxPlants = 10, -- Maximum amount of plants a player can have
+        maxPlants = 50, -- Maximum amount of plants a player can have
+
+        -- Z add
+        jobBonus = true,
+        jobBonusAmt = 3,
+        allowRandRew = true,
+        -- Z end
+
         plants = {
             {
 
                 webhooked = false, -- If true, it will send a message to the webhook when the plant is planted, and when it's harvested
                 plantingToolRequired = true, -- If true, the player will need a tool to plant the seed
-                plantingTool = "hoe", -- Item name for the tool required to plant the seed
+                plantingTool = "garden_hoe", -- Item name for the tool required to plant the seed
                 plantingToolDurability = 100, -- Durability of the tool required to plant the seed
                 plantingToolUsage = 1, -- Durability usage of the tool required to plant the seed
-                plantName = "Agarita", -- Name of the plant
-                seedName = "Agarita_Seed", -- Item name for the seed
-                plantProp = "p_tree_orange_01", -- Prop for the plant to be spawned
+                plantName = "Alaskan Ginseng", -- Name of the plant
+                seedName = "alaskian_ginseng_seed", -- Item name for the seed
+                plantProp = "alaskanginseng_p", -- Prop for the plant to be spawned
                 soilRequired = false, -- If true, the seed will require soil to be planted
                 soilAmount = 1, -- Amount of soil required to plant the seed
                 soilName = "soil", -- Item name for the soil required to plant the seed
-                fertilizerName = "fertilizer", -- Item name for the fertilizer to fertilize the seed
-                fertTimeReduction = 30, -- Time reduction in seconds when using fertilizer
-                timeToGrow = 180, -- Time in seconds for the plant to grow
+                fertilizerName = "farm_fertilizer", -- Item name for the fertilizer to fertilize the seed
+                fertTimeReduction = 300, -- Time reduction in seconds when using fertilizer
+                timeToGrow = 600, -- Time in seconds for the plant to grow
                 plantOffset = 1, -- If the plant is not on the ground properly you can use this setting
                 jobLocked = false, -- If true, only players with the job will be able to harvest the plant
                 rewards = {
                     {
-                        itemName = "water",
-                        amount = 1
+                        itemName = "alaskan_ginseng",
+                        amount = 5
+                    },
+                    {
+                        itemName = "alaskian_ginseng_seed",
+                        amount = 3
                     }
                 },
                 jobs = {
                     'farmer',
-                    'doctor'
+                    'rancher'
                 }
-            }
+            },
         }
     },
     townSetup = {
