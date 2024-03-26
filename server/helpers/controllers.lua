@@ -71,7 +71,28 @@ RegisterServerEvent('bcc-farming:HarvestPlant', function(plantId, plantData, des
     local _source = source
     if not destroy then
         for k, v in pairs(plantData.rewards) do
-            VorpInv.addItem(_source, v.itemName, v.amount)
+
+            -- Z add
+            local amtAdd = 0
+            if Config.plantSetup.allowRandRew then
+                amtAdd = math.random(1,v.amount)
+            else
+                amtAdd = v.amount
+            end
+            -- add jobBonus
+            if Config.plantSetup.jobBonus then
+                local character = VORPcore.getUser(_source).getUsedCharacter
+                for k1, v1 in pairs(plantData.jobs) do
+                    if character.job == v1 then
+                        amtAdd = amtAdd + Config.plantSetup.jobBonusAmt
+                    end
+                end
+            end
+
+            VorpInv.addItem(_source, v.itemName, amtAdd)
+            -- Z end
+
+            -- VorpInv.addItem(_source, v.itemName, v.amount) --> original
         end
     end
     MySQL.query.await("DELETE FROM bcc_farming WHERE plant_id = ?", { plantId })
