@@ -6,7 +6,6 @@ Locales["en_lang"] = {
     incorrectJob = "You are not the correct job to plant the seed",
     maxPlantsReached = "You have reached the maximum amount of plants",
     raking = "You are raking the soil",
-    weeding = "You are weeding the soil",
     plantingDone = "You have finished planting the seed",
     failed = "You have failed to plant the seed",
     fertilize = "Fertilize",

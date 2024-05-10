@@ -50,7 +50,11 @@ end)
 RegisterServerEvent("bcc-farming:UpdatePlantWateredStatus", function(plantId)
     local _source = source
     local waterBucketCount = VorpInv.getItemCount(_source, Config.fullWaterBucketItem)
-    if waterBucketCount > 0 then
+    local isRaining = Citizen.InvokeNative(0x931B5F4CC130224B)
+    if isRaining and isRaining > 0 then
+        MySQL.query.await("UPDATE bcc_farming SET plant_watered = ? WHERE plant_id = ?", { 'true', plantId })
+        TriggerClientEvent("bcc-farming:UpdatePlantWateredStatus", -1, plantId)
+    elseif waterBucketCount > 0 then
         VorpInv.subItem(_source, Config.fullWaterBucketItem, 1)
         VorpInv.addItem(_source, Config.emptyWaterBucketItem, 1)
         MySQL.query.await("UPDATE bcc_farming SET plant_watered = ? WHERE plant_id = ?", { 'true', plantId })

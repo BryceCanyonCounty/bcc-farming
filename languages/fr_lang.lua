@@ -7,7 +7,6 @@ Locales["fr_lang"] = {
     incorrectJob = "Vous n'êtes pas le bon travailleur pour planter la graine",
     maxPlantsReached = "Vous avez atteint le nombre maximum de plantes",
     raking = "Vous ratissez la terre",
-    weeding = "Vous désherbez la terre",
     plantingDone = "Vous avez fini de planter la graine",
     failed = "Vous avez échoué à planter la graine",
     fertilize = "Fertiliser",

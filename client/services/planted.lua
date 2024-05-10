@@ -47,7 +47,9 @@ RegisterNetEvent('bcc-farming:PlantPlanted', function(plantId, plandData, plantC
         if plantsPlantedOnClient[plantId].removePlant then
             plantsPlantedOnClient[plantId] = false
             if Config.plantSetup.blips then
-                blip:Remove()
+                if blip then
+                    blip:Remove()
+                end
             end
             plantObj:Remove() break
         end
@@ -60,7 +62,7 @@ RegisterNetEvent('bcc-farming:PlantPlanted', function(plantId, plandData, plantC
         local dist = GetDistanceBetweenCoords(plantCoords.x, plantCoords.y, plantCoords.z, playerCoords.x, playerCoords.y, playerCoords.z, true)
         if tostring(watered) ~= "false" then
             if doWaterAnim and plantsPlantedOnClient[plantId].watered == "true" then
-                ScenarioInPlace('WORLD_HUMAN_BUCKET_POUR_LOW', 7000)
+                ScenarioInPlace('WORLD_HUMAN_BUCKET_POUR_LOW', 5000)
                 doWaterAnim = false
             end
             if dist < 50 then
@@ -99,17 +101,22 @@ RegisterNetEvent('bcc-farming:PlantPlanted', function(plantId, plandData, plantC
         else
             if dist < 50 then
                 if dist < 1 then
-                    promptGroup:ShowGroup(_U("waterPlant"))
-                    if firstPrompt:HasCompleted() then
-                        doWaterAnim = true
-                        TriggerServerEvent("bcc-farming:UpdatePlantWateredStatus", plantId)
-                    end
-                    if waterPromptGroupDestroyPlant:HasCompleted() then
-                        if blip then
-                            blip:Remove()
-                        end
-                        PlayAnim("amb_camp@world_camp_fire@stomp@male_a@wip_base", "wip_base", 10000)
-                        TriggerServerEvent('bcc-farming:HarvestPlant', plantId, plandData, true)
+                    local isRaining = GetRainLevel() > 0
+                        if isRaining and tostring(watered) == "false" then
+                            plantsPlantedOnClient[plantId].watered = "true"
+                            TriggerServerEvent("qc-farming:UpdatePlantWateredStatus", plantId)
+                        elseif tostring(watered) == "false" and dist < 1 then
+                            promptGroup:ShowGroup(_U("waterPlant"))
+                                if firstPrompt:HasCompleted() then
+                                    doWaterAnim = true
+                                    TriggerServerEvent("qc-farming:UpdatePlantWateredStatus", plantId)
+                                end
+                            if waterPromptGroupDestroyPlant:HasCompleted() then
+                                if blip then
+                                    blip:Remove()
+                            end
+                            PlayAnim("amb_camp@world_camp_fire@stomp@male_a@wip_base", "wip_base", 10000)
+                            TriggerServerEvent('qc-farming:HarvestPlant', plantId, plandData, true)
                     end
                 end
             else
@@ -117,6 +124,7 @@ RegisterNetEvent('bcc-farming:PlantPlanted', function(plantId, plandData, plantC
             end
         end
     end
+end
 end)
 
 ---@param plantId integer
