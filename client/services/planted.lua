@@ -67,7 +67,7 @@ RegisterNetEvent('bcc-farming:PlantPlanted', function(plantId, plandData, plantC
                 doWaterAnim = false
             end
             if dist < 50 then
-                if dist < 1 then
+                if dist < 5 then
                     if tonumber(timeLeft) > 0 then
                         local minutes = math.floor(timeLeft / 60)
                         local seconds = timeLeft % 60
