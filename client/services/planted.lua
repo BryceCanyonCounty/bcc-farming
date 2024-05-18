@@ -7,7 +7,8 @@ local plantsPlantedOnClient = {}
 ---@param watered boolean --Boolean string
 ---@param source integer
 RegisterNetEvent('bcc-farming:PlantPlanted', function(plantId, plandData, plantCoords, timeLeft, watered, source)
-    local plantObj = BccUtils.Objects:Create(plandData.plantProp, plantCoords.x, plantCoords.y, plantCoords.z, 0, false, 'standard')
+    local pHead = GetEntityHeading(PlayerPedId())
+    local plantObj = BccUtils.Objects:Create(plandData.plantProp, plantCoords.x, plantCoords.y, plantCoords.z, pHead, false, 'standard')
 
     plantObj:PlaceOnGround(true)
     if plandData.plantOffset ~= 0 then
@@ -66,14 +67,13 @@ RegisterNetEvent('bcc-farming:PlantPlanted', function(plantId, plandData, plantC
                 doWaterAnim = false
             end
             if dist < 50 then
-                if dist < 5 then
+                if dist < 1 then
                     if tonumber(timeLeft) > 0 then
                         local minutes = math.floor(timeLeft / 60)
                         local seconds = timeLeft % 60
-                        DrawText3D(plantCoords.x, plantCoords.y, plantCoords.z, _U("secondsUntilharvest") .. string.format("%02d:%02d", minutes, seconds))
-                    end
-                    if dist < 1 then
-                        harvestPromptGroup:ShowGroup(_U("plant") .. " " .. plandData.plantName)
+                        harvestPromptGroup:ShowGroup(_U("plant") .. " " .. plandData.plantName.." | " .. _U("secondsUntilharvest")..string.format("%02d:%02d", minutes, seconds))
+                    elseif tonumber(timeLeft) <= 0 then
+                        harvestPromptGroup:ShowGroup(_U("plant") .. " " .. plandData.plantName.." " .. _U("secondsUntilharvestOver"))
                         if harvestPrompt:HasCompleted() then
                             if tonumber(timeLeft) <= 0 then
                                 PlayAnim("mech_pickup@plant@berries", "base", 2500)
@@ -86,13 +86,13 @@ RegisterNetEvent('bcc-farming:PlantPlanted', function(plantId, plandData, plantC
                                 VORPcore.NotifyRightTip(_U("plantNotGrown"), 4000)
                             end
                         end
-                        if harvestPromptGroupDestroyPlant:HasCompleted() then
-                            if blip then
-                                blip:Remove()
-                            end
-                            PlayAnim("amb_camp@world_camp_fire@stomp@male_a@wip_base", "wip_base", 10000)
-                            TriggerServerEvent('bcc-farming:HarvestPlant', plantId, plandData, true)
+                    end
+                    if harvestPromptGroupDestroyPlant:HasCompleted() then
+                        if blip then
+                            blip:Remove()
                         end
+                        PlayAnim("amb_camp@world_camp_fire@stomp@male_a@wip_base", "wip_base", 10000)
+                        TriggerServerEvent('bcc-farming:HarvestPlant', plantId, plandData, true)
                     end
                 end
             else
@@ -104,19 +104,19 @@ RegisterNetEvent('bcc-farming:PlantPlanted', function(plantId, plandData, plantC
                     local isRaining = GetRainLevel() > 0
                         if isRaining and tostring(watered) == "false" then
                             plantsPlantedOnClient[plantId].watered = "true"
-                            TriggerServerEvent("qc-farming:UpdatePlantWateredStatus", plantId)
+                            TriggerServerEvent("bcc-farming:UpdatePlantWateredStatus", plantId)
                         elseif tostring(watered) == "false" and dist < 1 then
                             promptGroup:ShowGroup(_U("waterPlant"))
                                 if firstPrompt:HasCompleted() then
                                     doWaterAnim = true
-                                    TriggerServerEvent("qc-farming:UpdatePlantWateredStatus", plantId)
+                                    TriggerServerEvent("bcc-farming:UpdatePlantWateredStatus", plantId)
                                 end
                             if waterPromptGroupDestroyPlant:HasCompleted() then
                                 if blip then
                                     blip:Remove()
                             end
                             PlayAnim("amb_camp@world_camp_fire@stomp@male_a@wip_base", "wip_base", 10000)
-                            TriggerServerEvent('qc-farming:HarvestPlant', plantId, plandData, true)
+                            TriggerServerEvent('bcc-farming:HarvestPlant', plantId, plandData, true)
                     end
                 end
             else

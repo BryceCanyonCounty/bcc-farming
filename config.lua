@@ -19,6 +19,7 @@ Config = {
                 plantingToolUsage = 1, -- Durability usage of the tool required to plant the seed
                 plantName = "Agarita", -- Name of the plant
                 seedName = "Agarita_Seed", -- Item name for the seed
+                seedAmount = 2, -- Amount of soil required to plant the seed
                 plantProp = "p_tree_orange_01", -- Prop for the plant to be spawned
                 soilRequired = false, -- If true, the seed will require soil to be planted
                 soilAmount = 1, -- Amount of soil required to plant the seed

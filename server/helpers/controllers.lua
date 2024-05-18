@@ -10,7 +10,6 @@ RegisterServerEvent("bcc-farming:AddPlant", function(plantData, plantCoords, fer
     if fertilized then
         VorpInv.subItem(_source, plantData.fertilizerName, 1)
     end
-    VorpInv.subItem(_source, plantData.seedName, 1)
     if Config.plantSetup.lockedToPlanter then
         TriggerClientEvent('bcc-farming:PlantPlanted', _source, plantId, plantData, plantCoords, plantData.timeToGrow, false, _source)
     else
@@ -73,9 +72,12 @@ RegisterServerEvent('bcc-farming:HarvestPlant', function(plantId, plantData, des
         for k, v in pairs(plantData.rewards) do
             VorpInv.addItem(_source, v.itemName, v.amount)
         end
+        MySQL.query.await("DELETE FROM bcc_farming WHERE plant_id = ?", { plantId })
+        TriggerClientEvent("bcc-farming:RemovePlantClient", -1, plantId)
+    else
+        MySQL.query.await("DELETE FROM bcc_farming WHERE plant_id = ?", { plantId })
+        TriggerClientEvent("bcc-farming:RemovePlantClient", -1, plantId)
     end
-    MySQL.query.await("DELETE FROM bcc_farming WHERE plant_id = ?", { plantId })
-    TriggerClientEvent("bcc-farming:RemovePlantClient", -1, plantId)
 end)
 
 CreateThread(function()
