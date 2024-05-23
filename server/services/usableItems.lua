@@ -62,7 +62,14 @@ CreateThread(function()
             if allowPlant and not dontAllowAgain then
                 -- Lower meta data in plant done event and remove items there too
                 local fertCount = VorpInv.getItemCount(data.source, v.fertilizerName)
-                TriggerClientEvent('bcc-farming:PlantingCrop', data.source, v, fertCount)
+                local seedCount = VorpInv.getItemCount(data.source, v.seedName)
+                if seedCount < v.seedAmount then
+                    VORPcore.NotifyRightTip(data.source, _U("notEnoughSeeds"), 4000)
+                    return
+                else
+                    VorpInv.subItem(data.source, v.seedName, v.seedAmount)
+                    TriggerClientEvent('bcc-farming:PlantingCrop', data.source, v, fertCount)
+                end
             end
         end)
     end
