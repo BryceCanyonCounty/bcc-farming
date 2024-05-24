@@ -31,7 +31,7 @@ Config = {
                 jobLocked = false, -- If true, only players with the job will be able to harvest the plant
                 rewards = {
                     {
-                        itemName = "water",
+                        itemName = "Agarita",
                         amount = 1
                     }
                 },
