@@ -1,7 +1,2 @@
-VorpInv = {}
-VorpInv = exports.vorp_inventory:vorp_inventoryApi()
-VORPcore = {}
-TriggerEvent("getCore", function(core)
-  VORPcore = core
-end)
+VORPcore = exports.vorp_core:GetCore()
 BccUtils = exports['bcc-utils'].initiate()

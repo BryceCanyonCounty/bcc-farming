@@ -5,7 +5,7 @@ end)
 BccUtils = exports['bcc-utils'].initiate()
 
 ---@param hash string
----@param time ineger --Milliseconds
+---@param time integer --Milliseconds
 function ScenarioInPlace(hash, time)
   local pl = PlayerPedId()
   FreezeEntityPosition(pl, true)
