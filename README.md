@@ -4,7 +4,7 @@
 
 ## Features
 - Allows you to create as many crops to plant for your RedM server as you want!
-- Easy to translate via the Languages file!
+- Easy to translate via the Language files!
 - Ability to individually job lock plants!
 - Must have a "Planting tool" to be able to plant the crop! (Tool is set for each plant individually in the config.lua)
 - Super easy to configure everything via the config.lua!
@@ -13,7 +13,6 @@
 - Option in config to have blips on plants!
 - Option for enabling or disabling planting crops in town!
 - Stores plants in a database so they stay after server restarts!
-- Script automatically makes the database table no need to run an sql!
 - Version Checker to help you keep informed on updates!
 - Option to require soil to plant!
 - Option to allow use of fertilizer!
@@ -29,10 +28,15 @@
 - bcc-utils
 
 ## Installation Steps
-- Add the file to your resource file
-- Add ensure 'bcc-farming' to your resources.cfg
+- Make sure dependencies are installed/updated and ensured before this script
+- Add `bcc-farming` folder to your resources folder
+- Add `ensure bcc-farming` to your resources.cfg
+- Run the included database file `bcc-farming.sql`
 
 ## Side notes
 - Make sure all items set exist in your database
 - This script is written from scratch, but took a heavy inspiration from prp_farming.
 - You can edit the code obviously. All I ask is that you release the edits to the community freely.
+
+## GitHub
+- https://github.com/BryceCanyonCounty/bcc-farming

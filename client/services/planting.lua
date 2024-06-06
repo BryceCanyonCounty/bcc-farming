@@ -4,7 +4,7 @@ RegisterNetEvent('bcc-farming:PlantingCrop', function(plantData, fertCount)
     local playerCoords = GetEntityCoords(PlayerPedId())
     local stop = false
     for e, a in pairs(Config.plantSetup.plants) do
-        local entity = GetClosestObjectOfType(playerCoords.x, playerCoords.y, playerCoords.z, 2.5, joaat(a.plantProp), false, false, false)
+        local entity = GetClosestObjectOfType(playerCoords.x, playerCoords.y, playerCoords.z, plantData.plantingDistance, joaat(a.plantProp), false, false, false)
         if entity ~= 0 then
             stop = true
             VORPcore.NotifyRightTip(_U("tooCloseToAnotherPlant"), 4000) break

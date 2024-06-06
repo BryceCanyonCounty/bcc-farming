@@ -100,23 +100,24 @@ RegisterNetEvent('bcc-farming:PlantPlanted', function(plantId, plandData, plantC
             end
         else
             if dist < 50 then
-                if dist < 1 then
-                    local isRaining = GetRainLevel() > 0
-                        if isRaining and tostring(watered) == "false" then
-                            plantsPlantedOnClient[plantId].watered = "true"
-                            TriggerServerEvent("bcc-farming:UpdatePlantWateredStatus", plantId)
-                        elseif tostring(watered) == "false" and dist < 1 then
-                            promptGroup:ShowGroup(_U("waterPlant"))
-                                if firstPrompt:HasCompleted() then
-                                    doWaterAnim = true
-                                    TriggerServerEvent("bcc-farming:UpdatePlantWateredStatus", plantId)
-                                end
-                            if waterPromptGroupDestroyPlant:HasCompleted() then
-                                if blip then
-                                    blip:Remove()
+                if dist < 1 and tostring(watered) == "false" then
+                    local isRaining = GetRainLevel()
+                    if isRaining > 0 then
+                        plantsPlantedOnClient[plantId].watered = "true"
+                        TriggerServerEvent("bcc-farming:UpdatePlantWateredStatus", plantId, isRaining)
+                    else
+                        promptGroup:ShowGroup(_U("waterPlant"))
+                        if firstPrompt:HasCompleted() then
+                            doWaterAnim = true
+                            TriggerServerEvent("bcc-farming:UpdatePlantWateredStatus", plantId, isRaining)
+                        end
+                        if waterPromptGroupDestroyPlant:HasCompleted() then
+                            if blip then
+                                blip:Remove()
                             end
                             PlayAnim("amb_camp@world_camp_fire@stomp@male_a@wip_base", "wip_base", 10000)
                             TriggerServerEvent('bcc-farming:HarvestPlant', plantId, plandData, true)
+                        end
                     end
                 end
             else
@@ -124,7 +125,6 @@ RegisterNetEvent('bcc-farming:PlantPlanted', function(plantId, plandData, plantC
             end
         end
     end
-end
 end)
 
 ---@param plantId integer
