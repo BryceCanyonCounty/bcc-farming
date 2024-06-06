@@ -17,6 +17,7 @@ Locales["fr_lang"] = {
     waterPlant = "Arroser la plante",
     plant = "Planter",
     secondsUntilharvest = "Secondes jusqu'à la récolte : ",
+    secondsUntilharvestOver = "Secondes jusqu'à la récolte : Terminé",
     harvest = "Récolter",
     destroyPlant = "Détruire la plante",
     plantNotGrown = "La plante n'a pas encore poussé",

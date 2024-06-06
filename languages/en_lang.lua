@@ -16,6 +16,7 @@ Locales["en_lang"] = {
     waterPlant = "Water Plant",
     plant = "Plant",
     secondsUntilharvest = "Time until harvest: ",
+    secondsUntilharvestOver = "Time until harvest: Finished",
     harvest = "Harvest",
     destroyPlant = "Destroy Plant",
     plantNotGrown = "The plant is not grown yet",
