@@ -8,7 +8,7 @@ RegisterServerEvent("bcc-farming:AddPlant", function(plantData, plantCoords, fer
     local character = VORPcore.getUser(_source).getUsedCharacter
     local plantId = MySQL.insert.await("INSERT INTO bcc_farming (plant_coords, plant_type, plant_watered, time_left, plant_owner) VALUES (?, ?, ?, ?, ?)", { json.encode(plantCoords), plantData.seedName, "false", plantData.timeToGrow, character.charIdentifier })
     if fertilized then
-        VorpInv.subItem(_source, plantData.fertilizerName, 1)
+        exports.vorp_inventory:subItem(_source, plantData.fertilizerName, 1)
     end
     if Config.plantSetup.lockedToPlanter then
         TriggerClientEvent('bcc-farming:PlantPlanted', _source, plantId, plantData, plantCoords, plantData.timeToGrow, false, _source)
@@ -46,16 +46,15 @@ RegisterServerEvent("bcc-farming:NewClientConnected", function()
 end)
 
 ---@param plantId integer
-RegisterServerEvent("bcc-farming:UpdatePlantWateredStatus", function(plantId)
+RegisterServerEvent("bcc-farming:UpdatePlantWateredStatus", function(plantId, isRaining)
     local _source = source
-    local waterBucketCount = VorpInv.getItemCount(_source, Config.fullWaterBucketItem)
-    local isRaining = Citizen.InvokeNative(0x931B5F4CC130224B)
-    if isRaining and isRaining > 0 then
+    local hasWaterBucket = exports.vorp_inventory:getItem(_source, Config.fullWaterBucketItem)
+    if isRaining > 0 then
         MySQL.query.await("UPDATE bcc_farming SET plant_watered = ? WHERE plant_id = ?", { 'true', plantId })
         TriggerClientEvent("bcc-farming:UpdatePlantWateredStatus", -1, plantId)
-    elseif waterBucketCount > 0 then
-        VorpInv.subItem(_source, Config.fullWaterBucketItem, 1)
-        VorpInv.addItem(_source, Config.emptyWaterBucketItem, 1)
+    elseif hasWaterBucket then
+        exports.vorp_inventory:subItem(_source, Config.fullWaterBucketItem, 1)
+        exports.vorp_inventory:addItem(_source, Config.emptyWaterBucketItem, 1)
         MySQL.query.await("UPDATE bcc_farming SET plant_watered = ? WHERE plant_id = ?", { 'true', plantId })
         TriggerClientEvent("bcc-farming:UpdatePlantWateredStatus", -1, plantId)
     else
@@ -70,7 +69,7 @@ RegisterServerEvent('bcc-farming:HarvestPlant', function(plantId, plantData, des
     local _source = source
     if not destroy then
         for k, v in pairs(plantData.rewards) do
-            VorpInv.addItem(_source, v.itemName, v.amount)
+            exports.vorp_inventory:addItem(_source, v.itemName, v.amount)
         end
         MySQL.query.await("DELETE FROM bcc_farming WHERE plant_id = ?", { plantId })
         TriggerClientEvent("bcc-farming:RemovePlantClient", -1, plantId)
