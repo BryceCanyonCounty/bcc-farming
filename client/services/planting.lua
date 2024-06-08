@@ -7,6 +7,9 @@ RegisterNetEvent('bcc-farming:PlantingCrop', function(plantData, fertCount)
         local entity = GetClosestObjectOfType(playerCoords.x, playerCoords.y, playerCoords.z, plantData.plantingDistance, joaat(a.plantProp), false, false, false)
         if entity ~= 0 then
             stop = true
+            local seed = plantData.seedName
+            local amount = plantData.seedAmount
+            TriggerServerEvent("bcc-farming:GiveBackSeed",seed,amount)
             VORPcore.NotifyRightTip(_U("tooCloseToAnotherPlant"), 4000) break
         end
     end
