@@ -17,6 +17,11 @@ RegisterServerEvent("bcc-farming:AddPlant", function(plantData, plantCoords, fer
     end
 end)
 
+RegisterServerEvent("bcc-farming:GiveBackSeed", function(seed,amount)
+    local src = source
+    exports.vorp_inventory:addItem(src, seed, amount)
+end)
+
 RegisterServerEvent("bcc-farming:NewClientConnected", function()
     local _source = source
     if not Config.plantSetup.lockedToPlanter then
