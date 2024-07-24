@@ -18,10 +18,10 @@ Locales["ro_lang"] = {
     waterPlant = "Uda Planta",
     plant = "Planteaza",
     secondsUntilharvest = "Secunde pana la recoltare: ",
-    secondsUntilharvestOver = "Secunde pana la recoltare: Terminat",
     harvest = "Recoltare",
     destroyPlant = "Distruge Planta",
     plantNotGrown = "Planta inca nu a crescut",
     harvested = "Ai recoltat planta",
     tooCloseToAnotherPlant = "Esti prea aproape de alta planta",
+    noCarry = "Nu puteți transporta aceste articole"
 }

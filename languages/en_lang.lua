@@ -21,5 +21,6 @@ Locales["en_lang"] = {
     destroyPlant = "Destroy Plant",
     plantNotGrown = "The plant is not grown yet",
     harvested = "You have harvested the plant",
-    tooCloseToAnotherPlant = "You are too close to another plant"
+    tooCloseToAnotherPlant = "You are too close to another plant",
+    noCarry = "You cannot carry these items"
 }

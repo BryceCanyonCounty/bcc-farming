@@ -17,10 +17,10 @@ Locales["fr_lang"] = {
     waterPlant = "Arroser la plante",
     plant = "Planter",
     secondsUntilharvest = "Secondes jusqu'à la récolte : ",
-    secondsUntilharvestOver = "Secondes jusqu'à la récolte : Terminé",
     harvest = "Récolter",
     destroyPlant = "Détruire la plante",
     plantNotGrown = "La plante n'a pas encore poussé",
     harvested = "Vous avez récolté la plante",
-    tooCloseToAnotherPlant = "Vous êtes trop près d'une autre plante"
+    tooCloseToAnotherPlant = "Vous êtes trop près d'une autre plante",
+    noCarry = "Vous ne pouvez pas emporter ces"
 }
