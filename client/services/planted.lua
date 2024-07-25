@@ -24,12 +24,12 @@ RegisterNetEvent('bcc-farming:PlantPlanted', function(plantId, plandData, plantC
     end
 
     local promptGroup = BccUtils.Prompt:SetupPromptGroup()
-    local firstPrompt = promptGroup:RegisterPrompt(_U("yes"), 0x4CC0E2FE, 1, 1, true, 'hold', { timedeventhash = "MEDIUM_TIMED_EVENT" })
-    local waterPromptGroupDestroyPlant = promptGroup:RegisterPrompt(_U("destroyPlant"), 0x27D1C284, 1, 1, true, 'hold', { timedeventhash = "MEDIUM_TIMED_EVENT"})
+    local firstPrompt = promptGroup:RegisterPrompt(_U("yes"), 0xCEFD9220, 1, 1, true, 'hold', { timedeventhash = "MEDIUM_TIMED_EVENT" })
+    local waterPromptGroupDestroyPlant = promptGroup:RegisterPrompt(_U("destroyPlant"), 0xE30CD707, 1, 1, true, 'hold', { timedeventhash = "MEDIUM_TIMED_EVENT"})
     local doWaterAnim = false -- Used to play the anim after the watered status is changed (Cant be done where serv event is triggered as you may not have the buckets this stops it from playing unless you have the buckets)
     local harvestPromptGroup = BccUtils.Prompt:SetupPromptGroup()
-    local harvestPrompt = harvestPromptGroup:RegisterPrompt(_U("harvest"), 0x4CC0E2FE, 1, 1, true, 'hold', { timedeventhash = "MEDIUM_TIMED_EVENT" })
-    local harvestPromptGroupDestroyPlant = harvestPromptGroup:RegisterPrompt(_U("destroyPlant"), 0x27D1C284, 1, 1, true, 'hold', { timedeventhash = "MEDIUM_TIMED_EVENT"})
+    local harvestPrompt = harvestPromptGroup:RegisterPrompt(_U("harvest"), 0xCEFD9220, 1, 1, true, 'hold', { timedeventhash = "MEDIUM_TIMED_EVENT" })
+    local harvestPromptGroupDestroyPlant = harvestPromptGroup:RegisterPrompt(_U("destroyPlant"), 0xE30CD707, 1, 1, true, 'hold', { timedeventhash = "MEDIUM_TIMED_EVENT"})
 
     CreateThread(function() -- I normally hate doing layered threads in an event or function but this is the best way to keep the time synced with the database and accurate
         while tonumber(timeLeft) > 0 and plantsPlantedOnClient[plantId] do
@@ -67,21 +67,35 @@ RegisterNetEvent('bcc-farming:PlantPlanted', function(plantId, plandData, plantC
                 doWaterAnim = false
             end
             if dist < 50 then
-                if dist < 1 then
+                if dist < 3 then
                     if tonumber(timeLeft) > 0 then
                         local minutes = math.floor(timeLeft / 60)
                         local seconds = timeLeft % 60
+                        harvestPrompt:EnabledPrompt(false)
                         harvestPromptGroup:ShowGroup(_U("plant") .. " " .. plandData.plantName.." | " .. _U("secondsUntilharvest")..string.format("%02d:%02d", minutes, seconds))
                     elseif tonumber(timeLeft) <= 0 then
-                        harvestPromptGroup:ShowGroup(_U("plant") .. " " .. plandData.plantName.." " .. _U("secondsUntilharvestOver"))
+                        harvestPrompt:EnabledPrompt(true)
+                        harvestPromptGroup:ShowGroup(_U("plant") .. " " .. plandData.plantName.." | " .. _U("secondsUntilharvestOver"))
                         if harvestPrompt:HasCompleted() then
                             if tonumber(timeLeft) <= 0 then
-                                PlayAnim("mech_pickup@plant@berries", "base", 2500)
-                                if blip then
-                                    blip:Remove()
+                                --Hobbes Changed
+                                local cbresult =  true
+                                for k, v in pairs(plandData.rewards) do
+                                    cbresult = VORPcore.Callback.TriggerAwait('bcc-farming:callback:CanCarryCheck', v.itemName, v.amount)
+                                    if not cbresult then
+                                        VORPcore.NotifyRightTip(_U("noCarry"), 4000)
+                                        break
+                                    end
                                 end
-                                VORPcore.NotifyRightTip(_U("harvested"), 4000)
-                                TriggerServerEvent("bcc-farming:HarvestPlant", plantId, plandData)
+                                if cbresult then
+                                    PlayAnim("mech_pickup@plant@berries", "base", 2500)
+                                    if blip then
+                                        blip:Remove()
+                                    end
+                                    VORPcore.NotifyRightTip(_U("harvested"), 4000)
+                                    TriggerServerEvent("bcc-farming:HarvestPlant", plantId, plandData) 
+                                end
+                                --end Hobbes Changed
                             else
                                 VORPcore.NotifyRightTip(_U("plantNotGrown"), 4000)
                             end
