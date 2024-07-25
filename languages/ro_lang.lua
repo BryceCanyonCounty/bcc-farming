@@ -18,6 +18,7 @@ Locales["ro_lang"] = {
     waterPlant = "Uda Planta",
     plant = "Planteaza",
     secondsUntilharvest = "Secunde pana la recoltare: ",
+    secondsUntilharvestOver = "Secunde pana la recoltare: Terminat",
     harvest = "Recoltare",
     destroyPlant = "Distruge Planta",
     plantNotGrown = "Planta inca nu a crescut",
