@@ -69,7 +69,7 @@ CreateThread(function()
                 local fertCount = exports.vorp_inventory:getItemCount(_source, nil, v.fertilizerName)
                 local seedCount = exports.vorp_inventory:getItemCount(_source, nil, v.seedName)
                 if seedCount < v.seedAmount then
-                    VORPcore.NotifyRightTip(_source, _U("notEnoughSeeds"), 4000)
+                    VORPcore.NotifyRightTip(_source, _U("noSeed"), 4000)
                     return
                 else
                     exports.vorp_inventory:subItem(_source, v.seedName, v.seedAmount)
