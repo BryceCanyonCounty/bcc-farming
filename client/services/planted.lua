@@ -97,6 +97,7 @@ RegisterNetEvent('bcc-farming:PlantPlanted', function(plantId, plandData, plantC
                             else
                                 VORPcore.NotifyRightTip(_U("plantNotGrown"), 4000)
                             end
+                        end
                     end
                     if harvestPromptGroupDestroyPlant:HasCompleted() then
                         if blip then
