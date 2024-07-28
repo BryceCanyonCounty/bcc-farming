@@ -3,11 +3,9 @@ Locales["ro_lang"] = {
     noSeed = "Nu ai suficiente seminte pentru a planta",
     noPlantingTool = "Ai nevoie de unelte de plantare pentru a planta samanta",
     tooCloseToTown = "Esti prea aproape de un oras pentru a planta samanta",
-    notNearFarm = "Nu esti aproape de o ferma, trebuie sa fii aproape de o ferma pentru a planta samanta",
     incorrectJob = "Nu esti meseria corecta pentru a planta samanta",
     maxPlantsReached = "Ai atins numarul maxim de plante",
     raking = "Ara pamantul",
-    weeding = "Sapa pamantul",
     plantingDone = "Ai terminat de plantat samanta",
     failed = "Ceva nu a functionat cand ai planta samanta",
     fertilize = "Fertilizare",
@@ -24,4 +22,5 @@ Locales["ro_lang"] = {
     plantNotGrown = "Planta inca nu a crescut",
     harvested = "Ai recoltat planta",
     tooCloseToAnotherPlant = "Esti prea aproape de alta planta",
+    noCarry = "Nu puteți transporta aceste articole"
 }

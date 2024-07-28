@@ -1,3 +1,12 @@
+function GetPositionInfrontOfElement(posX, posY, posZ, hed, distance)
+    local meters = (type(distance) == "number" and distance) or 3
+    posX = posX - math.sin(math.rad(hed)) * meters
+    posY = posY + math.cos(math.rad(hed)) * meters
+    hed = hed + math.cos(math.rad(hed))
+    local vec = vector3(posX, posY, posZ)
+    return vec
+end
+
 ---@param plantData table
 ---@param fertCount number
 RegisterNetEvent('bcc-farming:PlantingCrop', function(plantData, fertCount)
@@ -40,8 +49,10 @@ RegisterNetEvent('bcc-farming:PlantingCrop', function(plantData, fertCount)
                     end
                 end
             end
-
-            TriggerServerEvent('bcc-farming:AddPlant', plantData, GetEntityCoords(PlayerPedId()), fertilized)
+            local entCoords = GetEntityCoords(PlayerPedId())
+            local entRot = GetEntityHeading(PlayerPedId())
+            local plantCoords = GetPositionInfrontOfElement(entCoords.x, entCoords.y, entCoords.z, entRot, 0.75)
+            TriggerServerEvent('bcc-farming:AddPlant', plantData, plantCoords, fertilized)
         else
             VORPcore.NotifyRightTip(_U("failed"), 4000)
         end

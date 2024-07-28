@@ -3,7 +3,6 @@ Locales["fr_lang"] = {
     noSeed = "Vous n'avez pas assez de graines pour planter",
     noPlantingTool = "Vous avez besoin d'un outil de plantation pour planter la graine",
     tooCloseToTown = "Vous êtes trop près d'une ville pour planter la graine",
-    notNearFarm = "Vous n'êtes pas près d'une ferme, vous devez être près d'une ferme pour planter la graine",
     incorrectJob = "Vous n'êtes pas le bon travailleur pour planter la graine",
     maxPlantsReached = "Vous avez atteint le nombre maximum de plantes",
     raking = "Vous ratissez la terre",
@@ -22,5 +21,6 @@ Locales["fr_lang"] = {
     destroyPlant = "Détruire la plante",
     plantNotGrown = "La plante n'a pas encore poussé",
     harvested = "Vous avez récolté la plante",
-    tooCloseToAnotherPlant = "Vous êtes trop près d'une autre plante"
+    tooCloseToAnotherPlant = "Vous êtes trop près d'une autre plante",
+    noCarry = "Vous ne pouvez pas emporter ces"
 }

@@ -84,6 +84,14 @@ RegisterServerEvent('bcc-farming:HarvestPlant', function(plantId, plantData, des
     end
 end)
 
+---@param item string
+---@param amount integer
+VORPcore.Callback.Register('bcc-farming:callback:CanCarryCheck', function(source, cb, item, amount)
+    local _source = source
+    local check = exports.vorp_inventory:canCarryItem(_source, item, amount) 
+	cb(check)	
+end)
+
 CreateThread(function()
     while true do
         Wait(1000)

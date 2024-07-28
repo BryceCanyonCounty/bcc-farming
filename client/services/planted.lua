@@ -71,17 +71,29 @@ RegisterNetEvent('bcc-farming:PlantPlanted', function(plantId, plandData, plantC
                     if tonumber(timeLeft) > 0 then
                         local minutes = math.floor(timeLeft / 60)
                         local seconds = timeLeft % 60
+                        harvestPrompt:EnabledPrompt(false)
                         harvestPromptGroup:ShowGroup(_U("plant") .. " " .. plandData.plantName.." | " .. _U("secondsUntilharvest")..string.format("%02d:%02d", minutes, seconds))
                     elseif tonumber(timeLeft) <= 0 then
+                        harvestPrompt:EnabledPrompt(true)
                         harvestPromptGroup:ShowGroup(_U("plant") .. " " .. plandData.plantName.." " .. _U("secondsUntilharvestOver"))
                         if harvestPrompt:HasCompleted() then
                             if tonumber(timeLeft) <= 0 then
-                                PlayAnim("mech_pickup@plant@berries", "base", 2500)
-                                if blip then
-                                    blip:Remove()
+                                local cbresult =  true
+                                for k, v in pairs(plandData.rewards) do
+                                    cbresult = VORPcore.Callback.TriggerAwait('bcc-farming:callback:CanCarryCheck', v.itemName, v.amount)
+                                    if not cbresult then
+                                        VORPcore.NotifyRightTip(_U("noCarry"), 4000)
+                                        break
+                                    end
                                 end
-                                VORPcore.NotifyRightTip(_U("harvested"), 4000)
-                                TriggerServerEvent("bcc-farming:HarvestPlant", plantId, plandData)
+                                if cbresult then
+                                    PlayAnim("mech_pickup@plant@berries", "base", 2500)
+                                    if blip then
+                                        blip:Remove()
+                                    end
+                                    VORPcore.NotifyRightTip(_U("harvested"), 4000)
+                                    TriggerServerEvent("bcc-farming:HarvestPlant", plantId, plandData) 
+                                end
                             else
                                 VORPcore.NotifyRightTip(_U("plantNotGrown"), 4000)
                             end
