@@ -22,5 +22,8 @@ Locales["de_lang"] = {
     harvested = "Du hast die Pflanze Geernted",
     tooCloseToAnotherPlant = "Zu nah an einer Anderen Pflanze",
     secondsUntilharvestOver = 'Fertig',
-    noCarry = "Du kannst keine Gegenstände tragen"
+    noCarry = "Du kannst keine Gegenstände tragen",
+    --New
+    UsageLeft = 'Haltbarkeit: ',
+    FinishPlantingProcessFirst = 'Beende erst den Anbaue der Aktuellen Pflanze',
 }

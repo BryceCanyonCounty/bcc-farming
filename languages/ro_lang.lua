@@ -22,5 +22,8 @@ Locales["ro_lang"] = {
     plantNotGrown = "Planta inca nu a crescut",
     harvested = "Ai recoltat planta",
     tooCloseToAnotherPlant = "Esti prea aproape de alta planta",
-    noCarry = "Nu puteți transporta aceste articole"
+    noCarry = "Nu puteți transporta aceste articole",
+    --New
+    UsageLeft = 'Haltbarkeit: ',
+    FinishPlantingProcessFirst = 'Beende erst den Anbaue der Aktuellen Pflanze',
 }
