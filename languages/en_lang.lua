@@ -22,5 +22,8 @@ Locales["en_lang"] = {
     plantNotGrown = "The plant is not grown yet",
     harvested = "You have harvested the plant",
     tooCloseToAnotherPlant = "You are too close to another plant",
-    noCarry = "You cannot carry these items"
+    noCarry = "You cannot carry these items",
+    --New
+    UsageLeft = 'Haltbarkeit: ',
+    FinishPlantingProcessFirst = 'Beende erst den Anbaue der Aktuellen Pflanze',
 }

@@ -22,6 +22,28 @@ RegisterServerEvent("bcc-farming:GiveBackSeed", function(seed,amount)
     exports.vorp_inventory:addItem(src, seed, amount)
 end)
 
+RegisterServerEvent("bcc-farming:PlantToolUsage",function (plantData)
+    local src = source
+    local PlantItem = plantData.plantingTool
+    local RemoveUsage = plantData.plantingToolUsage
+    local Tool = exports.vorp_inventory:getItem(src, PlantItem)
+    local ToolMeta =  Tool["metadata"]
+    if next(ToolMeta) == nil then
+        exports.vorp_inventory:subItem(src, PlantItem, 1,{})
+        exports.vorp_inventory:addItem(src, PlantItem, 1,{description = _U("UsageLeft") .. 100 - RemoveUsage,durability = 100 - RemoveUsage})
+    else
+        local Durability = ToolMeta.durability - RemoveUsage
+        local description = _U("UsageLeft") .. Durability
+        exports.vorp_inventory:subItem(src, PlantItem, 1,ToolMeta)
+        if Durability >= plantData.plantingToolDurability then
+            exports.vorp_inventory:subItem(src, PlantItem, 1,ToolMeta)
+            exports.vorp_inventory:addItem(src, PlantItem, 1,{description = description ,durability = Durability})
+        elseif Durability <= plantData.plantingToolDurability then
+            exports.vorp_inventory:subItem(src, 'Handtuch', 1,ToolMeta)
+        end
+    end
+end)
+
 RegisterServerEvent("bcc-farming:NewClientConnected", function()
     local _source = source
     if not Config.plantSetup.lockedToPlanter then

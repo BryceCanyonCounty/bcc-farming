@@ -7,6 +7,8 @@ function GetPositionInfrontOfElement(posX, posY, posZ, hed, distance)
     return vec
 end
 
+local PlantingProcess = false
+
 ---@param plantData table
 ---@param fertCount number
 RegisterNetEvent('bcc-farming:PlantingCrop', function(plantData, fertCount)
@@ -23,8 +25,11 @@ RegisterNetEvent('bcc-farming:PlantingCrop', function(plantData, fertCount)
         end
     end
     if not stop then
+        if not PlantingProcess then
+            PlantingProcess = true
         VORPcore.NotifyRightTip(_U("raking"), 16000)
         PlayAnim("amb_work@world_human_farmer_rake@male_a@idle_a", "idle_a", 16000, true, true)
+        TriggerServerEvent("bcc-farming:PlantToolUsage",plantData)
         VORPcore.NotifyRightTip(_U("plantingDone"), 16000)
         if not IsEntityDead(PlayerPedId()) then
             local PromptGroup = BccUtils.Prompt:SetupPromptGroup()
@@ -53,8 +58,12 @@ RegisterNetEvent('bcc-farming:PlantingCrop', function(plantData, fertCount)
             local entRot = GetEntityHeading(PlayerPedId())
             local plantCoords = GetPositionInfrontOfElement(entCoords.x, entCoords.y, entCoords.z, entRot, 0.75)
             TriggerServerEvent('bcc-farming:AddPlant', plantData, plantCoords, fertilized)
+            PlantingProcess = false
         else
             VORPcore.NotifyRightTip(_U("failed"), 4000)
+        end
+        else
+            VORPcore.NotifyRightTip(_U("FinishPlantingProcessFirst"), 4000)
         end
     end
 end)
