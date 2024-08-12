@@ -1,5 +1,7 @@
 AllPlants = {} -- AllPlants is a table that will contain all the plants in the server
 
+
+
 ---@param plantData table
 ---@param plantCoords vector3
 ---@param fertilized boolean
@@ -46,10 +48,14 @@ end)
 
 RegisterServerEvent("bcc-farming:NewClientConnected", function()
     local _source = source
+    local character = VORPcore.getUser(_source).getUsedCharacter
     if not Config.plantSetup.lockedToPlanter then
         if #AllPlants > 0 then
             for k, v in pairs(AllPlants) do
                 for e, u in pairs(Config.plantSetup.plants) do
+                    if v.plant_owner == character.charIdentifier then
+                        TriggerClientEvent('bcc-farming:client:MaxPlantsAmount',_source,1)
+                    end
                     if v.plant_type == u.seedName then
                         TriggerClientEvent('bcc-farming:PlantPlanted', _source, v.plant_id, u, json.decode(v.plant_coords), v.time_left, v.plant_watered, _source) break
                     end
@@ -63,6 +69,7 @@ RegisterServerEvent("bcc-farming:NewClientConnected", function()
                 if v.plant_owner == character.charIdentifier then
                     for e, u in pairs(Config.plantSetup.plants) do
                         if v.plant_type == u.seedName then
+                            TriggerClientEvent('bcc-farming:client:MaxPlantsAmount',_source,1)
                             TriggerClientEvent('bcc-farming:PlantPlanted', _source, v.plant_id, u, json.decode(v.plant_coords), v.time_left, v.plant_watered, _source) break
                         end
                     end
@@ -99,9 +106,11 @@ RegisterServerEvent('bcc-farming:HarvestPlant', function(plantId, plantData, des
             exports.vorp_inventory:addItem(_source, v.itemName, v.amount)
         end
         MySQL.query.await("DELETE FROM bcc_farming WHERE plant_id = ?", { plantId })
+        TriggerClientEvent('bcc-farming:client:MaxPlantsAmount',_source, -1)
         TriggerClientEvent("bcc-farming:RemovePlantClient", -1, plantId)
     else
         MySQL.query.await("DELETE FROM bcc_farming WHERE plant_id = ?", { plantId })
+        TriggerClientEvent('bcc-farming:client:MaxPlantsAmount',_source, -1)
         TriggerClientEvent("bcc-farming:RemovePlantClient", -1, plantId)
     end
 end)

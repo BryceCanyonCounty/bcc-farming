@@ -8,18 +8,30 @@ function GetPositionInfrontOfElement(posX, posY, posZ, hed, distance)
 end
 
 local PlantingProcess = false
+local CurrentPlants = 0
+
+-- MaxPlants Logic
+
+RegisterNetEvent('bcc-farming:client:MaxPlantsAmount',function(Number)
+    if Number == 1 then
+        CurrentPlants = CurrentPlants +1
+    elseif Number == -1 then
+        CurrentPlants = CurrentPlants -1
+    end
+end)
 
 ---@param plantData table
 ---@param fertCount number
 RegisterNetEvent('bcc-farming:PlantingCrop', function(plantData, fertCount)
+    local seed = plantData.seedName
+    local amount = plantData.seedAmount
+    if CurrentPlants < Config.plantSetup.maxPlants then  -- MaxPlants Check
     local playerCoords = GetEntityCoords(PlayerPedId())
     local stop = false
     for e, a in pairs(Config.plantSetup.plants) do
         local entity = GetClosestObjectOfType(playerCoords.x, playerCoords.y, playerCoords.z, plantData.plantingDistance, joaat(a.plantProp), false, false, false)
         if entity ~= 0 then
             stop = true
-            local seed = plantData.seedName
-            local amount = plantData.seedAmount
             TriggerServerEvent("bcc-farming:GiveBackSeed",seed,amount)
             VORPcore.NotifyRightTip(_U("tooCloseToAnotherPlant"), 4000) break
         end
@@ -58,6 +70,7 @@ RegisterNetEvent('bcc-farming:PlantingCrop', function(plantData, fertCount)
             local entRot = GetEntityHeading(PlayerPedId())
             local plantCoords = GetPositionInfrontOfElement(entCoords.x, entCoords.y, entCoords.z, entRot, 0.75)
             TriggerServerEvent('bcc-farming:AddPlant', plantData, plantCoords, fertilized)
+            TriggerEvent('bcc-farming:client:MaxPlantsAmount',1)
             PlantingProcess = false
         else
             VORPcore.NotifyRightTip(_U("failed"), 4000)
@@ -65,5 +78,9 @@ RegisterNetEvent('bcc-farming:PlantingCrop', function(plantData, fertCount)
         else
             VORPcore.NotifyRightTip(_U("FinishPlantingProcessFirst"), 4000)
         end
+    end
+    elseif CurrentPlants == Config.plantSetup.maxPlants then
+        TriggerServerEvent("bcc-farming:GiveBackSeed",seed,amount)
+        VORPcore.NotifyRightTip(_U("maxPlantsReached"), 4000)
     end
 end)
