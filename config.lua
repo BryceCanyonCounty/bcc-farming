@@ -4,6 +4,22 @@ Config = {
     fullWaterBucketItem = "wateringcan", -- Item name for the full water bucket
     emptyWaterBucketItem = "wateringcan_empty", -- Item name for the empty water bucket
 
+    fertilizerSetup = {
+        {
+            fertName = "fertilizer", -- The name used in the inventory
+            fertTimeReduction = 30,  -- Time reduction in minutes or seconds
+        },
+        {
+            fertName = "fertilizer2",    -- The name used in the inventory
+            fertTimeReduction = 50,  -- Time reduction in minutes or seconds
+        },
+        {
+            fertName = "fertilizer3",    -- The name used in the inventory
+            fertTimeReduction = 80,  -- Time reduction in minutes or seconds
+        },
+        -- Add more fertilizers as needed
+    },
+
     plantSetup = {
         blips = false, -- If true, it will create blips for the plants
         deleteAfterDays = 3, -- Days after the plant will be deleted if not harvested (0 will disable, but it's not recommended)
@@ -25,8 +41,6 @@ Config = {
                 soilRequired = false, -- If true, the seed will require soil to be planted
                 soilAmount = 1, -- Amount of soil required to plant the seed
                 soilName = "soil", -- Item name for the soil required to plant the seed
-                fertilizerName = "fertilizer", -- Item name for the fertilizer to fertilize the seed
-                fertTimeReduction = 30, -- Time reduction in seconds when using fertilizer
                 timeToGrow = 180, -- Time in seconds for the plant to grow
                 plantOffset = 1, -- If the plant is not on the ground properly you can use this setting
                 jobLocked = false, -- If true, only players with the job will be able to harvest the plant

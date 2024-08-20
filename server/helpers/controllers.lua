@@ -24,27 +24,28 @@ RegisterServerEvent("bcc-farming:GiveBackSeed", function(seed,amount)
     exports.vorp_inventory:addItem(src, seed, amount)
 end)
 
-RegisterServerEvent("bcc-farming:PlantToolUsage",function (plantData)
-    local src = source
-    local PlantItem = plantData.plantingTool
-    local RemoveUsage = plantData.plantingToolUsage
-    local Tool = exports.vorp_inventory:getItem(src, PlantItem)
-    local ToolMeta =  Tool["metadata"]
-    if next(ToolMeta) == nil then
-        exports.vorp_inventory:subItem(src, PlantItem, 1,{})
-        exports.vorp_inventory:addItem(src, PlantItem, 1,{description = _U("UsageLeft") .. 100 - RemoveUsage,durability = 100 - RemoveUsage})
+RegisterServerEvent("bcc-farming:PlantToolUsage", function(plantdata)
+    local PlantingToolDurability = plantdata.plantingToolDurability
+    local PlantingToolUsage = plantdata.plantingToolUsage
+    local name = plantdata.plantingTool
+    local _source = source
+    local tool = exports.vorp_inventory:getItem(_source, name)
+    local meta = tool["metadata"]
+    if next(meta) == nil then
+        exports.vorp_inventory:subItem(_source, name, 1, {})
+        exports.vorp_inventory:addItem(_source, name, 1, {description = _U("UsageLeft") .. PlantingToolDurability - PlantingToolUsage, durability = PlantingToolDurability - PlantingToolUsage})
     else
-        local Durability = ToolMeta.durability - RemoveUsage
-        local description = _U("UsageLeft") .. Durability
-        exports.vorp_inventory:subItem(src, PlantItem, 1,ToolMeta)
-        if Durability >= plantData.plantingToolDurability then
-            exports.vorp_inventory:subItem(src, PlantItem, 1,ToolMeta)
-            exports.vorp_inventory:addItem(src, PlantItem, 1,{description = description ,durability = Durability})
-        elseif Durability <= plantData.plantingToolDurability then
-            exports.vorp_inventory:subItem(src, 'Handtuch', 1,ToolMeta)
-        end
+      local durability = meta.durability - PlantingToolUsage
+      local description = _U("UsageLeft")
+      exports.vorp_inventory:subItem(_source, name, 1, meta)
+      if 0 >= durability then
+        VORPcore.NotifyRightTip(_source, _U('OutOfUses'), 4000)
+      else
+        exports.vorp_inventory:addItem(_source, name, 1, { description = description .. durability, durability = durability })
+      end
     end
-end)
+  end)
+
 
 RegisterServerEvent("bcc-farming:NewClientConnected", function()
     local _source = source
@@ -119,8 +120,23 @@ end)
 ---@param amount integer
 VORPcore.Callback.Register('bcc-farming:callback:CanCarryCheck', function(source, cb, item, amount)
     local _source = source
-    local check = exports.vorp_inventory:canCarryItem(_source, item, amount) 
-	cb(check)	
+    local check = exports.vorp_inventory:canCarryItem(_source, item, amount)
+	cb(check)
+end)
+
+RegisterServerEvent('bcc-farming:RemoveFertilizer')
+AddEventHandler('bcc-farming:RemoveFertilizer', function(fertilizerName)
+    local _source = source
+
+    -- Check if the player has the fertilizer
+    local fertCount = exports.vorp_inventory:getItemCount(_source, nil, fertilizerName)
+    if fertCount > 0 then
+        -- Remove one unit of the fertilizer
+        exports.vorp_inventory:subItem(_source, fertilizerName, 1)
+        print("Removed one unit of " .. fertilizerName)
+    else
+        print("Fertilizer " .. fertilizerName .. " not found in inventory")
+    end
 end)
 
 CreateThread(function()

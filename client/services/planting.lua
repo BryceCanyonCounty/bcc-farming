@@ -21,8 +21,8 @@ RegisterNetEvent('bcc-farming:client:MaxPlantsAmount',function(Number)
 end)
 
 ---@param plantData table
----@param fertCount number
-RegisterNetEvent('bcc-farming:PlantingCrop', function(plantData, fertCount)
+---@param bestFertilizer table
+RegisterNetEvent('bcc-farming:PlantingCrop', function(plantData, bestFertilizer)
     local seed = plantData.seedName
     local amount = plantData.seedAmount
     if CurrentPlants < Config.plantSetup.maxPlants then  -- MaxPlants Check
@@ -54,12 +54,13 @@ RegisterNetEvent('bcc-farming:PlantingCrop', function(plantData, fertCount)
                 if GetDistanceBetweenCoords(playerCoords.x, playerCoords.y, playerCoords.z, newPlayerCoords.x, newPlayerCoords.y, newPlayerCoords.z, true) < 3 then
                     PromptGroup:ShowGroup(_U("fertilize"))
                     if firstprompt:HasCompleted() then
-                        if fertCount > 0 then
-                            fertilized = true
-                            plantData.timeToGrow = plantData.timeToGrow - plantData.fertTimeReduction break
+                        if bestFertilizer then
+                            plantData.timeToGrow = plantData.timeToGrow - bestFertilizer.fertTimeReduction
+                            TriggerServerEvent('bcc-farming:RemoveFertilizer', bestFertilizer.fertName)
                         else
-                            VORPcore.NotifyRightTip(_U("noFert"), 4000) break
+                            VORPcore.NotifyRightTip(_U("noFert"), 4000)
                         end
+                        break
                     end
                     if secondprompt:HasCompleted() then
                         break

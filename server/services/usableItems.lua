@@ -66,14 +66,22 @@ CreateThread(function()
 
             if allowPlant and not dontAllowAgain then
                 -- Lower meta data in plant done event and remove items there too
-                local fertCount = exports.vorp_inventory:getItemCount(_source, nil, v.fertilizerName)
                 local seedCount = exports.vorp_inventory:getItemCount(_source, nil, v.seedName)
                 if seedCount < v.seedAmount then
                     VORPcore.NotifyRightTip(_source, _U("noSeed"), 4000)
                     return
                 else
                     exports.vorp_inventory:subItem(_source, v.seedName, v.seedAmount)
-                    TriggerClientEvent('bcc-farming:PlantingCrop', _source, v, fertCount)
+                    local bestFertilizer = nil
+                    for _, fert in pairs(Config.fertilizerSetup) do
+                        local fertCount = exports.vorp_inventory:getItemCount(_source, nil, fert.fertName)
+                        if fertCount > 0 then
+                            if not bestFertilizer or fert.fertTimeReduction > bestFertilizer.fertTimeReduction then
+                                bestFertilizer = fert
+                            end
+                        end
+                    end
+                    TriggerClientEvent('bcc-farming:PlantingCrop', _source, v, bestFertilizer)
                 end
             end
         end)
