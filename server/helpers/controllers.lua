@@ -41,7 +41,7 @@ RegisterServerEvent("bcc-farming:PlantToolUsage",function (plantData)
             exports.vorp_inventory:subItem(src, PlantItem, 1,ToolMeta)
             exports.vorp_inventory:addItem(src, PlantItem, 1,{description = description ,durability = Durability})
         elseif Durability <= plantData.plantingToolDurability then
-            exports.vorp_inventory:subItem(src, 'Handtuch', 1,ToolMeta)
+            exports.vorp_inventory:subItem(src, PlantItem, 1,ToolMeta)
         end
     end
 end)

@@ -76,6 +76,7 @@ RegisterNetEvent('bcc-farming:PlantingCrop', function(plantData, fertCount)
             VORPcore.NotifyRightTip(_U("failed"), 4000)
         end
         else
+            TriggerServerEvent("bcc-farming:GiveBackSeed",seed,amount)
             VORPcore.NotifyRightTip(_U("FinishPlantingProcessFirst"), 4000)
         end
     end
