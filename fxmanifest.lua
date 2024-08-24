@@ -33,4 +33,4 @@ dependencies {
     'bcc-utils'
 }
 
-version '2.1.4'
+version '2.1.5'
