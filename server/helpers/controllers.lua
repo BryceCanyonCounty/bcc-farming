@@ -7,8 +7,13 @@ AllPlants = {} -- AllPlants is a table that will contain all the plants in the s
 ---@param fertilized boolean
 RegisterServerEvent("bcc-farming:AddPlant", function(plantData, plantCoords, fertilized)
     local _source = source
-    local character = VORPcore.getUser(_source).getUsedCharacter
-    local plantId = MySQL.insert.await("INSERT INTO bcc_farming (plant_coords, plant_type, plant_watered, time_left, plant_owner) VALUES (?, ?, ?, ?, ?)", { json.encode(plantCoords), plantData.seedName, "false", plantData.timeToGrow, character.charIdentifier })
+    local user = VORPcore.getUser(_source)
+    if not user then return end
+    local character = user.getUsedCharacter
+
+    local plantId = MySQL.insert.await("INSERT INTO `bcc_farming` (plant_coords, plant_type, plant_watered, time_left, plant_owner) VALUES (?, ?, ?, ?, ?)",
+    { json.encode(plantCoords), plantData.seedName, "false", plantData.timeToGrow, character.charIdentifier })
+
     if fertilized then
         exports.vorp_inventory:subItem(_source, plantData.fertilizerName, 1)
     end
@@ -21,11 +26,18 @@ end)
 
 RegisterServerEvent("bcc-farming:GiveBackSeed", function(seed,amount)
     local src = source
-    exports.vorp_inventory:addItem(src, seed, amount)
+    local user = VORPcore.getUser(src)
+    if not user then return end
+    local canCarry = exports.vorp_inventory:canCarryItem(src, seed, amount)
+    if canCarry then
+        exports.vorp_inventory:addItem(src, seed, amount)
+    end
 end)
 
 RegisterServerEvent("bcc-farming:PlantToolUsage",function (plantData)
     local src = source
+    local user = VORPcore.getUser(src)
+    if not user then return end
     local PlantItem = plantData.plantingTool
     local RemoveUsage = plantData.plantingToolUsage
     local Tool = exports.vorp_inventory:getItem(src, PlantItem)
@@ -41,14 +53,17 @@ RegisterServerEvent("bcc-farming:PlantToolUsage",function (plantData)
             exports.vorp_inventory:subItem(src, PlantItem, 1,ToolMeta)
             exports.vorp_inventory:addItem(src, PlantItem, 1,{description = description ,durability = Durability})
         elseif Durability <= plantData.plantingToolDurability then
-            exports.vorp_inventory:subItem(src, 'Handtuch', 1,ToolMeta)
+            exports.vorp_inventory:subItem(src, PlantItem, 1,ToolMeta)
         end
     end
 end)
 
 RegisterServerEvent("bcc-farming:NewClientConnected", function()
     local _source = source
-    local character = VORPcore.getUser(_source).getUsedCharacter
+    local user = VORPcore.getUser(_source)
+    if not user then return end
+    local character = user.getUsedCharacter
+    local charid = character.charIdentifier
     if not Config.plantSetup.lockedToPlanter then
         if #AllPlants > 0 then
             for k, v in pairs(AllPlants) do
@@ -63,10 +78,9 @@ RegisterServerEvent("bcc-farming:NewClientConnected", function()
             end
         end
     else
-        local character = VORPcore.getUser(_source).getUsedCharacter
         if #AllPlants > 0 then
             for k, v in pairs(AllPlants) do
-                if v.plant_owner == character.charIdentifier then
+                if v.plant_owner == charid then
                     for e, u in pairs(Config.plantSetup.plants) do
                         if v.plant_type == u.seedName then
                             TriggerClientEvent('bcc-farming:client:MaxPlantsAmount',_source,1)
@@ -82,15 +96,20 @@ end)
 ---@param plantId integer
 RegisterServerEvent("bcc-farming:UpdatePlantWateredStatus", function(plantId, isRaining)
     local _source = source
+    local user = VORPcore.getUser(_source)
+    if not user then return end
     local hasWaterBucket = exports.vorp_inventory:getItem(_source, Config.fullWaterBucketItem)
+
     if isRaining > 0 then
-        MySQL.query.await("UPDATE bcc_farming SET plant_watered = ? WHERE plant_id = ?", { 'true', plantId })
+        MySQL.query.await("UPDATE `bcc_farming` SET `plant_watered` = ? WHERE `plant_id` = ?", { 'true', plantId })
         TriggerClientEvent("bcc-farming:UpdatePlantWateredStatus", -1, plantId)
+
     elseif hasWaterBucket then
         exports.vorp_inventory:subItem(_source, Config.fullWaterBucketItem, 1)
         exports.vorp_inventory:addItem(_source, Config.emptyWaterBucketItem, 1)
-        MySQL.query.await("UPDATE bcc_farming SET plant_watered = ? WHERE plant_id = ?", { 'true', plantId })
+        MySQL.query.await("UPDATE `bcc_farming` SET `plant_watered` = ? WHERE `plant_id` = ?", { 'true', plantId })
         TriggerClientEvent("bcc-farming:UpdatePlantWateredStatus", -1, plantId)
+
     else
         VORPcore.NotifyRightTip(_source, _U("noWaterBucket"), 4000)
     end
@@ -101,15 +120,20 @@ end)
 ---@param destroy boolean
 RegisterServerEvent('bcc-farming:HarvestPlant', function(plantId, plantData, destroy)
     local _source = source
+    local user = VORPcore.getUser(_source)
+    if not user then return end
+
     if not destroy then
         for k, v in pairs(plantData.rewards) do
             exports.vorp_inventory:addItem(_source, v.itemName, v.amount)
         end
-        MySQL.query.await("DELETE FROM bcc_farming WHERE plant_id = ?", { plantId })
+
+        MySQL.query.await("DELETE FROM `bcc_farming` WHERE `plant_id` = ?", { plantId })
         TriggerClientEvent('bcc-farming:client:MaxPlantsAmount',_source, -1)
         TriggerClientEvent("bcc-farming:RemovePlantClient", -1, plantId)
+
     else
-        MySQL.query.await("DELETE FROM bcc_farming WHERE plant_id = ?", { plantId })
+        MySQL.query.await("DELETE FROM `bcc_farming` WHERE `plant_id` = ?", { plantId })
         TriggerClientEvent('bcc-farming:client:MaxPlantsAmount',_source, -1)
         TriggerClientEvent("bcc-farming:RemovePlantClient", -1, plantId)
     end
@@ -119,14 +143,17 @@ end)
 ---@param amount integer
 VORPcore.Callback.Register('bcc-farming:callback:CanCarryCheck', function(source, cb, item, amount)
     local _source = source
-    local check = exports.vorp_inventory:canCarryItem(_source, item, amount) 
-	cb(check)	
+    local user = VORPcore.getUser(_source)
+    if not user then return cb(false) end
+
+    local check = exports.vorp_inventory:canCarryItem(_source, item, amount)
+	cb(check)
 end)
 
 CreateThread(function()
     while true do
         Wait(1000)
-        local allPlants = MySQL.query.await("SELECT * FROM bcc_farming")
+        local allPlants = MySQL.query.await("SELECT * FROM `bcc_farming`")
         AllPlants = allPlants
         if #allPlants > 0 then
             for k, v in pairs(allPlants) do
