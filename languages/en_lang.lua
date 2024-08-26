@@ -24,6 +24,7 @@ Locales["en_lang"] = {
     tooCloseToAnotherPlant = "You are too close to another plant",
     noCarry = "You cannot carry these items",
     --New
-    UsageLeft = 'Haltbarkeit: ',
-    FinishPlantingProcessFirst = 'Beende erst den Anbaue der Aktuellen Pflanze',
+    UsageLeft = 'Durability: ',
+    FinishPlantingProcessFirst = 'Finish growing the current plant first',
+    needNewTool = 'Tool broken, you need a new one!',
 }
