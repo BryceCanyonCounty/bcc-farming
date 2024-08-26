@@ -1,5 +1,5 @@
 CreateThread(function()
-    for k, v in pairs(Config.plantSetup.plants) do
+    for k, v in pairs(Plants) do
         exports.vorp_inventory:registerUsableItem(v.seedName, function(data)
             local _source = data.source
             local playerCoords = GetEntityCoords(GetPlayerPed(_source))
