@@ -6,8 +6,8 @@
 - Allows you to create as many crops to plant for your RedM server as you want!
 - Easy to translate via the Language files!
 - Ability to individually job lock plants!
-- Must have a "Planting tool" to be able to plant the crop! (Tool is set for each plant individually in the config.lua)
-- Super easy to configure everything via the config.lua!
+- Option to require a "Planting tool" to be able to plant the crop! (Tool is set for each plant individually in the config.lua)
+- Super easy to configure everything via the config files!
 - You have to water crops using a bucket in the config!
 - Watering a crop removes the full bucket, and adds an empty one!
 - Option in config to have blips on plants!
@@ -22,10 +22,10 @@
 - It is simple, effective, and easy to use!
 
 ## Requirements
-- VORP Core
-- VORP Inventory
-- VORP Character
-- bcc-utils
+- [vorp_core](https://github.com/VORPCORE/vorp-core-lua)
+- [vorp_inventory](https://github.com/VORPCORE/vorp_inventory-lua)
+- [vorp_character](https://github.com/VORPCORE/vorp_character-lua)
+- [bcc-utils](https://github.com/BryceCanyonCounty/bcc-utils)
 
 ## Installation Steps
 - Make sure dependencies are installed/updated and ensured before this script
