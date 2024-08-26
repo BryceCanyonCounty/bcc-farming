@@ -26,4 +26,5 @@ Locales["ro_lang"] = {
     --New
     UsageLeft = 'Haltbarkeit: ',
     FinishPlantingProcessFirst = 'Beende erst den Anbaue der Aktuellen Pflanze',
+    needNewTool = 'Tool broken, you need a new one!',
 }
