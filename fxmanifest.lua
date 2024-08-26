@@ -7,7 +7,7 @@ author 'Jake2k4'
 description 'bcc-farming'
 
 shared_scripts {
-    'config.lua',
+    'configs/*.lua',
     'locale.lua',
     'languages/*.lua'
 }
@@ -33,4 +33,4 @@ dependencies {
     'bcc-utils'
 }
 
-version '2.1.4'
+version '2.2.0'
