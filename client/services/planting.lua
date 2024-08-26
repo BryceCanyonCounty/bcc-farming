@@ -28,7 +28,7 @@ RegisterNetEvent('bcc-farming:PlantingCrop', function(plantData, bestFertilizer)
     if CurrentPlants < Config.plantSetup.maxPlants then  -- MaxPlants Check
     local playerCoords = GetEntityCoords(PlayerPedId())
     local stop = false
-    for e, a in pairs(Config.plantSetup.plants) do
+    for e, a in pairs(Plants) do
         local entity = GetClosestObjectOfType(playerCoords.x, playerCoords.y, playerCoords.z, plantData.plantingDistance, joaat(a.plantProp), false, false, false)
         if entity ~= 0 then
             stop = true
@@ -47,7 +47,6 @@ RegisterNetEvent('bcc-farming:PlantingCrop', function(plantData, bestFertilizer)
             local PromptGroup = BccUtils.Prompt:SetupPromptGroup()
             local firstprompt = PromptGroup:RegisterPrompt(_U("yes"), 0x4CC0E2FE, 1, 1, true, 'hold', {timedeventhash = "MEDIUM_TIMED_EVENT"})
             local secondprompt = PromptGroup:RegisterPrompt(_U("no"), 0x9959A6F0, 1, 2, true, 'hold', {timedeventhash = "MEDIUM_TIMED_EVENT"})
-            local fertilized = false
             while true do
                 Wait(5)
                 local newPlayerCoords = GetEntityCoords(PlayerPedId())
@@ -70,10 +69,11 @@ RegisterNetEvent('bcc-farming:PlantingCrop', function(plantData, bestFertilizer)
             local entCoords = GetEntityCoords(PlayerPedId())
             local entRot = GetEntityHeading(PlayerPedId())
             local plantCoords = GetPositionInfrontOfElement(entCoords.x, entCoords.y, entCoords.z, entRot, 0.75)
-            TriggerServerEvent('bcc-farming:AddPlant', plantData, plantCoords, fertilized)
+            TriggerServerEvent('bcc-farming:AddPlant', plantData, plantCoords)
             TriggerEvent('bcc-farming:client:MaxPlantsAmount',1)
             PlantingProcess = false
         else
+            TriggerServerEvent("bcc-farming:GiveBackSeed",seed,amount)
             VORPcore.NotifyRightTip(_U("failed"), 4000)
         end
         else
