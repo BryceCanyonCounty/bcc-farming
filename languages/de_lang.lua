@@ -21,9 +21,11 @@ Locales["de_lang"] = {
     plantNotGrown = "Die Pflanze ist noch nicht Gewachsen",
     harvested = "Du hast die Pflanze Geernted",
     tooCloseToAnotherPlant = "Zu nah an einer Anderen Pflanze",
-    secondsUntilharvestOver = 'Fertig',
+    secondsUntilharvestOver = "Fertig",
     noCarry = "Du kannst keine Gegenstände tragen",
     --New
-    UsageLeft = 'Haltbarkeit: ',
-    FinishPlantingProcessFirst = 'Beende erst den Anbaue der Aktuellen Pflanze',
+    UsageLeft = "Haltbarkeit: ",
+    FinishPlantingProcessFirst = "Beende erst den Anbaue der Aktuellen Pflanze",
+    needNewTool = "Tool broken, you need a new one!",
+    useBucket = "Use Bucket",
 }
