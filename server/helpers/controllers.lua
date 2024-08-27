@@ -1,90 +1,92 @@
-AllPlants = {} -- AllPlants is a table that will contain all the plants in the server
-
-
+local AllPlants = {} -- AllPlants is a table that will contain all the plants in the server
 
 ---@param plantData table
 ---@param plantCoords vector3
----@param fertilized boolean
-RegisterServerEvent("bcc-farming:AddPlant", function(plantData, plantCoords, fertilized)
-    local _source = source
-    local user = VORPcore.getUser(_source)
-    if not user then return end
-    local character = user.getUsedCharacter
-
-    local plantId = MySQL.insert.await("INSERT INTO `bcc_farming` (plant_coords, plant_type, plant_watered, time_left, plant_owner) VALUES (?, ?, ?, ?, ?)",
-    { json.encode(plantCoords), plantData.seedName, "false", plantData.timeToGrow, character.charIdentifier })
-
-    if fertilized then
-        exports.vorp_inventory:subItem(_source, plantData.fertilizerName, 1)
-    end
-    if Config.plantSetup.lockedToPlanter then
-        TriggerClientEvent('bcc-farming:PlantPlanted', _source, plantId, plantData, plantCoords, plantData.timeToGrow, false, _source)
-    else
-        TriggerClientEvent('bcc-farming:PlantPlanted', -1, plantId, plantData, plantCoords, plantData.timeToGrow, false, _source)
-    end
-end)
-
-RegisterServerEvent("bcc-farming:GiveBackSeed", function(seed,amount)
+RegisterServerEvent('bcc-farming:AddPlant', function(plantData, plantCoords)
     local src = source
     local user = VORPcore.getUser(src)
     if not user then return end
+    local character = user.getUsedCharacter
+
+    local plantId = MySQL.insert.await('INSERT INTO `bcc_farming` (plant_coords, plant_type, plant_watered, time_left, plant_owner) VALUES (?, ?, ?, ?, ?)',
+    { json.encode(plantCoords), plantData.seedName, 'false', plantData.timeToGrow, character.charIdentifier })
+
+    if Config.plantSetup.lockedToPlanter then
+        TriggerClientEvent('bcc-farming:PlantPlanted', src, plantId, plantData, plantCoords, plantData.timeToGrow, false, src)
+    else
+        TriggerClientEvent('bcc-farming:PlantPlanted', -1, plantId, plantData, plantCoords, plantData.timeToGrow, false, src)
+    end
+end)
+
+RegisterServerEvent('bcc-farming:GiveBackSeed', function(seed, amount)
+    local src = source
+    local user = VORPcore.getUser(src)
+    if not user then return end
+
     local canCarry = exports.vorp_inventory:canCarryItem(src, seed, amount)
     if canCarry then
         exports.vorp_inventory:addItem(src, seed, amount)
     end
 end)
 
-RegisterServerEvent("bcc-farming:PlantToolUsage",function (plantData)
+RegisterServerEvent('bcc-farming:PlantToolUsage',function (plantData)
     local src = source
     local user = VORPcore.getUser(src)
     if not user then return end
-    local PlantItem = plantData.plantingTool
-    local RemoveUsage = plantData.plantingToolUsage
-    local Tool = exports.vorp_inventory:getItem(src, PlantItem)
-    local ToolMeta =  Tool["metadata"]
-    if next(ToolMeta) == nil then
-        exports.vorp_inventory:subItem(src, PlantItem, 1,{})
-        exports.vorp_inventory:addItem(src, PlantItem, 1,{description = _U("UsageLeft") .. 100 - RemoveUsage,durability = 100 - RemoveUsage})
+    local toolItem = plantData.plantingTool
+    local toolUsage = plantData.plantingToolUsage
+    local tool = exports.vorp_inventory:getItem(src, toolItem)
+    local toolMeta =  tool['metadata']
+
+    if next(toolMeta) == nil then
+        exports.vorp_inventory:subItem(src, toolItem, 1, {})
+        exports.vorp_inventory:addItem(src, toolItem, 1, { description = _U('UsageLeft') .. 100 - toolUsage, durability = 100 - toolUsage })
     else
-        local Durability = ToolMeta.durability - RemoveUsage
-        local description = _U("UsageLeft") .. Durability
-        exports.vorp_inventory:subItem(src, PlantItem, 1,ToolMeta)
-        if Durability >= plantData.plantingToolDurability then
-            exports.vorp_inventory:subItem(src, PlantItem, 1,ToolMeta)
-            exports.vorp_inventory:addItem(src, PlantItem, 1,{description = description ,durability = Durability})
-        elseif Durability <= plantData.plantingToolDurability then
-            exports.vorp_inventory:subItem(src, PlantItem, 1,ToolMeta)
+        local durabilityValue = toolMeta.durability - toolUsage
+        exports.vorp_inventory:subItem(src, toolItem, 1, toolMeta)
+
+        if durabilityValue >= toolUsage then
+            exports.vorp_inventory:subItem(src, toolItem, 1, toolMeta)
+            exports.vorp_inventory:addItem(src, toolItem, 1, { description = _U('UsageLeft') .. durabilityValue, durability = durabilityValue })
+        elseif durabilityValue < toolUsage then
+            exports.vorp_inventory:subItem(src, toolItem, 1, toolMeta)
+            VORPcore.NotifyRightTip(src, _U('needNewTool'), 4000)
         end
     end
 end)
 
-RegisterServerEvent("bcc-farming:NewClientConnected", function()
-    local _source = source
-    local user = VORPcore.getUser(_source)
+RegisterServerEvent('bcc-farming:NewClientConnected', function()
+    local src = source
+    local user = VORPcore.getUser(src)
     if not user then return end
     local character = user.getUsedCharacter
     local charid = character.charIdentifier
+
     if not Config.plantSetup.lockedToPlanter then
         if #AllPlants > 0 then
-            for k, v in pairs(AllPlants) do
-                for e, u in pairs(Config.plantSetup.plants) do
-                    if v.plant_owner == character.charIdentifier then
-                        TriggerClientEvent('bcc-farming:client:MaxPlantsAmount',_source,1)
+            for _, currentPlants in pairs(AllPlants) do
+                for _, plantCfg in pairs(Plants) do
+                    if currentPlants.plant_owner == charid then
+                        TriggerClientEvent('bcc-farming:MaxPlantsAmount', src, 1)
                     end
-                    if v.plant_type == u.seedName then
-                        TriggerClientEvent('bcc-farming:PlantPlanted', _source, v.plant_id, u, json.decode(v.plant_coords), v.time_left, v.plant_watered, _source) break
+                    if currentPlants.plant_type == plantCfg.seedName then
+                        TriggerClientEvent('bcc-farming:PlantPlanted',
+                        src, currentPlants.plant_id, plantCfg, json.decode(currentPlants.plant_coords), currentPlants.time_left, currentPlants.plant_watered, src)
+                        break
                     end
                 end
             end
         end
     else
         if #AllPlants > 0 then
-            for k, v in pairs(AllPlants) do
-                if v.plant_owner == charid then
-                    for e, u in pairs(Config.plantSetup.plants) do
-                        if v.plant_type == u.seedName then
-                            TriggerClientEvent('bcc-farming:client:MaxPlantsAmount',_source,1)
-                            TriggerClientEvent('bcc-farming:PlantPlanted', _source, v.plant_id, u, json.decode(v.plant_coords), v.time_left, v.plant_watered, _source) break
+            for _, currentPlants in pairs(AllPlants) do
+                if currentPlants.plant_owner == charid then
+                    for _, plantCfg in pairs(Plants) do
+                        if currentPlants.plant_type == plantCfg.seedName then
+                            TriggerClientEvent('bcc-farming:MaxPlantsAmount',src,1)
+                            TriggerClientEvent('bcc-farming:PlantPlanted',
+                            src, currentPlants.plant_id, plantCfg, json.decode(currentPlants.plant_coords), currentPlants.time_left, currentPlants.plant_watered, src)
+                            break
                         end
                     end
                 end
@@ -94,24 +96,24 @@ RegisterServerEvent("bcc-farming:NewClientConnected", function()
 end)
 
 ---@param plantId integer
-RegisterServerEvent("bcc-farming:UpdatePlantWateredStatus", function(plantId, isRaining)
-    local _source = source
-    local user = VORPcore.getUser(_source)
+RegisterServerEvent('bcc-farming:UpdatePlantWateredStatus', function(plantId, isRaining)
+    local src = source
+    local user = VORPcore.getUser(src)
     if not user then return end
-    local hasWaterBucket = exports.vorp_inventory:getItem(_source, Config.fullWaterBucketItem)
+    local hasWaterBucket = exports.vorp_inventory:getItem(src, Config.fullWaterBucket)
 
     if isRaining > 0 then
-        MySQL.query.await("UPDATE `bcc_farming` SET `plant_watered` = ? WHERE `plant_id` = ?", { 'true', plantId })
-        TriggerClientEvent("bcc-farming:UpdatePlantWateredStatus", -1, plantId)
+        MySQL.query.await('UPDATE `bcc_farming` SET `plant_watered` = ? WHERE `plant_id` = ?', { 'true', plantId })
+        TriggerClientEvent('bcc-farming:UpdatePlantWateredStatus', -1, plantId)
 
     elseif hasWaterBucket then
-        exports.vorp_inventory:subItem(_source, Config.fullWaterBucketItem, 1)
-        exports.vorp_inventory:addItem(_source, Config.emptyWaterBucketItem, 1)
-        MySQL.query.await("UPDATE `bcc_farming` SET `plant_watered` = ? WHERE `plant_id` = ?", { 'true', plantId })
-        TriggerClientEvent("bcc-farming:UpdatePlantWateredStatus", -1, plantId)
+        exports.vorp_inventory:subItem(src, Config.fullWaterBucket, 1)
+        exports.vorp_inventory:addItem(src, Config.emptyWaterBucket, 1)
+        MySQL.query.await('UPDATE `bcc_farming` SET `plant_watered` = ? WHERE `plant_id` = ?', { 'true', plantId })
+        TriggerClientEvent('bcc-farming:UpdatePlantWateredStatus', -1, plantId)
 
     else
-        VORPcore.NotifyRightTip(_source, _U("noWaterBucket"), 4000)
+        VORPcore.NotifyRightTip(src, _U('noWaterBucket'), 4000)
     end
 end)
 
@@ -119,46 +121,52 @@ end)
 ---@param plantData table
 ---@param destroy boolean
 RegisterServerEvent('bcc-farming:HarvestPlant', function(plantId, plantData, destroy)
-    local _source = source
-    local user = VORPcore.getUser(_source)
+    local src = source
+    local user = VORPcore.getUser(src)
     if not user then return end
 
     if not destroy then
-        for k, v in pairs(plantData.rewards) do
-            exports.vorp_inventory:addItem(_source, v.itemName, v.amount)
+        for _, reward in pairs(plantData.rewards) do
+            exports.vorp_inventory:addItem(src, reward.itemName, reward.amount)
         end
-
-        MySQL.query.await("DELETE FROM `bcc_farming` WHERE `plant_id` = ?", { plantId })
-        TriggerClientEvent('bcc-farming:client:MaxPlantsAmount',_source, -1)
-        TriggerClientEvent("bcc-farming:RemovePlantClient", -1, plantId)
-
-    else
-        MySQL.query.await("DELETE FROM `bcc_farming` WHERE `plant_id` = ?", { plantId })
-        TriggerClientEvent('bcc-farming:client:MaxPlantsAmount',_source, -1)
-        TriggerClientEvent("bcc-farming:RemovePlantClient", -1, plantId)
     end
+
+    MySQL.query.await('DELETE FROM `bcc_farming` WHERE `plant_id` = ?', { plantId })
+    TriggerClientEvent('bcc-farming:MaxPlantsAmount', src, -1)
+    TriggerClientEvent('bcc-farming:RemovePlantClient', -1, plantId)
 end)
 
 ---@param item string
 ---@param amount integer
-VORPcore.Callback.Register('bcc-farming:callback:CanCarryCheck', function(source, cb, item, amount)
-    local _source = source
-    local user = VORPcore.getUser(_source)
+VORPcore.Callback.Register('bcc-farming:CanCarryCheck', function(source, cb, item, amount)
+    local src = source
+    local user = VORPcore.getUser(src)
     if not user then return cb(false) end
 
-    local check = exports.vorp_inventory:canCarryItem(_source, item, amount)
+    local check = exports.vorp_inventory:canCarryItem(src, item, amount)
 	cb(check)
+end)
+
+RegisterServerEvent('bcc-farming:RemoveFertilizer', function(fertilizerName)
+    local src = source
+    local user = VORPcore.getUser(src)
+    if not user then return end
+
+    local fertCount = exports.vorp_inventory:getItemCount(src, nil, fertilizerName)
+    if fertCount > 0 then
+        exports.vorp_inventory:subItem(src, fertilizerName, 1)
+    end
 end)
 
 CreateThread(function()
     while true do
         Wait(1000)
-        local allPlants = MySQL.query.await("SELECT * FROM `bcc_farming`")
+        local allPlants = MySQL.query.await('SELECT * FROM `bcc_farming`')
         AllPlants = allPlants
         if #allPlants > 0 then
             for k, v in pairs(allPlants) do
-                if v.plant_watered == "true" and tonumber(v.time_left) > 0 then
-                    exports.oxmysql:execute("UPDATE bcc_farming SET time_left = time_left - ? WHERE plant_id = ?", { 1, v.plant_id })
+                if v.plant_watered == 'true' and tonumber(v.time_left) > 0 then
+                    exports.oxmysql:execute('UPDATE bcc_farming SET time_left = time_left - ? WHERE plant_id = ?', { 1, v.plant_id })
                 end
             end
         end
