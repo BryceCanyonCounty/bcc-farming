@@ -57,7 +57,7 @@ RegisterNetEvent('bcc-farming:PlantingCrop', function(plantData, bestFertilizer)
                             fetilizerGroup:ShowGroup(_U('fertilize'))
                             if yesPrompt:HasCompleted() then
                                 if bestFertilizer then
-                                    plantData.timeToGrow = plantData.timeToGrow - bestFertilizer.fertTimeReduction
+                                    plantData.timeToGrow = math.floor(plantData.timeToGrow - (bestFertilizer.fertTimeReduction * plantData.timeToGrow))
                                     TriggerServerEvent('bcc-farming:RemoveFertilizer', bestFertilizer.fertName)
                                 else
                                     VORPcore.NotifyRightTip(_U('noFert'), 4000)
