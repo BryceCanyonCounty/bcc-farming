@@ -6,20 +6,20 @@ Config = {
     emptyWaterBucket = 'wateringcan_empty', -- Item name for the empty water bucket
     -----------------------------------------------------
 
+    -- Script will use the one with the highest time reduction from the player's inventory
     fertilizerSetup = {
         {
             fertName = 'fertilizer1', -- Item name used in the database
-            fertTimeReduction = 200,  -- Time reduction in seconds
+            fertTimeReduction = 0.25, -- Default: 0.25 / 25% reduction in time
         },
         {
             fertName = 'fertilizer2', -- Item name used in the database
-            fertTimeReduction = 400,  -- Time reduction in seconds
+            fertTimeReduction = 0.50, -- Default: 0.50 / 50% reduction in time
         },
         {
             fertName = 'fertilizer3', -- Item name used in the database
-            fertTimeReduction = 600,  -- Time reduction in seconds
+            fertTimeReduction = 0.75, -- Default: 0.75 / 75% reduction in time
         },
-        -- Add more fertilizers as needed / Script will use the one with the highest time reduction from the player's inventory
     },
     -----------------------------------------------------
 
