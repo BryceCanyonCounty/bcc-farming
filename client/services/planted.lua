@@ -7,9 +7,7 @@ local Crops = {}
 ---@param watered boolean --Boolean string
 ---@param source integer
 RegisterNetEvent('bcc-farming:PlantPlanted', function(plantId, plantData, plantCoords, timeLeft, watered, source)
-    local playerPed = PlayerPedId()
-    local plantObj = BccUtils.Objects:Create(plantData.plantProp, plantCoords.x, plantCoords.y, plantCoords.z, GetEntityHeading(playerPed), false, 'standard')
-
+    local plantObj = BccUtils.Objects:Create(plantData.plantProp, plantCoords.x, plantCoords.y, plantCoords.z, GetEntityHeading(PlayerPedId()), false, 'standard')
     plantObj:PlaceOnGround(true)
     if plantData.plantOffset ~= 0 then
         SetEntityCoords(plantObj:GetObj(), plantCoords.x, plantCoords.y, plantCoords.z - plantData.plantOffset, false, false, false, true)
@@ -18,18 +16,18 @@ RegisterNetEvent('bcc-farming:PlantPlanted', function(plantId, plantData, plantC
     Crops[plantId] = { plantId = plantId, removePlant = false, watered = tostring(watered)}
     local blip = nil
     if Config.plantSetup.blips then -- Make a check on server to only have blip show for planter not everyone otherwise blips would be for everyone if its not locked to planter
-        if GetPlayerServerId(playerPed) == source then -- Only show blip for planter not all clients
+        if GetPlayerServerId(PlayerPedId()) == source then -- Only show blip for planter not all clients
             blip = BccUtils.Blip:SetBlip(_U('plant'), 'blip_mp_spawnpoint', 0.2, plantCoords.x, plantCoords.y, plantCoords.z)
         end
     end
 
     local waterGroup = BccUtils.Prompt:SetupPromptGroup()
-    local waterPrompt = waterGroup:RegisterPrompt(_U('useBucket'), 0x4CC0E2FE, 1, 1, true, 'hold', { timedeventhash = 'MEDIUM_TIMED_EVENT' })
-    local destroyPromptWG = waterGroup:RegisterPrompt(_U('destroyPlant'), 0x27D1C284, 1, 1, true, 'hold', { timedeventhash = 'MEDIUM_TIMED_EVENT'})
+    local waterPrompt = waterGroup:RegisterPrompt(_U('useBucket'), Config.keys.water, 1, 1, true, 'hold', { timedeventhash = 'MEDIUM_TIMED_EVENT' })
+    local destroyPromptWG = waterGroup:RegisterPrompt(_U('destroyPlant'), Config.keys.destroy, 1, 1, true, 'hold', { timedeventhash = 'MEDIUM_TIMED_EVENT'})
     local doWaterAnim = false -- Used to play the anim after the watered status is changed (Cant be done where serv event is triggered as you may not have the buckets this stops it from playing unless you have the buckets)
     local harvestGroup = BccUtils.Prompt:SetupPromptGroup()
-    local harvestPrompt = harvestGroup:RegisterPrompt(_U('harvest'), 0x4CC0E2FE, 1, 1, true, 'hold', { timedeventhash = 'MEDIUM_TIMED_EVENT' })
-    local destroyPromptHG = harvestGroup:RegisterPrompt(_U('destroyPlant'), 0x27D1C284, 1, 1, true, 'hold', { timedeventhash = 'MEDIUM_TIMED_EVENT'})
+    local harvestPrompt = harvestGroup:RegisterPrompt(_U('harvest'), Config.keys.harvest, 1, 1, true, 'hold', { timedeventhash = 'MEDIUM_TIMED_EVENT' })
+    local destroyPromptHG = harvestGroup:RegisterPrompt(_U('destroyPlant'), Config.keys.destroy, 1, 1, true, 'hold', { timedeventhash = 'MEDIUM_TIMED_EVENT'})
 
     CreateThread(function() -- I normally hate doing layered threads in an event or function but this is the best way to keep the time synced with the database and accurate
         while tonumber(timeLeft) > 0 and Crops[plantId] do
@@ -59,14 +57,14 @@ RegisterNetEvent('bcc-farming:PlantPlanted', function(plantId, plantData, plantC
             watered = Crops[plantId].watered
         end
 
-        local dist = #(vector3(plantCoords.x, plantCoords.y, plantCoords.z) - GetEntityCoords(playerPed))
+        local dist = #(GetEntityCoords(PlayerPedId()) - vector3(plantCoords.x, plantCoords.y, plantCoords.z))
         if tostring(watered) ~= 'false' then
             if doWaterAnim and Crops[plantId].watered == 'true' then
                 ScenarioInPlace('WORLD_HUMAN_BUCKET_POUR_LOW', 5000)
                 doWaterAnim = false
             end
 
-            if dist <= 1 then
+            if dist <= 1.5 then
                 sleep = 0
                 if tonumber(timeLeft) > 0 then
                     local minutes = math.floor(timeLeft / 60)
@@ -102,7 +100,7 @@ RegisterNetEvent('bcc-farming:PlantPlanted', function(plantId, plantData, plantC
                 end
             end
         else
-            if dist <= 1 and tostring(watered) == 'false' then
+            if dist <= 1.5 and tostring(watered) == 'false' then
                 sleep = 0
                 local isRaining = GetRainLevel()
                 if isRaining > 0 then
