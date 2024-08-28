@@ -164,9 +164,9 @@ CreateThread(function()
         local allPlants = MySQL.query.await('SELECT * FROM `bcc_farming`')
         AllPlants = allPlants
         if #allPlants > 0 then
-            for k, v in pairs(allPlants) do
-                if v.plant_watered == 'true' and tonumber(v.time_left) > 0 then
-                    exports.oxmysql:execute('UPDATE bcc_farming SET time_left = time_left - ? WHERE plant_id = ?', { 1, v.plant_id })
+            for _, plant in pairs(allPlants) do
+                if plant.plant_watered == 'true' and tonumber(plant.time_left) > 0 then
+                    MySQL.query.await('UPDATE `bcc_farming` SET `time_left` = `time_left` - ? WHERE `plant_id` = ?', { 1, plant.plant_id })
                 end
             end
         end
