@@ -24,6 +24,8 @@ Locales["fr_lang"] = {
     tooCloseToAnotherPlant = "Vous êtes trop près d'une autre plante",
     noCarry = "Vous ne pouvez pas emporter ces",
     --New
-    UsageLeft = 'Haltbarkeit: ',
-    FinishPlantingProcessFirst = 'Beende erst den Anbaue der Aktuellen Pflanze',
+    UsageLeft = "Durability: ",
+    FinishPlantingProcessFirst = "Finish growing the current plant first",
+    needNewTool = "Tool broken, you need a new one!",
+    useBucket = "Use Bucket",
 }
