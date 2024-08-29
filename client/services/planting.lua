@@ -47,8 +47,8 @@ RegisterNetEvent('bcc-farming:PlantingCrop', function(plantData, bestFertilizer)
                 VORPcore.NotifyRightTip(_U('plantingDone'), 4000)
                 if not IsEntityDead(playerPed) then
                     local fetilizerGroup = BccUtils.Prompt:SetupPromptGroup()
-                    local yesPrompt = fetilizerGroup:RegisterPrompt(_U('yes'), 0x4CC0E2FE, 1, 1, true, 'hold', { timedeventhash = 'MEDIUM_TIMED_EVENT' })
-                    local noPrompt = fetilizerGroup:RegisterPrompt(_U('no'), 0x9959A6F0, 1, 2, true, 'hold', { timedeventhash = 'MEDIUM_TIMED_EVENT' })
+                    local yesPrompt = fetilizerGroup:RegisterPrompt(_U('yes'), Config.keys.fertYes, 1, 1, true, 'hold', { timedeventhash = 'MEDIUM_TIMED_EVENT' })
+                    local noPrompt = fetilizerGroup:RegisterPrompt(_U('no'), Config.keys.fertNo, 1, 2, true, 'hold', { timedeventhash = 'MEDIUM_TIMED_EVENT' })
                     while true do
                         local sleep = 500
                         local newPlayerCoords = GetEntityCoords(playerPed)
