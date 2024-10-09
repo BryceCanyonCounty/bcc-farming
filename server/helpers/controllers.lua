@@ -165,8 +165,10 @@ CreateThread(function()
         AllPlants = allPlants
         if #allPlants > 0 then
             for _, plant in pairs(allPlants) do
-                if plant.plant_watered == 'true' and tonumber(plant.time_left) > 0 then
-                    MySQL.query.await('UPDATE `bcc_farming` SET `time_left` = `time_left` - ? WHERE `plant_id` = ?', { 1, plant.plant_id })
+                local timeLeft = tonumber(plant.time_left)
+                if plant.plant_watered == 'true' and timeLeft > 0 then
+                    local newTime = timeLeft - 1
+                    MySQL.query('UPDATE `bcc_farming` SET `time_left` = ? WHERE `plant_id` = ?', { newTime, plant.plant_id })
                 end
             end
         end
