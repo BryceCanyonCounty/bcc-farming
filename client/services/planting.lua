@@ -43,7 +43,9 @@ RegisterNetEvent('bcc-farming:PlantingCrop', function(plantData, bestFertilizer)
                 PlantingProcess = true
                 VORPcore.NotifyRightTip(_U('raking'), 16000)
                 PlayAnim('amb_work@world_human_farmer_rake@male_a@idle_a', 'idle_a', 16000, true, true)
-                TriggerServerEvent('bcc-farming:PlantToolUsage', plantData)
+                if plantData.plantingToolRequired then
+                    TriggerServerEvent('bcc-farming:PlantToolUsage', plantData)
+                end
                 VORPcore.NotifyRightTip(_U('plantingDone'), 4000)
                 if not IsEntityDead(playerPed) then
                     local fetilizerGroup = BccUtils.Prompt:SetupPromptGroup()
