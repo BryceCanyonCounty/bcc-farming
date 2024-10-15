@@ -14,17 +14,13 @@ shared_scripts {
 
 server_scripts {
     '@oxmysql/lib/MySQL.lua',
-    '/server/helpers/functions.lua',
-    '/server/helpers/*.lua',
-    '/server/services/*.lua',
-    '/server/*.lua'
+    'server/main.lua',
+    'server/services/*.lua'
 }
 
 client_scripts {
-    '/client/helpers/functions.lua',
-    '/client/helpers/*.lua',
-    '/client/*.lua',
-    '/client/services/*.lua'
+    'client/main.lua',
+    'client/services/*.lua'
 }
 
 dependencies {
@@ -33,4 +29,4 @@ dependencies {
     'bcc-utils'
 }
 
-version '2.2.2'
+version '2.3.0'
