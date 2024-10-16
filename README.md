@@ -36,7 +36,7 @@
 - Restart server
 
 ## Side notes
-- Make sure all items set exist in your database
+- Make sure all items exist in your database.
 - This script is written from scratch, but took a heavy inspiration from prp_farming.
 - You can edit the code obviously. All I ask is that you release the edits to the community freely.
 

@@ -32,10 +32,14 @@ Config = {
     -----------------------------------------------------
 
     plantSetup = {
-        blips = false,           -- If true, it will create blips for the plants
-        deleteAfterDays = 3,     -- Days after the plant will be deleted if not harvested (0 will disable, but it's not recommended)
-        lockedToPlanter = false, -- If true, only the player who planted the seed will be able to harvest it
-        maxPlants = 10,          -- Maximum amount of plants a player can have
+        blips = {
+            enabled = true,                -- Set true to Enable Blips for Plants (Only shows to planter)
+            sprite = 'blip_mp_spawnpoint', -- Default: 'blip_mp_spawnpoint'
+            name = 'Plant',                -- Name of Blip on Map
+            color = 'WHITE'                -- Blip Colors Shown Below
+        },
+        lockedToPlanter = false,           -- If true, only the player who planted the seed will be able to harvest it
+        maxPlants = 10,                    -- Maximum amount of plants a player can have
     },
     -----------------------------------------------------
 
@@ -75,5 +79,40 @@ Config = {
                 townRange = 150                              -- Range where the town will be considered
             }
         }
-    }
+    },
+
+    BlipColors = {
+        LIGHT_BLUE    = 'BLIP_MODIFIER_MP_COLOR_1',
+        DARK_RED      = 'BLIP_MODIFIER_MP_COLOR_2',
+        PURPLE        = 'BLIP_MODIFIER_MP_COLOR_3',
+        ORANGE        = 'BLIP_MODIFIER_MP_COLOR_4',
+        TEAL          = 'BLIP_MODIFIER_MP_COLOR_5',
+        LIGHT_YELLOW  = 'BLIP_MODIFIER_MP_COLOR_6',
+        PINK          = 'BLIP_MODIFIER_MP_COLOR_7',
+        GREEN         = 'BLIP_MODIFIER_MP_COLOR_8',
+        DARK_TEAL     = 'BLIP_MODIFIER_MP_COLOR_9',
+        RED           = 'BLIP_MODIFIER_MP_COLOR_10',
+        LIGHT_GREEN   = 'BLIP_MODIFIER_MP_COLOR_11',
+        TEAL2         = 'BLIP_MODIFIER_MP_COLOR_12',
+        BLUE          = 'BLIP_MODIFIER_MP_COLOR_13',
+        DARK_PUPLE    = 'BLIP_MODIFIER_MP_COLOR_14',
+        DARK_PINK     = 'BLIP_MODIFIER_MP_COLOR_15',
+        DARK_DARK_RED = 'BLIP_MODIFIER_MP_COLOR_16',
+        GRAY          = 'BLIP_MODIFIER_MP_COLOR_17',
+        PINKISH       = 'BLIP_MODIFIER_MP_COLOR_18',
+        YELLOW_GREEN  = 'BLIP_MODIFIER_MP_COLOR_19',
+        DARK_GREEN    = 'BLIP_MODIFIER_MP_COLOR_20',
+        BRIGHT_BLUE   = 'BLIP_MODIFIER_MP_COLOR_21',
+        BRIGHT_PURPLE = 'BLIP_MODIFIER_MP_COLOR_22',
+        YELLOW_ORANGE = 'BLIP_MODIFIER_MP_COLOR_23',
+        BLUE2         = 'BLIP_MODIFIER_MP_COLOR_24',
+        TEAL3         = 'BLIP_MODIFIER_MP_COLOR_25',
+        TAN           = 'BLIP_MODIFIER_MP_COLOR_26',
+        OFF_WHITE     = 'BLIP_MODIFIER_MP_COLOR_27',
+        LIGHT_YELLOW2 = 'BLIP_MODIFIER_MP_COLOR_28',
+        LIGHT_PINK    = 'BLIP_MODIFIER_MP_COLOR_29',
+        LIGHT_RED     = 'BLIP_MODIFIER_MP_COLOR_30',
+        LIGHT_YELLOW3 = 'BLIP_MODIFIER_MP_COLOR_31',
+        WHITE         = 'BLIP_MODIFIER_MP_COLOR_32'
+    },
 }

@@ -1,3 +1,7 @@
+local YesPrompt, NoPrompt
+local FetilizerGroup = GetRandomIntInRange(0, 0xffffff)
+local PromptsStarted = false
+
 local PlantingProcess = false
 local CurrentPlants = 0
 
@@ -10,7 +14,6 @@ local function GetPositionInfrontOfElement(posX, posY, posZ, hed, distance)
     return vec
 end
 
----@param number integer
 RegisterNetEvent('bcc-farming:MaxPlantsAmount', function(number)
     if number == 1 then
         CurrentPlants = CurrentPlants + 1
@@ -19,75 +22,103 @@ RegisterNetEvent('bcc-farming:MaxPlantsAmount', function(number)
     end
 end)
 
----@param plantData table
----@param bestFertilizer table
+local function StartPrompts()
+    YesPrompt = PromptRegisterBegin()
+    PromptSetControlAction(YesPrompt, Config.keys.fertYes)
+    PromptSetText(YesPrompt, CreateVarString(10, 'LITERAL_STRING', _U('yes')))
+    PromptSetVisible(YesPrompt, true)
+    PromptSetEnabled(YesPrompt, true)
+    PromptSetHoldMode(YesPrompt, 2000)
+    PromptSetGroup(YesPrompt, FetilizerGroup, 0)
+    PromptRegisterEnd(YesPrompt)
+
+    NoPrompt = PromptRegisterBegin()
+    PromptSetControlAction(NoPrompt, Config.keys.fertNo)
+    PromptSetText(NoPrompt, CreateVarString(10, 'LITERAL_STRING', _U('no')))
+    PromptSetVisible(NoPrompt, true)
+    PromptSetEnabled(NoPrompt, true)
+    PromptSetHoldMode(NoPrompt, 2000)
+    PromptSetGroup(NoPrompt, FetilizerGroup, 0)
+    PromptRegisterEnd(NoPrompt)
+
+    PromptsStarted = true
+end
+
 RegisterNetEvent('bcc-farming:PlantingCrop', function(plantData, bestFertilizer)
+    if CurrentPlants >= Config.plantSetup.maxPlants then
+        VORPcore.NotifyRightTip(_U('maxPlantsReached'), 4000)
+        return
+    end
+
     local playerPed = PlayerPedId()
-    local seed = plantData.seedName
-    local amount = plantData.seedAmount
-    if CurrentPlants < Config.plantSetup.maxPlants then -- MaxPlants Check
-        local playerCoords = GetEntityCoords(playerPed)
-        local stop = false
-        HidePedWeapons(playerPed, 2, true)
-        for _, plantCfg in pairs(Plants) do
-            local entity = GetClosestObjectOfType(playerCoords.x, playerCoords.y, playerCoords.z, plantData.plantingDistance, joaat(plantCfg.plantProp), false, false, false)
-            if entity ~= 0 then
-                stop = true
-                TriggerServerEvent('bcc-farming:GiveBackSeed', seed, amount)
-                VORPcore.NotifyRightTip(_U('tooCloseToAnotherPlant'), 4000)
+    local playerCoords = GetEntityCoords(playerPed)
+    local stop = false
+
+    HidePedWeapons(playerPed, 2, true)
+
+    for _, plantCfg in pairs(Plants) do
+        local entity = GetClosestObjectOfType(playerCoords.x, playerCoords.y, playerCoords.z, plantData.plantingDistance, joaat(plantCfg.plantProp), false, false, false)
+        if entity ~= 0 then
+            stop = true
+            VORPcore.NotifyRightTip(_U('tooCloseToAnotherPlant'), 4000)
+            break
+        end
+    end
+
+    if stop then return end
+
+    if PlantingProcess then
+        VORPcore.NotifyRightTip(_U('FinishPlantingProcessFirst'), 4000)
+        return
+    end
+
+    PlantingProcess = true
+
+    VORPcore.NotifyRightTip(_U('raking'), 16000)
+    PlayAnim('amb_work@world_human_farmer_rake@male_a@idle_a', 'idle_a', 16000, true, true)
+
+    if IsEntityDead(playerPed) then
+        VORPcore.NotifyRightTip(_U('failed'), 4000)
+        PlantingProcess = false
+        return
+    end
+
+    if plantData.plantingToolRequired then
+        TriggerServerEvent('bcc-farming:PlantToolUsage', plantData)
+    end
+
+    VORPcore.NotifyRightTip(_U('plantingDone'), 4000)
+
+    if not PromptsStarted then
+        StartPrompts()
+    end
+
+    while true do
+        local sleep = 1000
+        local newPlayerCoords = GetEntityCoords(playerPed)
+        if #(playerCoords - newPlayerCoords) < 3 then
+            sleep = 0
+            PromptSetActiveGroupThisFrame(FetilizerGroup, CreateVarString(10, 'LITERAL_STRING', _U('fertilize')), 1, 0, 0, 0)
+            if Citizen.InvokeNative(0xE0F65F0640EF0617, YesPrompt) then  -- PromptHasHoldModeCompleted
+                if bestFertilizer then
+                    plantData.timeToGrow = math.floor(plantData.timeToGrow - (bestFertilizer.fertTimeReduction * plantData.timeToGrow))
+                    TriggerServerEvent('bcc-farming:RemoveFertilizer', bestFertilizer.fertName)
+                else
+                    VORPcore.NotifyRightTip(_U('noFert'), 4000)
+                end
+                break
+            end
+            if Citizen.InvokeNative(0xE0F65F0640EF0617, NoPrompt) then  -- PromptHasHoldModeCompleted
                 break
             end
         end
-        if not stop then
-            if not PlantingProcess then
-                PlantingProcess = true
-                VORPcore.NotifyRightTip(_U('raking'), 16000)
-                PlayAnim('amb_work@world_human_farmer_rake@male_a@idle_a', 'idle_a', 16000, true, true)
-                if plantData.plantingToolRequired then
-                    TriggerServerEvent('bcc-farming:PlantToolUsage', plantData)
-                end
-                VORPcore.NotifyRightTip(_U('plantingDone'), 4000)
-                if not IsEntityDead(playerPed) then
-                    local fetilizerGroup = BccUtils.Prompt:SetupPromptGroup()
-                    local yesPrompt = fetilizerGroup:RegisterPrompt(_U('yes'), Config.keys.fertYes, 1, 1, true, 'hold', { timedeventhash = 'MEDIUM_TIMED_EVENT' })
-                    local noPrompt = fetilizerGroup:RegisterPrompt(_U('no'), Config.keys.fertNo, 1, 2, true, 'hold', { timedeventhash = 'MEDIUM_TIMED_EVENT' })
-                    while true do
-                        local sleep = 500
-                        local newPlayerCoords = GetEntityCoords(playerPed)
-                        if #(playerCoords - newPlayerCoords) < 3 then
-                            sleep = 0
-                            fetilizerGroup:ShowGroup(_U('fertilize'))
-                            if yesPrompt:HasCompleted() then
-                                if bestFertilizer then
-                                    plantData.timeToGrow = math.floor(plantData.timeToGrow - (bestFertilizer.fertTimeReduction * plantData.timeToGrow))
-                                    TriggerServerEvent('bcc-farming:RemoveFertilizer', bestFertilizer.fertName)
-                                else
-                                    VORPcore.NotifyRightTip(_U('noFert'), 4000)
-                                end
-                                break
-                            end
-                            if noPrompt:HasCompleted() then
-                                break
-                            end
-                        end
-                        Wait(sleep)
-                    end
-                    local entCoords = GetEntityCoords(playerPed)
-                    local entRot = GetEntityHeading(playerPed)
-                    local plantCoords = GetPositionInfrontOfElement(entCoords.x, entCoords.y, entCoords.z, entRot, 0.75)
-                    TriggerServerEvent('bcc-farming:AddPlant', plantData, plantCoords)
-                    TriggerEvent('bcc-farming:MaxPlantsAmount', 1)
-                    PlantingProcess = false
-                else
-                    VORPcore.NotifyRightTip(_U('failed'), 4000)
-                end
-            else
-                TriggerServerEvent('bcc-farming:GiveBackSeed', seed, amount)
-                VORPcore.NotifyRightTip(_U('FinishPlantingProcessFirst'), 4000)
-            end
-        end
-    elseif CurrentPlants == Config.plantSetup.maxPlants then
-        TriggerServerEvent('bcc-farming:GiveBackSeed', seed, amount)
-        VORPcore.NotifyRightTip(_U('maxPlantsReached'), 4000)
+        Wait(sleep)
     end
+
+    local entCoords = GetEntityCoords(playerPed)
+    local entRot = GetEntityHeading(playerPed)
+    local plantCoords = GetPositionInfrontOfElement(entCoords.x, entCoords.y, entCoords.z, entRot, 0.75)
+    TriggerServerEvent('bcc-farming:AddPlant', plantData, plantCoords)
+    TriggerEvent('bcc-farming:MaxPlantsAmount', 1)
+    PlantingProcess = false
 end)
