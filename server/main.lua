@@ -119,29 +119,40 @@ RegisterServerEvent('bcc-farming:UpdatePlantWateredStatus', function(plantId, is
     end
 end)
 
-RegisterServerEvent('bcc-farming:HarvestPlant', function(plantId, plantData, destroy)
-    local src = source
-    local user = VORPcore.getUser(src)
-    if not user then return end
-
-    if not destroy then
-        for _, reward in pairs(plantData.rewards) do
-            exports.vorp_inventory:addItem(src, reward.itemName, reward.amount)
-        end
-    end
-
-    MySQL.query.await('DELETE FROM `bcc_farming` WHERE `plant_id` = ?', { plantId })
-    TriggerClientEvent('bcc-farming:MaxPlantsAmount', src, -1)
-    TriggerClientEvent('bcc-farming:RemovePlantClient', -1, plantId)
-end)
-
-VORPcore.Callback.Register('bcc-farming:CanCarryCheck', function(source, cb, item, amount)
+VORPcore.Callback.Register('bcc-farming:HarvestCheck', function(source, cb, plantId, plantData, destroy)
     local src = source
     local user = VORPcore.getUser(src)
     if not user then return cb(false) end
 
-    local check = exports.vorp_inventory:canCarryItem(src, item, amount)
-	cb(check)
+    if not destroy then
+        local itemsToAdd = {}
+
+        -- Check if all items can be carried
+        for _, reward in pairs(plantData.rewards) do
+            local itemName = reward.itemName
+            local amount = reward.amount
+            local canCarry = exports.vorp_inventory:canCarryItem(src, itemName, amount)
+            if canCarry then
+                table.insert(itemsToAdd, { itemName = itemName, amount = amount })
+            else
+                VORPcore.NotifyRightTip(src, _U('noCarry') .. itemName, 4000)
+                return cb(false) -- Exit early if any item cannot be carried
+            end
+        end
+
+        -- Add items if all can be carried
+        for _, item in ipairs(itemsToAdd) do
+            exports.vorp_inventory:addItem(src, item.itemName, item.amount)
+            VORPcore.NotifyRightTip(src, _U('harvested') .. item.amount .. ' ' .. item.itemName, 4000)
+        end
+    end
+
+    cb(true)
+
+    -- Update plant status in database and remove plant from clients
+    MySQL.query.await('DELETE FROM `bcc_farming` WHERE `plant_id` = ?', { plantId })
+    TriggerClientEvent('bcc-farming:MaxPlantsAmount', src, -1)
+    TriggerClientEvent('bcc-farming:RemovePlantClient', -1, plantId)
 end)
 
 RegisterServerEvent('bcc-farming:RemoveFertilizer', function(fertilizerName)
