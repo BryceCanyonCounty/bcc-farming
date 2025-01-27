@@ -20,10 +20,9 @@ Locales["ro_lang"] = {
     harvest = "Recoltare",
     destroyPlant = "Distruge Planta",
     plantNotGrown = "Planta inca nu a crescut",
-    harvested = "Ai recoltat planta",
+    harvested = "Harvested: ",
     tooCloseToAnotherPlant = "Esti prea aproape de alta planta",
-    noCarry = "Nu puteți transporta aceste articole",
-    --New
+    noCarry = "Can't carry item: ",
     UsageLeft = "Durability: ",
     FinishPlantingProcessFirst = "Finish growing the current plant first",
     needNewTool = "Tool broken, you need a new one!",
