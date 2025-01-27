@@ -121,18 +121,11 @@ RegisterNetEvent('bcc-farming:PlantPlanted', function(plantId, plantData, plantC
                     PromptSetActiveGroupThisFrame(HarvestGroup, CreateVarString(10, 'LITERAL_STRING', harvest), 1, 0, 0, 0)
 
                     if Citizen.InvokeNative(0xE0F65F0640EF0617, HarvestPrompt) then  -- PromptHasHoldModeCompleted
-                        for _, reward in pairs(plantData.rewards) do
-                            local canCarry = VORPcore.Callback.TriggerAwait('bcc-farming:CanCarryCheck', reward.itemName, reward.amount)
-                            if canCarry then
-                                PlayAnim('mech_pickup@plant@berries', 'base', 2500)
-                                if blip then
-                                    RemoveBlip(blip)
-                                end
-                                VORPcore.NotifyRightTip(_U('harvested'), 4000)
-                                TriggerServerEvent('bcc-farming:HarvestPlant', plantId, plantData, false)
-                            else
-                                VORPcore.NotifyRightTip(_U('noCarry'), 4000)
-                                break
+                        local canHarvest = VORPcore.Callback.TriggerAwait('bcc-farming:HarvestCheck', plantId, plantData, false)
+                        if canHarvest then
+                            PlayAnim('mech_pickup@plant@berries', 'base', 2500)
+                            if blip then
+                                RemoveBlip(blip)
                             end
                         end
                     end
