@@ -20,10 +20,9 @@ Locales["fr_lang"] = {
     harvest = "Récolter",
     destroyPlant = "Détruire la plante",
     plantNotGrown = "La plante n'a pas encore poussé",
-    harvested = "Vous avez récolté la plante",
+    harvested = "Harvested: ",
     tooCloseToAnotherPlant = "Vous êtes trop près d'une autre plante",
-    noCarry = "Vous ne pouvez pas emporter ces",
-    --New
+    noCarry = "Can't carry item: ",
     UsageLeft = "Durability: ",
     FinishPlantingProcessFirst = "Finish growing the current plant first",
     needNewTool = "Tool broken, you need a new one!",
