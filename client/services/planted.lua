@@ -132,11 +132,13 @@ RegisterNetEvent('bcc-farming:PlantPlanted', function(plantId, plantData, plantC
                 end
 
                 if Citizen.InvokeNative(0xE0F65F0640EF0617, DestroyPromptHG) then  -- PromptHasHoldModeCompleted
-                    if blip then
-                        RemoveBlip(blip)
+                    local canDestroy = VORPcore.Callback.TriggerAwait('bcc-farming:HarvestCheck', plantId, plantData, true)
+                    if canDestroy then
+                        PlayAnim('amb_camp@world_camp_fire@stomp@male_a@wip_base', 'wip_base', 8000)
+                        if blip then
+                            RemoveBlip(blip)
+                        end
                     end
-                    PlayAnim('amb_camp@world_camp_fire@stomp@male_a@wip_base', 'wip_base', 8000)
-                    TriggerServerEvent('bcc-farming:HarvestPlant', plantId, plantData, true)
                 end
             end
 
@@ -161,11 +163,13 @@ RegisterNetEvent('bcc-farming:PlantPlanted', function(plantId, plantData, plantC
                     end
 
                     if Citizen.InvokeNative(0xE0F65F0640EF0617, DestroyPromptWG) then  -- PromptHasHoldModeCompleted
-                        if blip then
-                            RemoveBlip(blip)
+                        local canDestroy = VORPcore.Callback.TriggerAwait('bcc-farming:HarvestCheck', plantId, plantData, true)
+                        if canDestroy then
+                            PlayAnim('amb_camp@world_camp_fire@stomp@male_a@wip_base', 'wip_base', 8000)
+                            if blip then
+                                RemoveBlip(blip)
+                            end
                         end
-                        PlayAnim('amb_camp@world_camp_fire@stomp@male_a@wip_base', 'wip_base', 8000)
-                        TriggerServerEvent('bcc-farming:HarvestPlant', plantId, plantData, true)
                     end
                 end
             end
