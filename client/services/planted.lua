@@ -62,12 +62,13 @@ RegisterNetEvent('bcc-farming:PlantPlanted', function(plantId, plantData, plantC
     Crops[plantId] = { plantId = plantId, removePlant = false, watered = tostring(watered)}
 
     local blip = nil
-    if Config.plantSetup.blips.enabled then
+    local blipCfg = plantData.blips
+    if blipCfg.enabled then
         if GetPlayerServerId(PlayerId()) == source then -- Only show blip for planter not all clients
             blip = Citizen.InvokeNative(0x554d9d53f696d002, 1664425300, plantCoords.x, plantCoords.y, plantCoords.z) -- BlipAddForCoords
-            SetBlipSprite(blip, joaat(Config.plantSetup.blips.sprite), true)
-            Citizen.InvokeNative(0x9CB1A1623062F402, blip, Config.plantSetup.blips.name) -- SetBlipName
-            Citizen.InvokeNative(0x662D364ABF16DE2F, blip, joaat(Config.BlipColors[Config.plantSetup.blips.color])) -- BlipAddModifier
+            SetBlipSprite(blip, joaat(blipCfg.sprite), true)
+            Citizen.InvokeNative(0x9CB1A1623062F402, blip, blipCfg.name) -- SetBlipName
+            Citizen.InvokeNative(0x662D364ABF16DE2F, blip, joaat(Config.BlipColors[blipCfg.color])) -- BlipAddModifier
         end
     end
 
