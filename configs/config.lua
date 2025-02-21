@@ -9,6 +9,7 @@ Config = {
         harvest = 0x4CC0E2FE, -- Default: 0x4CC0E2FE / B key
         destroy = 0x27D1C284, -- Default: 0x27D1C284 / R key
     },
+    -----------------------------------------------------
 
     fullWaterBucket = 'wateringcan',        -- Item name for the full water bucket
     emptyWaterBucket = 'wateringcan_empty', -- Item name for the empty water bucket
