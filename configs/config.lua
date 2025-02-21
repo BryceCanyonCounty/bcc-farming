@@ -32,12 +32,6 @@ Config = {
     -----------------------------------------------------
 
     plantSetup = {
-        blips = {
-            enabled = true,                -- Set true to Enable Blips for Plants (Only shows to planter)
-            sprite = 'blip_mp_spawnpoint', -- Default: 'blip_mp_spawnpoint'
-            name = 'Plant',                -- Name of Blip on Map
-            color = 'WHITE'                -- Blip Colors Shown Below
-        },
         lockedToPlanter = false,           -- If true, only the player who planted the seed will be able to harvest it
         maxPlants = 10,                    -- Maximum amount of plants a player can have
     },
