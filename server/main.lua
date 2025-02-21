@@ -130,10 +130,11 @@ VORPcore.Callback.Register('bcc-farming:HarvestCheck', function(source, cb, plan
         -- Check if all items can be carried
         for _, reward in pairs(plantData.rewards) do
             local itemName = reward.itemName
+            local itemLabel = reward.itemLabel
             local amount = reward.amount
             local canCarry = exports.vorp_inventory:canCarryItem(src, itemName, amount)
             if canCarry then
-                table.insert(itemsToAdd, { itemName = itemName, amount = amount })
+                table.insert(itemsToAdd, { itemName = itemName, itemLabel = itemLabel, amount = amount })
             else
                 VORPcore.NotifyRightTip(src, _U('noCarry') .. itemName, 4000)
                 return cb(false) -- Exit early if any item cannot be carried
@@ -143,7 +144,7 @@ VORPcore.Callback.Register('bcc-farming:HarvestCheck', function(source, cb, plan
         -- Add items if all can be carried
         for _, item in ipairs(itemsToAdd) do
             exports.vorp_inventory:addItem(src, item.itemName, item.amount)
-            VORPcore.NotifyRightTip(src, _U('harvested') .. item.amount .. ' ' .. item.itemName, 4000)
+            VORPcore.NotifyRightTip(src, _U('harvested') .. item.amount .. ' ' .. item.itemLabel, 4000)
         end
     end
 
