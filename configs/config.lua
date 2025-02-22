@@ -9,6 +9,7 @@ Config = {
         harvest = 0x4CC0E2FE, -- Default: 0x4CC0E2FE / B key
         destroy = 0x27D1C284, -- Default: 0x27D1C284 / R key
     },
+    -----------------------------------------------------
 
     fullWaterBucket = 'wateringcan',        -- Item name for the full water bucket
     emptyWaterBucket = 'wateringcan_empty', -- Item name for the empty water bucket
@@ -32,12 +33,6 @@ Config = {
     -----------------------------------------------------
 
     plantSetup = {
-        blips = {
-            enabled = true,                -- Set true to Enable Blips for Plants (Only shows to planter)
-            sprite = 'blip_mp_spawnpoint', -- Default: 'blip_mp_spawnpoint'
-            name = 'Plant',                -- Name of Blip on Map
-            color = 'WHITE'                -- Blip Colors Shown Below
-        },
         lockedToPlanter = false,           -- If true, only the player who planted the seed will be able to harvest it
         maxPlants = 10,                    -- Maximum amount of plants a player can have
     },
