@@ -11,8 +11,12 @@ Config = {
     },
     -----------------------------------------------------
 
-    fullWaterBucket = 'wateringcan',        -- Item name for the full water bucket
-    emptyWaterBucket = 'wateringcan_empty', -- Item name for the empty water bucket
+    -- Item Names from Database
+    fullWaterBucket = {
+        'wateringcan',                      -- bucket of clean water
+        'wateringcan_dirtywater',           -- bucket of dirty water
+    },
+    emptyWaterBucket = 'wateringcan_empty', -- empty water bucket
     -----------------------------------------------------
 
     -- Script will use the one with the highest time reduction from the player's inventory
@@ -33,8 +37,8 @@ Config = {
     -----------------------------------------------------
 
     plantSetup = {
-        lockedToPlanter = false,           -- If true, only the player who planted the seed will be able to harvest it
-        maxPlants = 10,                    -- Maximum amount of plants a player can have
+        lockedToPlanter = false, -- If true, only the player who planted the seed will be able to harvest it
+        maxPlants = 10,          -- Maximum amount of plants a player can have
     },
     -----------------------------------------------------
 

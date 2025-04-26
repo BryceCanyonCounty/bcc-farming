@@ -8,13 +8,6 @@ RegisterServerEvent('bcc-farming:AddPlant', function(plantData, plantCoords)
     local user = VORPcore.getUser(src)
     if not user then return end
     local character = user.getUsedCharacter
-    local item = plantData.seedName
-    local amount = plantData.seedAmount
-
-    local itemCount = exports.vorp_inventory:getItemCount(src, nil, item)
-    if itemCount >= amount then
-        exports.vorp_inventory:subItem(src, item, amount)
-    end
 
     local plantId = MySQL.insert.await('INSERT INTO `bcc_farming` (plant_coords, plant_type, plant_watered, time_left, plant_owner) VALUES (?, ?, ?, ?, ?)',
     { json.encode(plantCoords), plantData.seedName, 'false', plantData.timeToGrow, character.charIdentifier })
@@ -90,33 +83,33 @@ RegisterServerEvent('bcc-farming:NewClientConnected', function()
     end
 end)
 
-VORPcore.Callback.Register('bcc-farming:CheckHasItem', function(source, cb, item, amount)
+VORPcore.Callback.Register('bcc-farming:ManagePlantWateredStatus', function(source, cb, plantId)
     local src = source
     local user = VORPcore.getUser(src)
     if not user then return cb(false) end
 
-    local itemCount = exports.vorp_inventory:getItemCount(src, nil, item)
-    if itemCount >= amount then
-        cb(true)
-    else
-        cb(false)
+    local fullWaterBucket = Config.fullWaterBucket
+    for _, item in ipairs(fullWaterBucket) do
+        local itemCount = exports.vorp_inventory:getItemCount(src, nil, item)
+        if itemCount >= 1 then
+            exports.vorp_inventory:subItem(src, item, 1)
+            exports.vorp_inventory:addItem(src, Config.emptyWaterBucket, 1)
+            MySQL.update.await('UPDATE `bcc_farming` SET `plant_watered` = ? WHERE `plant_id` = ?', { 'true', plantId })
+            TriggerClientEvent('bcc-farming:UpdateClientPlantWateredStatus', -1, plantId)
+            return cb(true)
+        end
     end
+
+    cb(false)
 end)
 
-RegisterServerEvent('bcc-farming:UpdatePlantWateredStatus', function(plantId, isRaining)
+RegisterNetEvent('bcc-farming:UpdatePlantWateredStatus', function(plantId)
     local src = source
     local user = VORPcore.getUser(src)
     if not user then return end
 
-    if isRaining > 0 then
-        MySQL.update.await('UPDATE `bcc_farming` SET `plant_watered` = ? WHERE `plant_id` = ?', { 'true', plantId })
-        TriggerClientEvent('bcc-farming:UpdatePlantWateredStatus', -1, plantId)
-    else
-        exports.vorp_inventory:subItem(src, Config.fullWaterBucket, 1)
-        exports.vorp_inventory:addItem(src, Config.emptyWaterBucket, 1)
-        MySQL.update.await('UPDATE `bcc_farming` SET `plant_watered` = ? WHERE `plant_id` = ?', { 'true', plantId })
-        TriggerClientEvent('bcc-farming:UpdatePlantWateredStatus', -1, plantId)
-    end
+    MySQL.update.await('UPDATE `bcc_farming` SET `plant_watered` = ? WHERE `plant_id` = ?', { 'true', plantId })
+    TriggerClientEvent('bcc-farming:UpdateClientPlantWateredStatus', -1, plantId)
 end)
 
 VORPcore.Callback.Register('bcc-farming:HarvestCheck', function(source, cb, plantId, plantData, destroy)
@@ -164,6 +157,17 @@ RegisterServerEvent('bcc-farming:RemoveFertilizer', function(fertilizerName)
     local fertCount = exports.vorp_inventory:getItemCount(src, nil, fertilizerName)
     if fertCount >= 1 then
         exports.vorp_inventory:subItem(src, fertilizerName, 1)
+    end
+end)
+
+RegisterNetEvent('bcc-farming:AddSeedToInventory', function(seedName, amount)
+    local src = source
+    local user = VORPcore.getUser(src)
+    if not user then return end
+
+    local canCarry = exports.vorp_inventory:canCarryItem(src, seedName, amount)
+    if canCarry then
+        exports.vorp_inventory:addItem(src, seedName, amount)
     end
 end)
 

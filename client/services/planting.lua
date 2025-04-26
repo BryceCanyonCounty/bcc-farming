@@ -5,15 +5,6 @@ local PromptsStarted = false
 local PlantingProcess = false
 local CurrentPlants = 0
 
-local function GetPositionInfrontOfElement(posX, posY, posZ, hed, distance)
-    local meters = (type(distance) == 'number' and distance) or 3
-    posX = posX - math.sin(math.rad(hed)) * meters
-    posY = posY + math.cos(math.rad(hed)) * meters
-    hed = hed + math.cos(math.rad(hed))
-    local vec = vector3(posX, posY, posZ)
-    return vec
-end
-
 RegisterNetEvent('bcc-farming:MaxPlantsAmount', function(number)
     if number == 1 then
         CurrentPlants = CurrentPlants + 1
@@ -65,10 +56,14 @@ RegisterNetEvent('bcc-farming:PlantingCrop', function(plantData, bestFertilizer)
         end
     end
 
-    if stop then return end
+    if stop then
+        TriggerServerEvent('bcc-farming:AddSeedToInventory', plantData.seedName, plantData.seedAmount)
+        return
+    end
 
     if PlantingProcess then
         VORPcore.NotifyRightTip(_U('FinishPlantingProcessFirst'), 4000)
+        TriggerServerEvent('bcc-farming:AddSeedToInventory', plantData.seedName, plantData.seedAmount)
         return
     end
 
@@ -80,6 +75,7 @@ RegisterNetEvent('bcc-farming:PlantingCrop', function(plantData, bestFertilizer)
     if IsEntityDead(playerPed) then
         VORPcore.NotifyRightTip(_U('failed'), 4000)
         PlantingProcess = false
+        TriggerServerEvent('bcc-farming:AddSeedToInventory', plantData.seedName, plantData.seedAmount)
         return
     end
 
@@ -115,9 +111,9 @@ RegisterNetEvent('bcc-farming:PlantingCrop', function(plantData, bestFertilizer)
         Wait(sleep)
     end
 
-    local entCoords = GetEntityCoords(playerPed)
-    local entRot = GetEntityHeading(playerPed)
-    local plantCoords = GetPositionInfrontOfElement(entCoords.x, entCoords.y, entCoords.z, entRot, 0.75)
+    local x, y, z = table.unpack(GetOffsetFromEntityInWorldCoords(PlayerPedId(), 0.0, 0.75, 0.0))
+    local plantCoords = vector3(x, y, z)
+
     TriggerServerEvent('bcc-farming:AddPlant', plantData, plantCoords)
     TriggerEvent('bcc-farming:MaxPlantsAmount', 1)
     PlantingProcess = false
