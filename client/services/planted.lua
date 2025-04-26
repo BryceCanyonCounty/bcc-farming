@@ -47,17 +47,39 @@ local function StartPrompts()
     PromptsStarted = true
 end
 
+local function LoadModel(model, modelName)
+    if not IsModelValid(model) then
+        print('Invalid model:', modelName)
+        return
+    end
+
+    if HasModelLoaded(model) then return end
+
+    RequestModel(model, false)
+    local timeout = 10000
+    local startTime = GetGameTimer()
+
+    while not HasModelLoaded(model) do
+        if GetGameTimer() - startTime > timeout then
+            print('Failed to load model:', modelName)
+            return
+        end
+        Wait(10)
+    end
+end
+
 RegisterNetEvent('bcc-farming:PlantPlanted', function(plantId, plantData, plantCoords, timeLeft, watered, source)
-    local hash = joaat(plantData.plantProp)
-    RequestModel(hash, false)
-    while not HasModelLoaded(hash) do
+    local plantProp = plantData.plantProp
+    local hash = joaat(plantProp)
+    LoadModel(hash, plantProp)
+
+    local plantObj = CreateObject(hash, plantCoords.x, plantCoords.y, plantCoords.z - plantData.plantOffset, true, false, false, false, false)
+    while not DoesEntityExist(plantObj) do
         Wait(10)
     end
 
-    local plantObj = Citizen.InvokeNative(0x509D5878EB39E842, hash, plantCoords.x, plantCoords.y, plantCoords.z - plantData.plantOffset, false, false, false, false, false) -- CreateObject
     SetEntityHeading(plantObj, GetEntityHeading(PlayerPedId()))
     PlaceObjectOnGroundProperly(plantObj, true)
-    FreezeEntityPosition(plantObj, true)
 
     Crops[plantId] = { plantId = plantId, removePlant = false, watered = tostring(watered)}
 
@@ -148,16 +170,14 @@ RegisterNetEvent('bcc-farming:PlantPlanted', function(plantId, plantData, plantC
                 sleep = 0
                 local isRaining = GetRainLevel()
                 if isRaining > 0 then
-                    Crops[plantId].watered = 'true'
-                    TriggerServerEvent('bcc-farming:UpdatePlantWateredStatus', plantId, isRaining)
+                    TriggerServerEvent('bcc-farming:UpdatePlantWateredStatus', plantId)
 
                 else
                     PromptSetActiveGroupThisFrame(WaterGroup, CreateVarString(10, 'LITERAL_STRING', _U('waterPlant')), 1, 0, 0, 0)
                     if Citizen.InvokeNative(0xE0F65F0640EF0617, WaterPrompt) then  -- PromptHasHoldModeCompleted
-                        local hasWaterBucket = VORPcore.Callback.TriggerAwait('bcc-farming:CheckHasItem', Config.fullWaterBucket, 1)
-                        if hasWaterBucket then
+                        local canWater = VORPcore.Callback.TriggerAwait('bcc-farming:ManagePlantWateredStatus', plantId)
+                        if canWater then
                             ScenarioInPlace('WORLD_HUMAN_BUCKET_POUR_LOW', 5000)
-                            TriggerServerEvent('bcc-farming:UpdatePlantWateredStatus', plantId, isRaining)
                         else
                             VORPcore.NotifyRightTip(_U('noWaterBucket'), 4000)
                         end
@@ -185,7 +205,7 @@ RegisterNetEvent('bcc-farming:RemovePlantClient', function(plantId)
     end
 end)
 
-RegisterNetEvent('bcc-farming:UpdatePlantWateredStatus', function (plantId)
+RegisterNetEvent('bcc-farming:UpdateClientPlantWateredStatus', function (plantId)
     if Crops[plantId] then
         Crops[plantId].watered = 'true'
     end
