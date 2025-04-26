@@ -78,6 +78,7 @@ CreateThread(function()
                     VORPcore.NotifyRightTip(src, _U('noSeed'), 4000)
                 else
                     exports.vorp_inventory:closeInventory(src)
+                    exports.vorp_inventory:subItem(src, plant.seedName, plant.seedAmount)
                     local bestFertilizer = nil
                     for _, fert in pairs(Config.fertilizerSetup) do
                         local fertCount = exports.vorp_inventory:getItemCount(src, nil, fert.fertName)
