@@ -73,13 +73,15 @@ RegisterNetEvent('bcc-farming:PlantPlanted', function(plantId, plantData, plantC
     local hash = joaat(plantProp)
     LoadModel(hash, plantProp)
 
-    local plantObj = CreateObject(hash, plantCoords.x, plantCoords.y, plantCoords.z - plantData.plantOffset, true, false, false, false, false)
+    local plantObj = CreateObject(hash, plantCoords.x, plantCoords.y, plantCoords.z - plantData.plantOffset, false, false, false, false, false)
     while not DoesEntityExist(plantObj) do
         Wait(10)
     end
 
     SetEntityHeading(plantObj, GetEntityHeading(PlayerPedId()))
     PlaceObjectOnGroundProperly(plantObj, true)
+    Wait(500)
+    FreezeEntityPosition(plantObj, true)
 
     Crops[plantId] = { plantId = plantId, removePlant = false, watered = tostring(watered)}
 
