@@ -27,4 +27,6 @@ Locales["ro_lang"] = {
     FinishPlantingProcessFirst = "Finish growing the current plant first",
     needNewTool = "Tool broken, you need a new one!",
     useBucket = "Use Bucket",
+    --- Smelling 
+    SmellPlant = "There is the scent of a suspicious plant in the air",
 }
