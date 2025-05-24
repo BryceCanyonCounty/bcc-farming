@@ -44,3 +44,29 @@ function PlayAnim(animDict, animName, time, raking, loopUntilTimeOver) --functio
     end
     ClearPedTasks(playerPed)
 end
+
+RegisterNetEvent('bcc-farming:ShowSmellingPlants', function(smellingPlants)
+    for _, plant in pairs(smellingPlants) do
+        print('Showing smelling plant:', plant.plantName, 'at coords:', plant.coords.x, plant.coords.y, plant.coords.z)
+        -- TriggerEvent("rsd_notify:NotifLeftAdvanced", "Spürnase", _U('SmellPlant'), "toast_awards_set_d", "awards_set_d_001", 5000)
+        VORPcore.NotifyRightTip(_U('SmellPlant'), 5000)
+        if Config.SmellingPlantBlips then
+            local blip = Citizen.InvokeNative(0x554D9D53F696D002, 1664425300, plant.coords.x, plant.coords.y, plant.coords.z)
+            SetBlipSprite(blip, joaat('BLIP_AMBIENT_SMELL'), true)
+            Citizen.InvokeNative(0x9CB1A1623062F402, blip, 'Riechbare Pflanze: ' .. plant.plantName)
+            Citizen.InvokeNative(0x662D364ABF16DE2F, blip, joaat(Config.BlipColors.RED))
+            Wait(5000) -- Remove Blip after 5 Seconds
+            RemoveBlip(blip)
+        end
+        
+    end
+end)
+
+-- Trigger  Server-Logic for distance check
+CreateThread(function()
+    while true do
+        Wait(5000) -- Alle 5 Sekunden prüfen
+        local playerCoords = GetEntityCoords(PlayerPedId())
+        TriggerServerEvent('bcc-farming:DetectSmellingPlants', playerCoords)
+    end
+end)
