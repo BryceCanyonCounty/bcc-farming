@@ -188,4 +188,28 @@ CreateThread(function()
     end
 end)
 
+RegisterNetEvent('bcc-farming:DetectSmellingPlants', function(playerCoords)
+    local src = source
+    local user = VORPcore.getUser(src)
+    if not user then return end
+    local character = user.getUsedCharacter
+    local hasJob = CheckPlayerJob(src)
+    if not hasJob then return end
+    local smellingPlants = {}
+
+    for _, allPlant in pairs(AllPlants) do
+        for h, plant in pairs(Plants) do
+            local plantData = AllPlants[allPlant.plant_type]
+            if allPlant.plant_type == plant.seedName and plant.smelling then
+                local plantCoords = json.decode(allPlant.plant_coords)
+                local distance = #(vector3(plantCoords.x, plantCoords.y, plantCoords.z) - playerCoords)
+                if distance <= Config.SmellingDistance then
+                    table.insert(smellingPlants, { coords = plantCoords, plantName = plant.plantName })
+                    TriggerClientEvent('bcc-farming:ShowSmellingPlants', src, smellingPlants)
+                end
+            end
+        end
+    end
+end)
+
 BccUtils.Versioner.checkFile(GetCurrentResourceName(), 'https://github.com/BryceCanyonCounty/bcc-farming')
