@@ -27,4 +27,6 @@ Locales["de_lang"] = {
     FinishPlantingProcessFirst = "Beende erst den Anbaue der Aktuellen Pflanze",
     needNewTool = "Tool broken, you need a new one!",
     useBucket = "Use Bucket",
+    --- Smelling 
+    SmellPlant = "Es liegt der Duft einer verdächtigen Planze in der Luft",
 }
