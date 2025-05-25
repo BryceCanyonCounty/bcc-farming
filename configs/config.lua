@@ -41,6 +41,22 @@ Config = {
         maxPlants = 10,          -- Maximum amount of plants a player can have
     },
     -----------------------------------------------------
+    --- Config Smelling
+    SmellingDistance = 50,      -- Distance in which the player can smell plants
+    SmellingPlantBlips = true,  -- If true, plants will be marked on the map when smelled
+    PoliceJobs = {              -- Jobs that can smell plants
+        'admin', 
+        'usms', 
+        'valaw',
+        'sdlaw',
+        'anlaw',
+        'rhlaw',
+        'sblaw',
+        'bwlaw',
+        'arlaw',
+        'twlaw',
+    },
+    -----------------------------------------------------
 
     townSetup = {
         canPlantInTowns = false, -- If true, players will be able to plant seeds in towns
