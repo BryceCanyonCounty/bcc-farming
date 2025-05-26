@@ -3,6 +3,17 @@ BccUtils = exports['bcc-utils'].initiate()
 
 local AllPlants = {} -- AllPlants will contain all the plants in the server
 
+local function CheckPlayerJob(src)
+    local character = VORPcore.getUser(src).getUsedCharacter
+    local playerJob = character.job
+    for _, job in ipairs(Config.PoliceJobs) do
+        if (playerJob == job) then
+            return true
+        end
+    end
+    return false
+end
+
 RegisterServerEvent('bcc-farming:AddPlant', function(plantData, plantCoords)
     local src = source
     local user = VORPcore.getUser(src)
