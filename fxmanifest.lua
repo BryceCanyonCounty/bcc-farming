@@ -3,11 +3,12 @@ fx_version 'cerulean'
 rdr3_warning 'I acknowledge that this is a prerelease build of RedM, and I am aware my resources *will* become incompatible once RedM ships.'
 
 lua54 'yes'
-author 'Jake2k4'
+author 'BCC Team'
 description 'bcc-farming'
 
 shared_scripts {
     'configs/*.lua',
+    'debug_init.lua',
     'locale.lua',
     'languages/*.lua'
 }
@@ -29,4 +30,4 @@ dependencies {
     'bcc-utils'
 }
 
-version '2.4.4'
+version '2.5.0'
