@@ -29,4 +29,5 @@ Locales["fr_lang"] = {
     useBucket = "Use Bucket",
     --- Smelling 
     SmellPlant = "There is the scent of a suspicious plant in the air",
+    SmellablePlant = "Smellable plant: ",
 }
