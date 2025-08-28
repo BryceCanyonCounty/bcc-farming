@@ -1,9 +1,15 @@
+<2.5.0>
+- Fix: Soil removal from inventory after planting
+- Added debug prints
+
 <2.4.4>
 - Fix for jobCheck
+
 <2.4.3>
 - Smell plants
+
 <2.4.2>
-- Fix: Tree would fall into ground after planting.
+- Fix: Tree would fall into ground after planting
 
 <2.4.1>
-- Update: Can use both clean and dirty water buckets.
+- Update: Can use both clean and dirty water buckets
