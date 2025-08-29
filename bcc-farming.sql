@@ -16,7 +16,9 @@ VALUES
     ('wateringcan_dirtywater', 'Dirty Water Jug', 10, 1, 'item_standard', 1, 'A bucket filled with dirty water.'),
     ('fertilizer1', 'Fertilizer Grade C', 10, 1, 'item_standard', 1, 'Low grade fertilizer.'),
     ('fertilizer2', 'Fertilizer Grade B', 10, 1, 'item_standard', 1, 'Mid grade fertilizer.'),
-    ('fertilizer3', 'Fertilizer Grade A', 10, 1, 'item_standard', 1, 'High grade fertilizer.')
+    ('fertilizer3', 'Fertilizer Grade A', 10, 1, 'item_standard', 1, 'High grade fertilizer.'),
+    ('soil', 'Soil', 10, 1, 'item_standard', 1, 'High grade soil.'),
+    ('hoe', 'Garden Hoe', 10, 1, 'item_standard', 1, 'A gardening tool with a thin metal blade.')
 ON DUPLICATE KEY UPDATE
     `item` = VALUES(`item`),
     `label` = VALUES(`label`),

@@ -1,4 +1,4 @@
-Locales = {} --Credit to bcc-boats for this
+Locales = {}
 
 function _(str, ...) -- Translate string
 

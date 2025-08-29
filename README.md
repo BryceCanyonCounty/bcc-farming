@@ -1,56 +1,106 @@
-# bcc-farming
+# BCC Farming 🌱
 
-> **bcc-farming** is a highly configurable and user-friendly farming script designed for RedM servers. It allows you to create and manage various crops, providing a rich and immersive farming experience for your players.
+*Advanced Agricultural System for RedM*
 
-## Features
+**Transform your RedM server with immersive farming mechanics** - from planting seeds to harvesting crops, with realistic gameplay elements.
 
-- **Customizable Crops**: Create as many crops as you want for your RedM server.
-- **Multilingual Support**: Easily translate the script using language files.
-- **Job Locking**: Individually job lock plants to restrict access.
-- **Planting Tools**: Require specific "Planting tools" for each crop, configurable via config file.
-- **Easy Configuration**: Configure everything effortlessly through the provided config files.
-- **Watering System**: Water crops using a bucket, which gets replaced with an empty one after use.
-- **Blip Options**: Enable or disable blips on plants via the config file.
-- **Town Planting**: Control whether players can plant crops in town areas.
-- **Database Storage**: Stores plant data in a database to persist across server restarts.
-- **Version Checker**: Stay informed about updates with the built-in version checker.
-- **Soil Requirement**: Optionally require soil for planting crops.
-- **Fertilizer Support**: Allow the use of fertilizers to enhance crop growth.
-- **Plant Locking**: Lock plants so only the planter can interact with them, or allow everyone to interact with all plants.
+---
 
-## Dependencies
+## 🌟 Key Features
+
+### **🌿 Core Farming System**
+
+- **Unlimited Custom Crops**: Create any number of plant types with unique growth cycles and yields
+- **Resource Management**:
+  - Soil requirements with configurable amounts
+  - Fertilizer system for growth acceleration
+  - Watering mechanics with bucket depletion (auto-replaced with empty buckets)
+- **Ownership System**: Configurable plant locking (planter-only or public access)
+
+### **🔧 Advanced Configuration**
+
+- **Job Restrictions**: Lock plants to specific professions (farmer, outlaw, etc.)
+- **Zone Control**: Town proximity restrictions with adjustable radii
+- **Tool Requirements**: Specify required equipment per crop type
+- **Economic Balancing**: Configure required seed and soil amounts as well as harvest yields
+- **Player Limits**: Set maximum plants per player
+
+### **💻 Technical Implementation**
+
+- **Database Backed**: Persistent storage across server restarts
+- **Localization Ready**: Full multilingual support
+- **Update Notifications**: Built-in version checker
+
+### **🎮 Gameplay Enhancements**
+
+- **Interactive UI**: Intuitive prompts for all farming actions
+- **Debug System**: Color-coded logging for easy troubleshooting
+
+*Every feature is configurable through simple, well-documented config files.*
+
+---
+
+## 📋 Requirements
+
+### **Core Dependencies**
 
 - [vorp_core](https://github.com/VORPCORE/vorp-core-lua)
 - [vorp_inventory](https://github.com/VORPCORE/vorp_inventory-lua)
 - [vorp_character](https://github.com/VORPCORE/vorp_character-lua)
 - [bcc-utils](https://github.com/BryceCanyonCounty/bcc-utils)
 
-## Additional Dependency
+### **Recommended Addon**
 
-You'll need a script that fills buckets for watering the plants. The default config settings use:
+- [bcc-water](https://github.com/BryceCanyonCounty/bcc-water) *(for bucket filling functionality)*
 
-- [bcc-water](https://github.com/BryceCanyonCounty/bcc-water)
+---
 
-## Installation Steps
+## 🛠 Installation Guide
 
-1. **Install Dependencies**: Ensure all dependencies are installed and updated before installing this script.
-2. **Add to Resource Folder**: Add the `bcc-farming` folder to your resources folder.
-3. **Update Server Cfg**: Add `ensure bcc-farming` to your `server.cfg` file.
-4. **Run Database File**: Execute the included database file `bcc-farming.sql` to set up the necessary tables.
-5. **Add Images**: Copy the images from the `img` folder to `...\vorp_inventory\html\img\items`.
-6. **Restart Server**: Restart your server to apply the changes.
+### **1. Prepare Your Server**
 
-## Configuration
+```bash
+# Ensure all dependencies are installed and updated
+ensure vorp_core
+ensure vorp_inventory
+ensure vorp_character
+ensure bcc-utils
+```
 
-- **Config Files**: All configuration settings can be found in the `configs` folder. Adjust the settings to fit your server's needs.
-- **Language Files**: Translate the script using the provided language files.
+### **2. Install BCC Farming**
 
-## Side Notes
+1. Place the `bcc-farming` folder in your `resources` directory
+2. Add to your `server.cfg`:
 
-- **Database Items**: Ensure all items exist in your database.
-- **Inspiration**: This script is written from scratch but took heavy inspiration from `prp_farming`.
-- **Community Contributions**: Feel free to edit the code and share your modifications with the community.
+   ```cfg
+   ensure bcc-farming
+   ```
 
-## GitHub
+### **3. Database Setup**
 
-- [bcc-farming](https://github.com/BryceCanyonCounty/bcc-farming)
+Import the included SQL file: `bcc-farming.sql`
+
+### **4. Asset Installation**
+
+Copy images to your inventory system:
+```
+\vorp_inventory\html\img\items\*.png
+```
+
+### **5. Final Steps**
+
+- Configure settings in `config.lua`
+- Restart your server
+
+---
+
+## 🙏 Credits & Inspiration
+
+Original concept inspired by 'prp_farming' - completely rebuilt with enhanced features and optimizations.
+
+**Maintained by:** [BryceCanyonCounty](https://github.com/BryceCanyonCounty)
+
+---
+*For support, issues, or contributions, visit our [Discord](https://discord.gg/bNDpwruqwX) or [GitHub repository](https://github.com/BryceCanyonCounty/bcc-farming)*
+
+---

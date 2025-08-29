@@ -2,6 +2,12 @@ Config = {
     defaultlang = 'en_lang', -- Language file to use
     -----------------------------------------------------
 
+    -- Do Not Enable on Live Server
+    devMode = {
+        active = false, -- Shows Debug Prints in Client and Server Consoles
+    },
+    -----------------------------------------------------
+
     keys = {
         fertYes = 0x4CC0E2FE, -- Default: 0x4CC0E2FE / B key
         fertNo = 0x9959A6F0,  -- Default: 0x9959A6F0 / C key
@@ -41,20 +47,32 @@ Config = {
         maxPlants = 10,          -- Maximum amount of plants a player can have
     },
     -----------------------------------------------------
-    --- Config Smelling
-    SmellingDistance = 50,      -- Distance in which the player can smell plants
-    SmellingPlantBlips = true,  -- If true, plants will be marked on the map when smelled
-    PoliceJobs = {              -- Jobs that can smell plants
-        'admin', 
-        'usms', 
-        'valaw',
-        'sdlaw',
-        'anlaw',
-        'rhlaw',
-        'sblaw',
-        'bwlaw',
-        'arlaw',
-        'twlaw',
+
+    -- Enable/Disable Smelling per plant in Plants config
+    smelling = {
+        distance = 50,             -- Distance in which the player can smell plants
+        blip = {
+            enabled = true,        -- If true, plants will be marked on the map when smelled
+            sprite = 'blip_plant', -- Blip sprite name
+            color = 'RED',         -- Blip Colors Shown Below
+            duration = 5,          -- Duration in seconds the blip will be shown
+            frequency = 15,        -- Time in seconds to wait before showing the blip again
+        },
+        notifications = {
+            enabled = true, -- If true, a notification will be shown when a plant is smelled
+            cooldown = 30,  -- Cooldown in seconds between smell notifications
+        },
+        jobs = {            -- Jobs that can smell plants
+            'admin',
+            'usms',
+            'valaw',
+            'sdlaw',
+            'anlaw',
+            'rhlaw',
+            'sblaw',
+            'bwlaw',
+            'arlaw',
+        }
     },
     -----------------------------------------------------
 
