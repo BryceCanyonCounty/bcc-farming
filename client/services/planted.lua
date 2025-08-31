@@ -194,7 +194,8 @@ RegisterNetEvent('bcc-farming:PlantPlanted', function(plantId, plantData, plantC
     end
 
     -- Create plant object with timeout
-    local plantObj = CreateObject(hash, plantCoords.x, plantCoords.y, plantCoords.z - plantData.plantOffset, false, false, false, false, false)
+    local x, y, z = table.unpack(plantCoords)
+    local plantObj = CreateObject(hash, x, y, z - plantData.plantOffset, false, false, false, false, false)
     if not DoesEntityExist(plantObj) then
         local timeout = 10000
         local startTime = GetGameTimer()
@@ -208,10 +209,11 @@ RegisterNetEvent('bcc-farming:PlantPlanted', function(plantId, plantData, plantC
     end
 
     -- Position and freeze plant
+    SetEntityCollision(plantObj, false, false)
+    SetEntityCoords(plantObj, x, y, z - plantData.plantOffset, false, false, false, false)
     SetEntityHeading(plantObj, GetEntityHeading(PlayerPedId()))
-    PlaceObjectOnGroundProperly(plantObj, true)
-    Wait(500)
     FreezeEntityPosition(plantObj, true)
+    SetEntityCollision(plantObj, true, true)
 
     -- Initialize crop data
     Crops[plantId] = {
