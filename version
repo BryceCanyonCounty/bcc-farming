@@ -1,3 +1,6 @@
+<2.5.1>
+- Fix: Trees are placed on ground when planting
+
 <2.5.0>
 - Fix: Soil removal from inventory after planting
 - Added debug prints
