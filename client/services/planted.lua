@@ -208,10 +208,11 @@ RegisterNetEvent('bcc-farming:PlantPlanted', function(plantId, plantData, plantC
     end
 
     -- Position and freeze plant
+    SetEntityCollision(plantObj, false, false)
+    SetEntityCoords(plantObj, plantCoords.x, plantCoords.y, plantCoords.z - plantData.plantOffset, false, false, false, false)
     SetEntityHeading(plantObj, GetEntityHeading(PlayerPedId()))
-    PlaceObjectOnGroundProperly(plantObj, true)
-    Wait(500)
     FreezeEntityPosition(plantObj, true)
+    SetEntityCollision(plantObj, true, true)
 
     -- Initialize crop data
     Crops[plantId] = {
