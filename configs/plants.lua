@@ -31,6 +31,13 @@ Plants = {
         jobs = {
             'farmer',
             'doctor'
+        },
+        lockCoords = true, -- Set to false to allow planting anywhere
+        coordsLockRange = 50,
+        coordsLockTolerance = 0.75,
+        coordsLocks = {
+            vector3(1306.07, -1903.26, 52.26)
+
         }
     },
     -----------------------------------------------------
@@ -66,6 +73,12 @@ Plants = {
         jobs = {
             'farmer',
             'doctor'
+        },
+        lockCoords = true, -- Set to false to allow planting anywhere
+        coordsLockRange = 50,
+        coordsLockTolerance = 0.75,
+        coordsLocks = {
+            vector3(1306.07, -1903.26, 52.26)
         }
     },
     -----------------------------------------------------
@@ -101,6 +114,12 @@ Plants = {
         jobs = {
             'farmer',
             'doctor'
+        },
+        lockCoords = true, -- Set to false to allow planting anywhere
+        coordsLockRange = 50,
+        coordsLockTolerance = 0.75,
+        coordsLocks = {
+            vector3(1306.07, -1903.26, 52.26)
         }
     },
     -----------------------------------------------------
@@ -136,6 +155,12 @@ Plants = {
         jobs = {
             'farmer',
             'doctor'
+        },
+        lockCoords = true, -- Set to false to allow planting anywhere
+        coordsLockRange = 50,
+        coordsLockTolerance = 0.75,
+        coordsLocks = {
+            vector3(1306.07, -1903.26, 52.26)
         }
     },
     -----------------------------------------------------
@@ -171,6 +196,12 @@ Plants = {
         jobs = {
             'farmer',
             'doctor'
+        },
+        lockCoords = true, -- Set to false to allow planting anywhere
+        coordsLockRange = 50,
+        coordsLockTolerance = 0.75,
+        coordsLocks = {
+            vector3(1306.07, -1903.26, 52.26)
         }
     },
     -----------------------------------------------------
@@ -206,6 +237,12 @@ Plants = {
         jobs = {
             'farmer',
             'doctor'
+        },
+        lockCoords = true, -- Set to false to allow planting anywhere
+        coordsLockRange = 50,
+        coordsLockTolerance = 0.75,
+        coordsLocks = {
+            vector3(1306.07, -1903.26, 52.26)
         }
     },
     -----------------------------------------------------
@@ -241,6 +278,12 @@ Plants = {
         jobs = {
             'farmer',
             'doctor'
+        },
+        lockCoords = true, -- Set to false to allow planting anywhere
+        coordsLockRange = 50,
+        coordsLockTolerance = 0.75,
+        coordsLocks = {
+            vector3(1306.07, -1903.26, 52.26)
         }
     },
     -----------------------------------------------------
@@ -276,6 +319,12 @@ Plants = {
         jobs = {
             'farmer',
             'doctor'
+        },
+        lockCoords = true, -- Set to false to allow planting anywhere
+        coordsLockRange = 50,
+        coordsLockTolerance = 0.75,
+        coordsLocks = {
+            vector3(1306.07, -1903.26, 52.26)
         }
     },
     -----------------------------------------------------
@@ -311,6 +360,12 @@ Plants = {
         jobs = {
             'farmer',
             'doctor'
+        },
+        lockCoords = true, -- Set to false to allow planting anywhere
+        coordsLockRange = 50,
+        coordsLockTolerance = 0.75,
+        coordsLocks = {
+            vector3(1306.07, -1903.26, 52.26)
         }
     },
     -----------------------------------------------------
@@ -346,6 +401,12 @@ Plants = {
         jobs = {
             'farmer',
             'doctor'
+        },
+        lockCoords = true, -- Set to false to allow planting anywhere
+        coordsLockRange = 50,
+        coordsLockTolerance = 0.75,
+        coordsLocks = {
+            vector3(1306.07, -1903.26, 52.26)
         }
     },
     -----------------------------------------------------
@@ -381,6 +442,12 @@ Plants = {
         jobs = {
             'farmer',
             'doctor'
+        },
+        lockCoords = true, -- Set to false to allow planting anywhere
+        coordsLockRange = 50,
+        coordsLockTolerance = 0.75,
+        coordsLocks = {
+            vector3(1306.07, -1903.26, 52.26)
         }
     },
     -----------------------------------------------------
@@ -416,6 +483,12 @@ Plants = {
         jobs = {
             'farmer',
             'doctor'
+        },
+        lockCoords = true, -- Set to false to allow planting anywhere
+        coordsLockRange = 50,
+        coordsLockTolerance = 0.75,
+        coordsLocks = {
+            vector3(1306.07, -1903.26, 52.26)
         }
     },
     -----------------------------------------------------
@@ -451,6 +524,12 @@ Plants = {
         jobs = {
             'farmer',
             'doctor'
+        },
+        lockCoords = true, -- Set to false to allow planting anywhere
+        coordsLockRange = 50,
+        coordsLockTolerance = 0.75,
+        coordsLocks = {
+            vector3(1306.07, -1903.26, 52.26)
         }
     },
     -----------------------------------------------------
@@ -486,6 +565,12 @@ Plants = {
         jobs = {
             'farmer',
             'doctor'
+        },
+        lockCoords = true, -- Set to false to allow planting anywhere
+        coordsLockRange = 50,
+        coordsLockTolerance = 0.75,
+        coordsLocks = {
+            vector3(1306.07, -1903.26, 52.26)
         }
     },
     -----------------------------------------------------
@@ -520,6 +605,12 @@ Plants = {
         },
         jobs = {
             'tabak',
+        },
+        lockCoords = true, -- Set to false to allow planting anywhere
+        coordsLockRange = 50,
+        coordsLockTolerance = 0.75,
+        coordsLocks = {
+            vector3(1306.07, -1903.26, 52.26)
         }
     },
     -----------------------------------------------------
@@ -555,6 +646,12 @@ Plants = {
         jobs = {
             'farmer',
             'doctor'
+        },
+        lockCoords = true, -- Set to false to allow planting anywhere
+        coordsLockRange = 50,
+        coordsLockTolerance = 0.75,
+        coordsLocks = {
+            vector3(1306.07, -1903.26, 52.26)
         }
     },
     -----------------------------------------------------
@@ -590,6 +687,12 @@ Plants = {
         jobs = {
             'farmer',
             'doctor'
+        },
+        lockCoords = true, -- Set to false to allow planting anywhere
+        coordsLockRange = 50,
+        coordsLockTolerance = 0.75,
+        coordsLocks = {
+            vector3(1306.07, -1903.26, 52.26)
         }
     },
     -----------------------------------------------------
@@ -625,6 +728,12 @@ Plants = {
         jobs = {
             'farmer',
             'doctor'
+        },
+        lockCoords = true, -- Set to false to allow planting anywhere
+        coordsLockRange = 50,
+        coordsLockTolerance = 0.75,
+        coordsLocks = {
+            vector3(1306.07, -1903.26, 52.26)
         }
     },
     -----------------------------------------------------
@@ -660,6 +769,12 @@ Plants = {
         jobs = {
             'farmer',
             'doctor'
+        },
+        lockCoords = true, -- Set to false to allow planting anywhere
+        coordsLockRange = 50,
+        coordsLockTolerance = 0.75,
+        coordsLocks = {
+            vector3(1306.07, -1903.26, 52.26)
         }
     },
     -----------------------------------------------------
@@ -695,6 +810,12 @@ Plants = {
         jobs = {
             'farmer',
             'doctor'
+        },
+        lockCoords = true, -- Set to false to allow planting anywhere
+        coordsLockRange = 50,
+        coordsLockTolerance = 0.75,
+        coordsLocks = {
+            vector3(1306.07, -1903.26, 52.26)
         }
     },
     -----------------------------------------------------
@@ -730,6 +851,12 @@ Plants = {
         jobs = {
             'farmer',
             'doctor'
+        },
+        lockCoords = true, -- Set to false to allow planting anywhere
+        coordsLockRange = 50,
+        coordsLockTolerance = 0.75,
+        coordsLocks = {
+            vector3(1306.07, -1903.26, 52.26)
         }
     },
     -----------------------------------------------------
@@ -765,6 +892,12 @@ Plants = {
         jobs = {
             'farmer',
             'doctor'
+        },
+        lockCoords = true, -- Set to false to allow planting anywhere
+        coordsLockRange = 50,
+        coordsLockTolerance = 0.75,
+        coordsLocks = {
+            vector3(1306.07, -1903.26, 52.26)
         }
     },
     -----------------------------------------------------
@@ -800,6 +933,12 @@ Plants = {
         jobs = {
             'farmer',
             'doctor'
+        },
+        lockCoords = true, -- Set to false to allow planting anywhere
+        coordsLockRange = 50,
+        coordsLockTolerance = 0.75,
+        coordsLocks = {
+            vector3(1306.07, -1903.26, 52.26)
         }
     },
     -----------------------------------------------------
@@ -835,6 +974,12 @@ Plants = {
         jobs = {
             'farmer',
             'doctor'
+        },
+        lockCoords = true, -- Set to false to allow planting anywhere
+        coordsLockRange = 50,
+        coordsLockTolerance = 0.75,
+        coordsLocks = {
+            vector3(1306.07, -1903.26, 52.26)
         }
     },
     -----------------------------------------------------
@@ -870,6 +1015,12 @@ Plants = {
         jobs = {
             'farmer',
             'doctor'
+        },
+        lockCoords = true, -- Set to false to allow planting anywhere
+        coordsLockRange = 50,
+        coordsLockTolerance = 0.75,
+        coordsLocks = {
+            vector3(1306.07, -1903.26, 52.26)
         }
     },
     -----------------------------------------------------
@@ -905,6 +1056,12 @@ Plants = {
         jobs = {
             'farmer',
             'doctor'
+        },
+        lockCoords = true, -- Set to false to allow planting anywhere
+        coordsLockRange = 50,
+        coordsLockTolerance = 0.75,
+        coordsLocks = {
+            vector3(1306.07, -1903.26, 52.26)
         }
     },
     -----------------------------------------------------
@@ -940,6 +1097,12 @@ Plants = {
         jobs = {
             'farmer',
             'doctor'
+        },
+        lockCoords = true, -- Set to false to allow planting anywhere
+        coordsLockRange = 50,
+        coordsLockTolerance = 0.75,
+        coordsLocks = {
+            vector3(1306.07, -1903.26, 52.26)
         }
     },
     -----------------------------------------------------
@@ -975,6 +1138,12 @@ Plants = {
         jobs = {
             'farmer',
             'doctor'
+        },
+        lockCoords = true, -- Set to false to allow planting anywhere
+        coordsLockRange = 50,
+        coordsLockTolerance = 0.75,
+        coordsLocks = {
+            vector3(1306.07, -1903.26, 52.26)
         }
     },
     -----------------------------------------------------
@@ -1010,6 +1179,12 @@ Plants = {
         jobs = {
             'farmer',
             'doctor'
+        },
+        lockCoords = true, -- Set to false to allow planting anywhere
+        coordsLockRange = 50,
+        coordsLockTolerance = 0.75,
+        coordsLocks = {
+            vector3(1306.07, -1903.26, 52.26)
         }
     },
     -----------------------------------------------------
@@ -1045,6 +1220,12 @@ Plants = {
         jobs = {
             'farmer',
             'doctor'
+        },
+        lockCoords = true, -- Set to false to allow planting anywhere
+        coordsLockRange = 50,
+        coordsLockTolerance = 0.75,
+        coordsLocks = {
+            vector3(1306.07, -1903.26, 52.26)
         }
     },
     -----------------------------------------------------
@@ -1080,6 +1261,12 @@ Plants = {
         jobs = {
             'farmer',
             'doctor'
+        },
+        lockCoords = true, -- Set to false to allow planting anywhere
+        coordsLockRange = 50,
+        coordsLockTolerance = 0.75,
+        coordsLocks = {
+            vector3(1306.07, -1903.26, 52.26)
         }
     },
     -----------------------------------------------------
@@ -1115,6 +1302,12 @@ Plants = {
         jobs = {
             'farmer',
             'doctor'
+        },
+        lockCoords = true, -- Set to false to allow planting anywhere
+        coordsLockRange = 50,
+        coordsLockTolerance = 0.75,
+        coordsLocks = {
+            vector3(1306.07, -1903.26, 52.26)
         }
     },
     -----------------------------------------------------
@@ -1150,6 +1343,12 @@ Plants = {
         jobs = {
             'farmer',
             'doctor'
+        },
+        lockCoords = true, -- Set to false to allow planting anywhere
+        coordsLockRange = 50,
+        coordsLockTolerance = 0.75,
+        coordsLocks = {
+            vector3(1306.07, -1903.26, 52.26)
         }
     }
 }

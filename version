@@ -1,3 +1,8 @@
+<2.6.0>
+- Added **feather-menu notifications**.
+- Added a **configurable option** to determine whether the player *owns or rents* a house (using `bcc-housing`).
+- Added **configurable lock coordinates** to each plant.
+
 <2.5.1>
 - Fix: Trees are placed on ground when planting
 

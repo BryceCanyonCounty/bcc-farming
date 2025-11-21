@@ -1,4 +1,5 @@
 local Core = exports.vorp_core:GetCore()
+BccUtils = exports['bcc-utils'].initiate()
 ---@type BCCFarmingDebugLib
 local DBG = BCCFarmingDebug or {
     Info = function() end,
@@ -7,10 +8,12 @@ local DBG = BCCFarmingDebug or {
     Success = function() end
 }
 
-RegisterNetEvent('vorp:SelectedCharacter', function()
+--RegisterNetEvent('vorp:SelectedCharacter', function()
+CreateThread(function()
     TriggerServerEvent('bcc-farming:NewClientConnected')
     TriggerEvent('bcc-farming:ShowSmellingPlants')
 end)
+--end)
 
 function PlayAnim(animDict, animName, time, raking, loopUntilTimeOver)
     -- Validate inputs
@@ -125,7 +128,7 @@ AddEventHandler('bcc-farming:ShowSmellingPlants', function()
             if Config.smelling.notifications.enabled then
                 local currentTime = GetGameTimer()
                 if currentTime - lastNotificationTime > notificationCooldown then
-                    Core.NotifyRightTip(_U('SmellPlant'), 5000)
+                    Notify(_U('SmellPlant'), "info", 5000)
                     lastNotificationTime = currentTime
                 end
             end

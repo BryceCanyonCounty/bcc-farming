@@ -67,7 +67,7 @@ local function StartPrompts()
     return true
 end
 
-RegisterNetEvent('bcc-farming:PlantingCrop', function(plantData, bestFertilizer)
+RegisterNetEvent('bcc-farming:PlantingCrop', function(plantData, bestFertilizer, houseLocks)
     DBG.Info('PlantingCrop event triggered')
     -- Validate inputs
     if not plantData then
@@ -84,11 +84,99 @@ RegisterNetEvent('bcc-farming:PlantingCrop', function(plantData, bestFertilizer)
     local playerCoords = GetEntityCoords(playerPed)
     HidePedWeapons(playerPed, 2, true)
 
+    local placementHeading
+    local withinLock = false
+    local lockRequired = plantData.lockCoords and type(plantData.coordsLocks) == 'table' and next(plantData.coordsLocks)
+    local withinHouseRadius = false
+
+    if Config.plantSetup.requireHouseOwnership and type(houseLocks) == 'table' then
+        for _, house in ipairs(houseLocks) do
+            if house.x and house.y and house.z and house.radius then
+                local dist = #(playerCoords - vector3(house.x, house.y, house.z))
+                if dist <= (house.radius or 0.0) then
+                    withinHouseRadius = true
+                    break
+                end
+            end
+        end
+    end
+
+    if lockRequired then
+        local baseRadius = plantData.coordsLockRange or 2.5
+        local radiusPadding = plantData.coordsLockTolerance or 0.0
+
+        for _, lock in ipairs(plantData.coordsLocks) do
+            local normalized = lock
+            local lradius
+            local lheading
+            if type(lock) == 'table' then
+                if lock.radius or lock.range then
+                    lradius = lock.radius or lock.range
+                end
+                if lock.heading then
+                    lheading = lock.heading + 0.0
+                end
+                if lock.coords then
+                    normalized = lock.coords
+                end
+            end
+
+            local lx, ly, lz, lh
+            if type(normalized) == 'vector3' or type(normalized) == 'vector4' then
+                lx = normalized.x + 0.0
+                ly = normalized.y + 0.0
+                lz = normalized.z + 0.0
+                if normalized.w or normalized.h then
+                    lh = (normalized.w or normalized.h) + 0.0
+                end
+            elseif type(normalized) == 'table' then
+                if normalized.x and normalized.y and normalized.z then
+                    lx = normalized.x + 0.0
+                    ly = normalized.y + 0.0
+                    lz = normalized.z + 0.0
+                    if normalized.w or normalized.h or normalized.heading then
+                        lh = (normalized.w or normalized.h or normalized.heading) + 0.0
+                    end
+                elseif normalized[1] and normalized[2] and normalized[3] then
+                    lx = normalized[1] + 0.0
+                    ly = normalized[2] + 0.0
+                    lz = normalized[3] + 0.0
+                    if normalized[4] then
+                        lh = normalized[4] + 0.0
+                    end
+                end
+            end
+
+            if lx and ly and lz then
+                local lockVector = vector3(lx, ly, lz)
+                local distance = #(lockVector - playerCoords)
+                local allowedRadius = (lradius or baseRadius) + radiusPadding
+                if distance <= allowedRadius then
+                    withinLock = true
+                    placementHeading = lheading or lh
+                    break
+                end
+            end
+        end
+    end
+
+    if lockRequired and not withinLock and not withinHouseRadius then
+        Notify(_U('mustUseLockedSpot'), "error", 4000)
+        TriggerServerEvent('bcc-farming:ReturnItems', plantData.seedName, plantData.seedAmount, plantData.soilRequired, plantData.soilName, plantData.soilAmount)
+        return
+    end
+
+    if Config.plantSetup.requireHouseOwnership and not withinHouseRadius and not withinLock then
+        Notify(_U('needHousePlot'), "error", 4000)
+        TriggerServerEvent('bcc-farming:ReturnItems', plantData.seedName, plantData.seedAmount, plantData.soilRequired, plantData.soilName, plantData.soilAmount)
+        return
+    end
+
     -- Check for nearby plants
     for _, plantCfg in pairs(Plants) do
         local entity = GetClosestObjectOfType(playerCoords.x, playerCoords.y, playerCoords.z, plantData.plantingDistance, joaat(plantCfg.plantProp), false, false, false)
         if entity ~= 0 then
-            Core.NotifyRightTip(_U('tooCloseToAnotherPlant'), 4000)
+            Notify(_U('tooCloseToAnotherPlant'), "error", 4000)
             TriggerServerEvent('bcc-farming:ReturnItems', plantData.seedName, plantData.seedAmount, plantData.soilRequired, plantData.soilName, plantData.soilAmount)
             return
         end
@@ -96,7 +184,7 @@ RegisterNetEvent('bcc-farming:PlantingCrop', function(plantData, bestFertilizer)
 
     -- Return if already planting
     if PlantingProcess then
-        Core.NotifyRightTip(_U('FinishPlantingProcessFirst'), 4000)
+        Notify(_U('FinishPlantingProcessFirst'), "error", 4000)
         TriggerServerEvent('bcc-farming:ReturnItems', plantData.seedName, plantData.seedAmount, plantData.soilRequired, plantData.soilName, plantData.soilAmount)
         return
     end
@@ -105,12 +193,12 @@ RegisterNetEvent('bcc-farming:PlantingCrop', function(plantData, bestFertilizer)
     DBG.Info('Planting process started')
 
     -- Raking animation
-    Core.NotifyRightTip(_U('raking'), 16000)
+    Notify(_U('raking'), "info", 16000)
     PlayAnim('amb_work@world_human_farmer_rake@male_a@idle_a', 'idle_a', 16000, true, true)
 
     -- Check if player died during animation
     if IsEntityDead(playerPed) then
-        Core.NotifyRightTip(_U('failed'), 4000)
+        Notify(_U('failed'), "error", 4000)
         PlantingProcess = false
         TriggerServerEvent('bcc-farming:ReturnItems', plantData.seedName, plantData.seedAmount, plantData.soilRequired, plantData.soilName, plantData.soilAmount)
         return
@@ -122,7 +210,7 @@ RegisterNetEvent('bcc-farming:PlantingCrop', function(plantData, bestFertilizer)
         TriggerServerEvent('bcc-farming:PlantToolUsage', plantData)
     end
 
-    Core.NotifyRightTip(_U('plantingDone'), 4000)
+    Notify(_U('plantingDone'), "success", 4000)
 
     -- Start fertilizer prompts if not already started
     if not PromptsStarted and not StartPrompts() then
@@ -149,7 +237,7 @@ RegisterNetEvent('bcc-farming:PlantingCrop', function(plantData, bestFertilizer)
                     plantData.timeToGrow = math.floor(plantData.timeToGrow - (bestFertilizer.fertTimeReduction * plantData.timeToGrow))
                     TriggerServerEvent('bcc-farming:RemoveFertilizer', bestFertilizer.fertName)
                 else
-                    Core.NotifyRightTip(_U('noFert'), 4000)
+                    Notify(_U('noFert'), "error", 4000)
                 end
                 break
             end
@@ -161,14 +249,14 @@ RegisterNetEvent('bcc-farming:PlantingCrop', function(plantData, bestFertilizer)
 
             -- Check if player died during fertilizer selection
             if IsEntityDead(playerPed) then
-                Core.NotifyRightTip(_U('failed'), 4000)
+                Notify(_U('failed'), "error", 4000)
                 PlantingProcess = false
                 TriggerServerEvent('bcc-farming:ReturnItems', plantData.seedName, plantData.seedAmount, plantData.soilRequired, plantData.soilName, plantData.soilAmount)
                 return
             end
         else
             -- Player moved too far away
-            Core.NotifyRightTip(_U('movedTooFar'), 4000)
+            Notify(_U('movedTooFar'), "error", 4000)
             PlantingProcess = false
             TriggerServerEvent('bcc-farming:ReturnItems', plantData.seedName, plantData.seedAmount, plantData.soilRequired, plantData.soilName, plantData.soilAmount)
             return
@@ -180,7 +268,14 @@ RegisterNetEvent('bcc-farming:PlantingCrop', function(plantData, bestFertilizer)
     if PlantingProcess then
         DBG.Info('Planting crop at final location')
         local x, y, z = table.unpack(GetOffsetFromEntityInWorldCoords(PlayerPedId(), 0.0, 0.75, 0.0))
-        local plantCoords = vector3(x, y, z)
+        local plantCoords = {
+            x = x,
+            y = y,
+            z = z
+        }
+        if placementHeading then
+            plantCoords.w = placementHeading
+        end
         TriggerServerEvent('bcc-farming:AddPlant', plantData, plantCoords)
     end
 

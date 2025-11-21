@@ -16,6 +16,9 @@ Config = {
         destroy = 0x27D1C284, -- Default: 0x27D1C284 / R key
     },
     -----------------------------------------------------
+    Notify = "feather-menu", ----or use vorp-core
+    
+    -----------------------------------------------------
 
     -- Item Names from Database
     fullWaterBucket = {
@@ -45,6 +48,8 @@ Config = {
     plantSetup = {
         lockedToPlanter = false, -- If true, only the player who planted the seed will be able to harvest it
         maxPlants = 10,          -- Maximum amount of plants a player can have
+        requireHouseOwnership = true, -- If true, planting must occur within one of the player's house plots
+        houseRadiusPadding = 10       -- Extra meters added to the house radius when checking planting range
     },
     -----------------------------------------------------
 
