@@ -8,12 +8,12 @@ local DBG = BCCFarmingDebug or {
     Success = function() end
 }
 
---RegisterNetEvent('vorp:SelectedCharacter', function()
+RegisterNetEvent('vorp:SelectedCharacter', function()
 CreateThread(function()
     TriggerServerEvent('bcc-farming:NewClientConnected')
     TriggerEvent('bcc-farming:ShowSmellingPlants')
 end)
---end)
+end)
 
 function PlayAnim(animDict, animName, time, raking, loopUntilTimeOver)
     -- Validate inputs
