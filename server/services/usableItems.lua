@@ -21,6 +21,97 @@ CreateThread(function()
 
             local character = user.getUsedCharacter
             local playerCoords = GetEntityCoords(GetPlayerPed(src))
+            local playerHouses = nil
+            local housePayload = nil
+            local withinHouseRadius = false
+
+            if Config.plantSetup.requireHouseOwnership then
+                playerHouses = exports['bcc-farming']:GetPlayerHouses(character.charIdentifier)
+                if not playerHouses or #playerHouses == 0 then
+                    DBG.Error("Player does not own a house")
+                    NotifyClient(src, _U('needHouseOwnership'), "error", 4000)
+                    return
+                end
+
+                local padding = Config.plantSetup.houseRadiusPadding or 0.0
+                for _, house in ipairs(playerHouses) do
+                    if house.coords and #(playerCoords - house.coords) <= ((house.radius or 0.0) + padding) then
+                        withinHouseRadius = true
+                        break
+                    end
+                end
+
+                housePayload = {}
+                for _, house in ipairs(playerHouses) do
+                    if house.coords then
+                        table.insert(housePayload, {
+                            x = house.coords.x,
+                            y = house.coords.y,
+                            z = house.coords.z,
+                            radius = (house.radius or 0.0) + padding
+                        })
+                    end
+                end
+            end
+
+            local lockRequired = plantCfg.lockCoords and type(plantCfg.coordsLocks) == 'table' and next(plantCfg.coordsLocks)
+            local withinLock = false
+
+            if lockRequired then
+                local baseRadius = plantCfg.coordsLockRange or 2.5
+                local radiusPadding = plantCfg.coordsLockTolerance or 0.0
+
+                for _, lock in ipairs(plantCfg.coordsLocks) do
+                    local normalized = lock
+                    local lradius
+                    if type(lock) == 'table' then
+                        if lock.radius or lock.range then
+                            lradius = lock.radius or lock.range
+                        end
+                        if lock.coords then
+                            normalized = lock.coords
+                        end
+                    end
+
+                    local lx, ly, lz
+                    if type(normalized) == 'vector3' or type(normalized) == 'vector4' then
+                        lx = normalized.x + 0.0
+                        ly = normalized.y + 0.0
+                        lz = normalized.z + 0.0
+                    elseif type(normalized) == 'table' then
+                        if normalized.x and normalized.y and normalized.z then
+                            lx = normalized.x + 0.0
+                            ly = normalized.y + 0.0
+                            lz = normalized.z + 0.0
+                        elseif normalized[1] and normalized[2] and normalized[3] then
+                            lx = normalized[1] + 0.0
+                            ly = normalized[2] + 0.0
+                            lz = normalized[3] + 0.0
+                        end
+                    end
+
+                    if lx and ly and lz then
+                        local distance = #(vector3(lx, ly, lz) - playerCoords)
+                        local allowedRadius = (lradius or baseRadius) + radiusPadding
+                        if distance <= allowedRadius then
+                            withinLock = true
+                            break
+                        end
+                    end
+                end
+
+                if not withinLock and not (Config.plantSetup.requireHouseOwnership and withinHouseRadius) then
+                    DBG.Error("Player not within locked planting coordinates")
+                    NotifyClient(src, _U('mustUseLockedSpot'), "error", 4000)
+                    return
+                end
+            end
+
+            if Config.plantSetup.requireHouseOwnership and not withinHouseRadius and not withinLock then
+                DBG.Error("Player not within owned house radius")
+                NotifyClient(src, _U('needHousePlot'), "error", 4000)
+                return
+            end
 
             -- Town Check
             if not Config.townSetup.canPlantInTowns then
@@ -28,7 +119,7 @@ CreateThread(function()
                 for _, townCfg in pairs(Config.townSetup.townLocations) do
                     if #(playerCoords - townCfg.coords) <= townCfg.townRange then
                         DBG.Error("Player too close to town")
-                        Core.NotifyRightTip(src, _U('tooCloseToTown'), 4000)
+                        NotifyClient(src, _U('tooCloseToTown'), "error", 4000)
                         return
                     end
                 end
@@ -49,7 +140,7 @@ CreateThread(function()
                 end
                 if not hasJob then
                     DBG.Error("Player doesn't have required job")
-                    Core.NotifyRightTip(src, _U('incorrectJob'), 4000)
+                    NotifyClient(src, _U('incorrectJob'), "error", 4000)
                     return
                 end
                 DBG.Success("Job check passed")
@@ -67,7 +158,7 @@ CreateThread(function()
                 local hasSoil = exports.vorp_inventory:getItemCount(src, nil, plantCfg.soilName)
                 if hasSoil < plantCfg.soilAmount then
                     DBG.Error("Player doesn't have enough soil")
-                    Core.NotifyRightTip(src, _U('noSoil'), 4000)
+                    NotifyClient(src, _U('noSoil'), "error", 4000)
                     return
                 end
                 DBG.Success("Soil check passed")
@@ -81,7 +172,7 @@ CreateThread(function()
                 local hasPlantingTool = exports.vorp_inventory:getItemCount(src, nil, plantCfg.plantingTool)
                 if hasPlantingTool == 0 then
                     DBG.Error("Player doesn't have planting tool")
-                    Core.NotifyRightTip(src, _U('noPlantingTool'), 4000)
+                    NotifyClient(src, _U('noPlantingTool'), "error", 4000)
                     return
                 end
                 DBG.Success("Tool check passed")
@@ -94,7 +185,7 @@ CreateThread(function()
             local playerPlants = MySQL.query.await('SELECT * FROM `bcc_farming` WHERE `plant_owner` = ?', { character.charIdentifier })
             if not playerPlants or #playerPlants >= Config.plantSetup.maxPlants then
                 DBG.Error("Player reached max plants limit")
-                Core.NotifyRightTip(src, _U('maxPlantsReached'), 4000)
+                NotifyClient(src, _U('maxPlantsReached'), "error", 4000)
                 return
             end
             DBG.Success("Max plants check passed")
@@ -109,7 +200,7 @@ CreateThread(function()
             local seedCount = exports.vorp_inventory:getItemCount(src, nil, plantCfg.seedName)
             if seedCount < plantCfg.seedAmount then
                 DBG.Error("Player doesn't have enough seeds")
-                Core.NotifyRightTip(src, _U('noSeed'), 4000)
+                NotifyClient(src, _U('noSeed'), "error", 4000)
                 return
             end
             DBG.Success("Seed check passed")
@@ -141,7 +232,7 @@ CreateThread(function()
 
             -- Trigger Planting Event
             DBG.Info("Triggering planting event...")
-            TriggerClientEvent('bcc-farming:PlantingCrop', src, plantCfg, bestFertilizer)
+            TriggerClientEvent('bcc-farming:PlantingCrop', src, plantCfg, bestFertilizer, housePayload)
         end)
     end
 end)

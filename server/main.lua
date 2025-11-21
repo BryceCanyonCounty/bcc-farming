@@ -8,6 +8,38 @@ local DBG = BCCFarmingDebug or {
     Success = function() end
 }
 local AllPlants = {} -- AllPlants will contain all the plants in the server
+local DEFAULT_LOCK_RANGE = 2.5
+
+local function GetPlayerHouses(charIdentifier)
+    if not charIdentifier then
+        DBG.Warning('GetPlayerHouses called without charidentifier')
+        return {}
+    end
+
+    local houses = {}
+    local rows = MySQL.query.await('SELECT house_coords, house_radius_limit FROM `bcchousing` WHERE `charidentifier` = ?', { charIdentifier })
+
+    if not rows or #rows == 0 then
+        return houses
+    end
+
+    for _, row in ipairs(rows) do
+        if row.house_coords then
+            local ok, coords = pcall(json.decode, row.house_coords)
+            if ok and type(coords) == 'table' and coords.x and coords.y and coords.z then
+                local radius = tonumber(row.house_radius_limit) or 20.0
+                table.insert(houses, {
+                    coords = vector3(coords.x + 0.0, coords.y + 0.0, coords.z + 0.0),
+                    radius = radius
+                })
+            else
+                DBG.Warning('Invalid house coordinates for charidentifier ' .. tostring(charIdentifier))
+            end
+        end
+    end
+
+    return houses
+end
 
 local function CheckPlayerJob(src)
     local character = Core.getUser(src).getUsedCharacter
@@ -32,6 +64,7 @@ RegisterNetEvent('bcc-farming:AddPlant', function(plantData, plantCoords)
     end
 
     local character = user.getUsedCharacter
+    local playerHouses = nil
 
     -- Validate plant data and coordinates
     if not plantData or not plantCoords then
@@ -43,18 +76,233 @@ RegisterNetEvent('bcc-farming:AddPlant', function(plantData, plantCoords)
         return
     end
 
-    -- Insert plant into database
-    local plantId = MySQL.insert.await('INSERT INTO `bcc_farming` (plant_coords, plant_type, plant_watered, time_left, plant_owner) VALUES (?, ?, ?, ?, ?)',
-    { json.encode(plantCoords), plantData.seedName, 'false', plantData.timeToGrow, character.charIdentifier })
+    local finalCoords
+    local coordsCandidate = plantCoords
+    if type(coordsCandidate) == 'table' and coordsCandidate.coords then
+        coordsCandidate = coordsCandidate.coords
+    end
 
-    if not plantId then
-        DBG.Error('Failed to insert plant into database.')
+    local px, py, pz, heading = nil, nil, nil, nil
+    if type(coordsCandidate) == 'vector3' or type(coordsCandidate) == 'vector4' then
+        px = coordsCandidate.x + 0.0
+        py = coordsCandidate.y + 0.0
+        pz = coordsCandidate.z + 0.0
+        if coordsCandidate.w or coordsCandidate.h then
+            heading = (coordsCandidate.w or coordsCandidate.h) + 0.0
+        end
+    elseif type(coordsCandidate) == 'table' then
+        if coordsCandidate.x and coordsCandidate.y and coordsCandidate.z then
+            px = coordsCandidate.x + 0.0
+            py = coordsCandidate.y + 0.0
+            pz = coordsCandidate.z + 0.0
+            if coordsCandidate.w or coordsCandidate.h or coordsCandidate.heading then
+                heading = (coordsCandidate.w or coordsCandidate.h or coordsCandidate.heading) + 0.0
+            end
+        elseif coordsCandidate[1] and coordsCandidate[2] and coordsCandidate[3] then
+            px = coordsCandidate[1] + 0.0
+            py = coordsCandidate[2] + 0.0
+            pz = coordsCandidate[3] + 0.0
+            if coordsCandidate[4] then
+                heading = coordsCandidate[4] + 0.0
+            end
+        end
+    end
+
+    if px and py and pz then
+        finalCoords = { x = px, y = py, z = pz }
+        if heading then
+            finalCoords.w = heading
+        end
+    else
+        DBG.Error('Unable to normalize plant coordinates for source: ' .. tostring(src))
+        NotifyClient(src, _U('mustUseLockedSpot'), "error", 4000)
+        if plantData.seedName and plantData.seedAmount and plantData.seedAmount > 0 then
+            if exports.vorp_inventory:canCarryItem(src, plantData.seedName, plantData.seedAmount) then
+                exports.vorp_inventory:addItem(src, plantData.seedName, plantData.seedAmount)
+            else
+                DBG.Warning('Player ' .. tostring(src) .. ' could not carry returned seeds: ' .. tostring(plantData.seedName))
+            end
+        end
+        if plantData.soilRequired and plantData.soilName and plantData.soilAmount and plantData.soilAmount > 0 then
+            if exports.vorp_inventory:canCarryItem(src, plantData.soilName, plantData.soilAmount) then
+                exports.vorp_inventory:addItem(src, plantData.soilName, plantData.soilAmount)
+            else
+                DBG.Warning('Player ' .. tostring(src) .. ' could not carry returned soil: ' .. tostring(plantData.soilName))
+            end
+        end
         return
     end
 
+    local withinHouseRadius = false
+
+    if Config.plantSetup.requireHouseOwnership then
+        playerHouses = GetPlayerHouses(character.charIdentifier)
+        if not playerHouses or #playerHouses == 0 then
+            NotifyClient(src, _U('needHouseOwnership'), "error", 4000)
+            if plantData.seedName and plantData.seedAmount and plantData.seedAmount > 0 then
+                if exports.vorp_inventory:canCarryItem(src, plantData.seedName, plantData.seedAmount) then
+                    exports.vorp_inventory:addItem(src, plantData.seedName, plantData.seedAmount)
+                else
+                    DBG.Warning('Player ' .. tostring(src) .. ' could not carry returned seeds: ' .. tostring(plantData.seedName))
+                end
+            end
+            if plantData.soilRequired and plantData.soilName and plantData.soilAmount and plantData.soilAmount > 0 then
+                if exports.vorp_inventory:canCarryItem(src, plantData.soilName, plantData.soilAmount) then
+                    exports.vorp_inventory:addItem(src, plantData.soilName, plantData.soilAmount)
+                else
+                    DBG.Warning('Player ' .. tostring(src) .. ' could not carry returned soil: ' .. tostring(plantData.soilName))
+                end
+            end
+            return
+        end
+
+        local padding = Config.plantSetup.houseRadiusPadding or 0.0
+        local plantingVector = vector3(finalCoords.x, finalCoords.y, finalCoords.z)
+        for _, house in ipairs(playerHouses) do
+            if house.coords and #(plantingVector - house.coords) <= ((house.radius or 0.0) + padding) then
+                withinHouseRadius = true
+                break
+            end
+        end
+
+    end
+
+    local lockRequired = plantData.lockCoords and type(plantData.coordsLocks) == 'table' and next(plantData.coordsLocks)
+    local withinLock = false
+
+    if lockRequired then
+        local plantingVector = vector3(finalCoords.x, finalCoords.y, finalCoords.z)
+        local baseRadius = plantData.coordsLockRange or DEFAULT_LOCK_RANGE
+        local radiusPadding = plantData.coordsLockTolerance or 0.0
+        for _, lock in ipairs(plantData.coordsLocks) do
+            local normalized = lock
+            local lradius
+            local lheading
+            if type(lock) == 'table' then
+                if lock.radius or lock.range then
+                    lradius = lock.radius or lock.range
+                end
+                if lock.heading then
+                    lheading = lock.heading + 0.0
+                end
+                if lock.coords then
+                    normalized = lock.coords
+                end
+            end
+
+            local lx, ly, lz, lh
+            if type(normalized) == 'vector3' or type(normalized) == 'vector4' then
+                lx = normalized.x + 0.0
+                ly = normalized.y + 0.0
+                lz = normalized.z + 0.0
+                if normalized.w or normalized.h then
+                    lh = (normalized.w or normalized.h) + 0.0
+                end
+            elseif type(normalized) == 'table' then
+                if normalized.x and normalized.y and normalized.z then
+                    lx = normalized.x + 0.0
+                    ly = normalized.y + 0.0
+                    lz = normalized.z + 0.0
+                    if normalized.w or normalized.h or normalized.heading then
+                        lh = (normalized.w or normalized.h or normalized.heading) + 0.0
+                    end
+                elseif normalized[1] and normalized[2] and normalized[3] then
+                    lx = normalized[1] + 0.0
+                    ly = normalized[2] + 0.0
+                    lz = normalized[3] + 0.0
+                    if normalized[4] then
+                        lh = normalized[4] + 0.0
+                    end
+                end
+            end
+
+            if lx and ly and lz then
+                local allowedRadius = (lradius or baseRadius) + radiusPadding
+                if #(plantingVector - vector3(lx, ly, lz)) <= allowedRadius then
+                    withinLock = true
+                    if lheading or lh then
+                        finalCoords.w = lheading or lh
+                    end
+                    break
+                end
+            end
+        end
+
+        if not withinLock and not (Config.plantSetup.requireHouseOwnership and withinHouseRadius) then
+            DBG.Error('Player ' .. tostring(src) .. ' attempted to plant outside of locked coordinates.')
+            NotifyClient(src, _U('mustUseLockedSpot'), "error", 4000)
+            if plantData.seedName and plantData.seedAmount and plantData.seedAmount > 0 then
+                if exports.vorp_inventory:canCarryItem(src, plantData.seedName, plantData.seedAmount) then
+                    exports.vorp_inventory:addItem(src, plantData.seedName, plantData.seedAmount)
+                else
+                    DBG.Warning('Player ' .. tostring(src) .. ' could not carry returned seeds: ' .. tostring(plantData.seedName))
+                end
+            end
+            if plantData.soilRequired and plantData.soilName and plantData.soilAmount and plantData.soilAmount > 0 then
+                if exports.vorp_inventory:canCarryItem(src, plantData.soilName, plantData.soilAmount) then
+                    exports.vorp_inventory:addItem(src, plantData.soilName, plantData.soilAmount)
+                else
+                    DBG.Warning('Player ' .. tostring(src) .. ' could not carry returned soil: ' .. tostring(plantData.soilName))
+                end
+            end
+            return
+        end
+    end
+
+    if Config.plantSetup.requireHouseOwnership and not withinHouseRadius and not withinLock then
+        NotifyClient(src, _U('needHousePlot'), "error", 4000)
+        if plantData.seedName and plantData.seedAmount and plantData.seedAmount > 0 then
+            if exports.vorp_inventory:canCarryItem(src, plantData.seedName, plantData.seedAmount) then
+                exports.vorp_inventory:addItem(src, plantData.seedName, plantData.seedAmount)
+            else
+                DBG.Warning('Player ' .. tostring(src) .. ' could not carry returned seeds: ' .. tostring(plantData.seedName))
+            end
+        end
+        if plantData.soilRequired and plantData.soilName and plantData.soilAmount and plantData.soilAmount > 0 then
+            if exports.vorp_inventory:canCarryItem(src, plantData.soilName, plantData.soilAmount) then
+                exports.vorp_inventory:addItem(src, plantData.soilName, plantData.soilAmount)
+            else
+                DBG.Warning('Player ' .. tostring(src) .. ' could not carry returned soil: ' .. tostring(plantData.soilName))
+            end
+        end
+        return
+    end
+
+    -- Insert plant into database
+    local plantId = MySQL.insert.await('INSERT INTO `bcc_farming` (plant_coords, plant_type, plant_watered, time_left, plant_owner) VALUES (?, ?, ?, ?, ?)',
+    { json.encode(finalCoords), plantData.seedName, 'false', plantData.timeToGrow, character.charIdentifier })
+
+    if not plantId then
+        DBG.Error('Failed to insert plant into database.')
+        if plantData.seedName and plantData.seedAmount and plantData.seedAmount > 0 then
+            if exports.vorp_inventory:canCarryItem(src, plantData.seedName, plantData.seedAmount) then
+                exports.vorp_inventory:addItem(src, plantData.seedName, plantData.seedAmount)
+            else
+                DBG.Warning('Player ' .. tostring(src) .. ' could not carry returned seeds: ' .. tostring(plantData.seedName))
+            end
+        end
+        if plantData.soilRequired and plantData.soilName and plantData.soilAmount and plantData.soilAmount > 0 then
+            if exports.vorp_inventory:canCarryItem(src, plantData.soilName, plantData.soilAmount) then
+                exports.vorp_inventory:addItem(src, plantData.soilName, plantData.soilAmount)
+            else
+                DBG.Warning('Player ' .. tostring(src) .. ' could not carry returned soil: ' .. tostring(plantData.soilName))
+            end
+        end
+        return
+    end
+
+    table.insert(AllPlants, {
+        plant_id = plantId,
+        plant_coords = json.encode(finalCoords),
+        plant_type = plantData.seedName,
+        plant_watered = 'false',
+        time_left = plantData.timeToGrow,
+        plant_owner = character.charIdentifier
+    })
+
     -- Trigger client event
     local target = Config.plantSetup.lockedToPlanter and src or -1
-    TriggerClientEvent('bcc-farming:PlantPlanted', target, plantId, plantData, plantCoords, plantData.timeToGrow, false, src)
+    TriggerClientEvent('bcc-farming:PlantPlanted', target, plantId, plantData, finalCoords, plantData.timeToGrow, false, src)
 end)
 
 --- @param plantData table
@@ -101,7 +349,7 @@ RegisterNetEvent('bcc-farming:PlantToolUsage',function (plantData)
         else
             -- Remove the tool if durability is exhausted
             exports.vorp_inventory:subItemById(src, tool.id, nil, nil, 1)
-            Core.NotifyRightTip(src, _U('needNewTool'), 4000)
+            NotifyClient(src, _U('needNewTool'), "error", 4000)
             DBG.Info('Removed broken tool for source: ' .. tostring(src) .. ', tool: ' .. toolItem)
         end
     end
@@ -127,6 +375,11 @@ RegisterNetEvent('bcc-farming:NewClientConnected', function()
     end
 
     -- Loop through all plants on the server
+    if type(Plants) ~= 'table' then
+        DBG.Error('Plants configuration table is missing or invalid')
+        return
+    end
+
     for _, currentPlants in pairs(AllPlants) do
         if Config.plantSetup.lockedToPlanter and currentPlants.plant_owner ~= charid then
             goto END
@@ -262,7 +515,7 @@ Core.Callback.Register('bcc-farming:HarvestCheck', function(source, cb, plantId,
 
             local canCarry = exports.vorp_inventory:canCarryItem(src, itemName, amount)
             if not canCarry then
-                Core.NotifyRightTip(src, _U('noCarry') .. itemName, 4000)
+                NotifyClient(src, _U('noCarry') .. itemName, "error", 4000)
                 DBG.Error('Player ' .. tostring(src) .. ' cannot carry item: ' .. itemName)
                 return cb(false)
             end
@@ -276,7 +529,7 @@ Core.Callback.Register('bcc-farming:HarvestCheck', function(source, cb, plantId,
             if not success then
                 DBG.Warning('Failed to add item to inventory for source: ' .. tostring(src) .. ', item: ' .. item.itemName)
             else
-                Core.NotifyRightTip(src, _U('harvested') .. item.amount .. ' ' .. item.itemLabel, 4000)
+                NotifyClient(src, _U('harvested') .. item.amount .. ' ' .. item.itemLabel, "success", 4000)
                 DBG.Success('Successfully added item to inventory for source: ' .. tostring(src) .. ', item: ' .. item.itemName)
             end
         end
@@ -517,3 +770,5 @@ Core.Callback.Register('bcc-farming:DetectSmellingPlants', function(source, cb, 
 end)
 
 BccUtils.Versioner.checkFile(GetCurrentResourceName(), 'https://github.com/BryceCanyonCounty/bcc-farming')
+
+exports('GetPlayerHouses', GetPlayerHouses)
