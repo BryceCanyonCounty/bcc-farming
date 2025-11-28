@@ -1,6 +1,4 @@
-local BccUtils = exports['bcc-utils'].initiate()
 FeatherMenu = exports['feather-menu'].initiate()
-local VORPcore = exports.vorp_core:GetCore()
 
 function Notify(message, typeOrDuration, maybeDuration)
     local notifyType = "info"
@@ -30,7 +28,7 @@ function Notify(message, typeOrDuration, maybeDuration)
         })
     elseif Config.Notify == "vorp-core" then
         -- Only message and duration supported
-        VORPcore.NotifyRightTip(message, notifyDuration)
+       Core.NotifyRightTip(message, notifyDuration)
     else
         print("^1[Notify] Invalid Config.Notify: " .. tostring(Config.Notify))
     end

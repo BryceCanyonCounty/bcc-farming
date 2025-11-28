@@ -1,30 +1,20 @@
-local Core = exports.vorp_core:GetCore()
-BccUtils = exports['bcc-utils'].initiate()
----@type BCCFarmingDebugLib
-local DBG = BCCFarmingDebug or {
-    Info = function() end,
-    Error = function() end,
-    Warning = function() end,
-    Success = function() end
-}
-
-RegisterNetEvent('vorp:SelectedCharacter', function()
+--RegisterNetEvent('vorp:SelectedCharacter', function()
 CreateThread(function()
     TriggerServerEvent('bcc-farming:NewClientConnected')
     TriggerEvent('bcc-farming:ShowSmellingPlants')
 end)
-end)
+--end)
 
 function PlayAnim(animDict, animName, time, raking, loopUntilTimeOver)
     -- Validate inputs
     if not animDict or not animName then
-        DBG.Error('Invalid animation dictionary or name for PlayAnim: ' .. tostring(animDict) .. ', ' .. tostring(animName))
+        DBG:Error('Invalid animation dictionary or name for PlayAnim: ' .. tostring(animDict) .. ', ' .. tostring(animName))
         return
     end
 
     local playerPed = PlayerPedId()
     if not DoesEntityExist(playerPed) or playerPed == 0 then
-        DBG.Error('Player ped does not exist')
+        DBG:Error('Player ped does not exist')
         return
     end
 
@@ -62,7 +52,7 @@ function PlayAnim(animDict, animName, time, raking, loopUntilTimeOver)
             AttachEntityToEntity(rakeObj, playerPed, GetEntityBoneIndexByName(playerPed, 'PH_R_Hand'), 0.0, 0.0, 0.19,
             0.0, 0.0, 0.0, false, false, true, false, 0, true, false, false)
         else
-            DBG.Warning('Failed to create rake object')
+            DBG:Warning('Failed to create rake object')
         end
     end
 
@@ -92,14 +82,14 @@ AddEventHandler('bcc-farming:ShowSmellingPlants', function()
             -- Get player ped
             local playerPed = PlayerPedId()
             if playerPed == 0 or not DoesEntityExist(playerPed) then
-                DBG.Warning("Player ped does not exist, waiting to retry...")
+                DBG:Warning("Player ped does not exist, waiting to retry...")
                 goto continueLoop
             end
 
             -- Get and validate player coords
             local playerCoords = GetEntityCoords(playerPed)
             if not playerCoords or playerCoords == vector3(0, 0, 0) then
-                DBG.Warning("Invalid player coordinates, waiting to retry...")
+                DBG:Warning("Invalid player coordinates, waiting to retry...")
                 goto continueLoop
             end
 
@@ -108,21 +98,21 @@ AddEventHandler('bcc-farming:ShowSmellingPlants', function()
 
             -- Validate response
             if not smellingPlants then
-                --DBG.Info('No smelling plants found or invalid data received')
+                --DBG:Info('No smelling plants found or invalid data received')
                 goto continueLoop
             end
 
             if smellingPlants == false then
-                DBG.Info('Server returned false, likely due to job restriction or error')
+                DBG:Info('Server returned false, likely due to job restriction or error')
                 goto continueLoop
             end
 
             if type(smellingPlants) ~= "table" or #smellingPlants == 0 then
-                DBG.Info('Empty smelling plants table received')
+                DBG:Info('Empty smelling plants table received')
                 goto continueLoop
             end
 
-            DBG.Info('Received ' .. tostring(#smellingPlants) .. ' smelling plants to show')
+            DBG:Info('Received ' .. tostring(#smellingPlants) .. ' smelling plants to show')
 
             -- Show notification with cooldown
             if Config.smelling.notifications.enabled then
@@ -148,11 +138,11 @@ AddEventHandler('bcc-farming:ShowSmellingPlants', function()
                     for _, plant in pairs(smellingPlants) do
                         -- Validate plant data
                         if not plant or not plant.plantName or not plant.coords or not plant.coords.x or not plant.coords.y or not plant.coords.z then
-                            DBG.Warning("Invalid plant data in smellingPlants table")
+                            DBG:Warning("Invalid plant data in smellingPlants table")
                             goto continuePlant
                         end
 
-                        DBG.Info('Showing smelling plant: ' .. plant.plantName .. ' at coords: ' .. plant.coords.x .. ', ' .. plant.coords.y .. ', ' .. plant.coords.z)
+                        DBG:Info('Showing smelling plant: ' .. plant.plantName .. ' at coords: ' .. plant.coords.x .. ', ' .. plant.coords.y .. ', ' .. plant.coords.z)
 
                         -- Create blip
                         blip = Citizen.InvokeNative(0x554D9D53F696D002, 1664425300, plant.coords.x, plant.coords.y,
@@ -164,7 +154,7 @@ AddEventHandler('bcc-farming:ShowSmellingPlants', function()
                             Citizen.InvokeNative(0x662D364ABF16DE2F, blip, joaat(Config.BlipColors[Config.smelling.blip.color]))
                             table.insert(blips, blip)
                         else
-                            DBG.Warning("Failed to create blip for plant: " .. plant.plantName)
+                            DBG:Warning("Failed to create blip for plant: " .. plant.plantName)
                         end
                         ::continuePlant::
                     end
