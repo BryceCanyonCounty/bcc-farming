@@ -1,5 +1,3 @@
-local BccUtils = exports['bcc-utils'].initiate()
-
 function NotifyClient(src, message, notifyType, duration)
     BccUtils.RPC:Notify("bcc-farming:NotifyClient", {
         message = message,

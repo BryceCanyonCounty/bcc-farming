@@ -3,9 +3,7 @@ Config = {
     -----------------------------------------------------
 
     -- Do Not Enable on Live Server
-    devMode = {
-        active = false, -- Shows Debug Prints in Client and Server Consoles
-    },
+    DevMode = false, -- Shows Debug Prints in Client and Server Consoles
     -----------------------------------------------------
 
     keys = {
@@ -26,6 +24,7 @@ Config = {
         'wateringcan_dirtywater',           -- bucket of dirty water
     },
     emptyWaterBucket = 'wateringcan_empty', -- empty water bucket
+    waterBucketUses = 5, -- How many plants a full bucket can water before turning empty
     -----------------------------------------------------
 
     -- Script will use the one with the highest time reduction from the player's inventory
@@ -41,7 +40,7 @@ Config = {
         {
             fertName = 'fertilizer3', -- Item name used in the database
             fertTimeReduction = 0.75, -- Default: 0.75 / 75% reduction in time
-        },
+        }
     },
     -----------------------------------------------------
 

@@ -29,6 +29,7 @@ Locales["de_lang"] = {
     secondsUntilharvestOver = "Fertig",
     noCarry = "Can't carry item: ",
     UsageLeft = "Haltbarkeit: ",
+    WaterUsesLeft = "Verbleibende Wassernutzungen: ",
     FinishPlantingProcessFirst = "Beende erst den Anbaue der Aktuellen Pflanze",
     needNewTool = "Tool broken, you need a new one!",
     useBucket = "Use Bucket",

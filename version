@@ -1,3 +1,9 @@
+<2.7.0>
+- Added `BccUtils.Debug` integration
+- Updated all debug calls to colon syntax as part of DebugAPI cleanup
+- Moved core dependencies (`bcc-utils`, `vorp_core`, etc.) into the init file
+- Added water bucket utilization logic
+
 <2.6.0>
 - Added **feather-menu notifications**.
 - Added a **configurable option** to determine whether the player *owns or rents* a house (using `bcc-housing`).

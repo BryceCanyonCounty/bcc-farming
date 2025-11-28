@@ -1,11 +1,3 @@
-local Core = exports.vorp_core:GetCore()
----@type BCCFarmingDebugLib
-local DBG = BCCFarmingDebug or {
-    Info = function() end,
-    Error = function() end,
-    Warning = function() end,
-    Success = function() end
-}
 local YesPrompt = 0
 local NoPrompt = 0
 local FertilizerGroup = GetRandomIntInRange(0, 0xffffff)
@@ -13,30 +5,30 @@ local PromptsStarted = false
 local PlantingProcess = false
 
 local function StartPrompts()
-    DBG.Info('Starting fertilizer prompts...')
+    DBG:Info('Starting fertilizer prompts...')
     -- Check if prompts are already started
     if PromptsStarted then
-        DBG.Success('Prompts are already started')
+        DBG:Success('Prompts are already started')
         return true
     end
 
     -- Validate that prompt groups exist
     if not FertilizerGroup then
-        DBG.Error('Prompt group is not initialized for Fertilizer')
+        DBG:Error('Prompt group is not initialized for Fertilizer')
         return false
     end
 
     -- Validate config keys exist
     if not Config.keys or not Config.keys.fertYes or not Config.keys.fertNo then
-        DBG.Error('Required Fertilizer keys are not defined in config')
+        DBG:Error('Required Fertilizer keys are not defined in config')
         return false
     end
 
     -- Create Fertilizer Yes prompt
     YesPrompt = UiPromptRegisterBegin()
-    DBG.Info('Creating YesPrompt...')
+    DBG:Info('Creating YesPrompt...')
     if not YesPrompt or YesPrompt == 0 then
-        DBG.Error('Failed to register YesPrompt')
+        DBG:Error('Failed to register YesPrompt')
         return false
     end
     UiPromptSetControlAction(YesPrompt, Config.keys.fertYes)
@@ -49,9 +41,9 @@ local function StartPrompts()
 
     -- Create Fertilizer No prompt
     NoPrompt = UiPromptRegisterBegin()
-    DBG.Info('Creating NoPrompt...')
+    DBG:Info('Creating NoPrompt...')
     if not NoPrompt or NoPrompt == 0 then
-        DBG.Error('Failed to register NoPrompt')
+        DBG:Error('Failed to register NoPrompt')
         return false
     end
     UiPromptSetControlAction(NoPrompt, Config.keys.fertNo)
@@ -63,21 +55,21 @@ local function StartPrompts()
     UiPromptRegisterEnd(NoPrompt)
 
     PromptsStarted = true
-    DBG.Success('All fertilizer prompts started successfully')
+    DBG:Success('All fertilizer prompts started successfully')
     return true
 end
 
 RegisterNetEvent('bcc-farming:PlantingCrop', function(plantData, bestFertilizer, houseLocks)
-    DBG.Info('PlantingCrop event triggered')
+    DBG:Info('PlantingCrop event triggered')
     -- Validate inputs
     if not plantData then
-        DBG.Error('Invalid plantData received')
+        DBG:Error('Invalid plantData received')
         return
     end
 
     local playerPed = PlayerPedId()
     if not DoesEntityExist(playerPed) or IsEntityDead(playerPed) then
-        DBG.Error('Player ped is invalid or dead')
+        DBG:Error('Player ped is invalid or dead')
         return
     end
 
@@ -190,7 +182,7 @@ RegisterNetEvent('bcc-farming:PlantingCrop', function(plantData, bestFertilizer,
     end
 
     PlantingProcess = true
-    DBG.Info('Planting process started')
+    DBG:Info('Planting process started')
 
     -- Raking animation
     Notify(_U('raking'), "info", 16000)
@@ -206,7 +198,7 @@ RegisterNetEvent('bcc-farming:PlantingCrop', function(plantData, bestFertilizer,
 
     -- Tool usage
     if plantData.plantingToolRequired then
-        DBG.Info('Sending tool usage data')
+        DBG:Info('Sending tool usage data')
         TriggerServerEvent('bcc-farming:PlantToolUsage', plantData)
     end
 
@@ -214,14 +206,14 @@ RegisterNetEvent('bcc-farming:PlantingCrop', function(plantData, bestFertilizer,
 
     -- Start fertilizer prompts if not already started
     if not PromptsStarted and not StartPrompts() then
-        DBG.Error('Failed to start prompts')
+        DBG:Error('Failed to start prompts')
         PlantingProcess = false
         TriggerServerEvent('bcc-farming:ReturnItems', plantData.seedName, plantData.seedAmount, plantData.soilRequired, plantData.soilName, plantData.soilAmount)
         return
     end
 
     -- Fertilizer prompt loop
-    DBG.Info('Entering fertilizer prompt loop')
+    DBG:Info('Entering fertilizer prompt loop')
     while PlantingProcess do
         local sleep = 1000
         local newPlayerCoords = GetEntityCoords(playerPed)
@@ -232,7 +224,7 @@ RegisterNetEvent('bcc-farming:PlantingCrop', function(plantData, bestFertilizer,
             UiPromptSetActiveGroupThisFrame(FertilizerGroup, CreateVarString(10, 'LITERAL_STRING', _U('fertilize')), 1, 0, 0, 0)
 
             if Citizen.InvokeNative(0xE0F65F0640EF0617, YesPrompt) then  -- PromptHasHoldModeCompleted
-                DBG.Info('Yes prompt completed - using fertilizer')
+                DBG:Info('Yes prompt completed - using fertilizer')
                 if bestFertilizer then
                     plantData.timeToGrow = math.floor(plantData.timeToGrow - (bestFertilizer.fertTimeReduction * plantData.timeToGrow))
                     TriggerServerEvent('bcc-farming:RemoveFertilizer', bestFertilizer.fertName)
@@ -243,7 +235,7 @@ RegisterNetEvent('bcc-farming:PlantingCrop', function(plantData, bestFertilizer,
             end
 
             if Citizen.InvokeNative(0xE0F65F0640EF0617, NoPrompt) then -- PromptHasHoldModeCompleted
-                DBG.Info('No prompt completed - skipping fertilizer')
+                DBG:Info('No prompt completed - skipping fertilizer')
                 break
             end
 
@@ -266,7 +258,7 @@ RegisterNetEvent('bcc-farming:PlantingCrop', function(plantData, bestFertilizer,
 
     -- Plant the crop if process is still active
     if PlantingProcess then
-        DBG.Info('Planting crop at final location')
+        DBG:Info('Planting crop at final location')
         local x, y, z = table.unpack(GetOffsetFromEntityInWorldCoords(PlayerPedId(), 0.0, 0.75, 0.0))
         local plantCoords = {
             x = x,
