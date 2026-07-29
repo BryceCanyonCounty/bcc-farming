@@ -29,7 +29,6 @@ Locales["pl_lang"] = {
     movedTooFar = "Odszedłeś zbyt daleko",
     noCarry = "Nie możesz unieść przedmiotu: ",
     UsageLeft = "Wytrzymałość: ",
-    WaterUsesLeft = "Pozostała woda: ",
     FinishPlantingProcessFirst = "Najpierw dokończ uprawę obecnej rośliny",
     needNewTool = "Narzędzie zniszczone, potrzebujesz nowego!",
     useBucket = "Użyj wiadra",
