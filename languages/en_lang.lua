@@ -29,7 +29,6 @@ Locales["en_lang"] = {
     movedTooFar = "You moved too far away",
     noCarry = "Can't carry item: ",
     UsageLeft = "Durability: ",
-    WaterUsesLeft = "Water uses left: ",
     FinishPlantingProcessFirst = "Finish growing the current plant first",
     needNewTool = "Tool broken, you need a new one!",
     useBucket = "Use Bucket",
