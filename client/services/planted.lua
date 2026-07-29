@@ -134,32 +134,20 @@ local function LoadModel(model, modelName)
     return true
 end
 
-local function ScenarioInPlace(hash, time)
-    -- Validate inputs
-    if not hash or not time then
-        DBG:Error('Invalid hash or time parameter for ScenarioInPlace: ' .. tostring(hash) .. ', ' .. tostring(time))
+local function ScenarioInPlace(scenarioType, conditionalAnim, duration)
+    if not scenarioType then
+        DBG:Error('Invalid scenarioType parameter for ScenarioInPlace: ' .. tostring(scenarioType))
         return
     end
 
     local playerPed = PlayerPedId()
-    if not DoesEntityExist(playerPed) or playerPed == 0 then
-        DBG:Error('Player ped does not exist')
-        return
-    end
-
-    -- Freeze player and start scenario
     FreezeEntityPosition(playerPed, true)
 
-    -- Convert hash to joaat if it's not already
-    local scenarioHash = type(hash) == 'string' and joaat(hash) or hash
+    local scenarioHash = joaat(scenarioType)
+    local conditionalHash = joaat(conditionalAnim)
 
-    -- Start scenario
-    TaskStartScenarioInPlaceHash(playerPed, scenarioHash, time, true, 0, GetEntityHeading(playerPed), false)
-
-    -- Wait for the scenario to complete
-    Wait(time)
-
-    -- Clear tasks and reset player state
+    TaskStartScenarioInPlaceHash(playerPed, scenarioHash, duration, true, conditionalHash, GetEntityHeading(playerPed), false)
+    Wait(duration)
     ClearPedTasks(playerPed)
     Wait(4000)
     HidePedWeapons(playerPed, 2, true)
@@ -301,7 +289,9 @@ RegisterNetEvent('bcc-farming:PlantPlanted', function(plantId, plantData, plantC
                         DBG:Info('Water prompt completed...')
                         local canWater = Core.Callback.TriggerAwait('bcc-farming:ManagePlantWateredStatus', plantId)
                         if canWater then
-                            ScenarioInPlace('WORLD_HUMAN_BUCKET_POUR_LOW', 5000)
+                            local scenarioType = 'WORLD_HUMAN_BUCKET_POUR_LOW'
+                            local conditionalAnim = IsPedMale(PlayerPedId()) and 'WORLD_HUMAN_BUCKET_POUR_LOW_MALE_A' or 'WORLD_HUMAN_BUCKET_POUR_LOW_FEMALE_A'
+                            ScenarioInPlace(scenarioType, conditionalAnim, 3000)
                         else
                             Core.NotifyRightTip(_U('noWaterBucket'), 4000)
                         end
