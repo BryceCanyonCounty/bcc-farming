@@ -27,7 +27,8 @@ client_scripts {
 dependencies {
     'vorp_character',
     'vorp_inventory',
-    'bcc-utils'
+    'bcc-utils',
+    'bcc-water'
 }
 
 version '2.7.0'
