@@ -32,7 +32,7 @@ Plants = {
             'farmer',
             'doctor'
         },
-        lockCoords = true, -- Set to false to allow planting anywhere
+        lockCoords = false, -- Set to false to allow planting anywhere
         coordsLockRange = 50,
         coordsLockTolerance = 0.75,
         coordsLocks = {
@@ -74,7 +74,7 @@ Plants = {
             'farmer',
             'doctor'
         },
-        lockCoords = true, -- Set to false to allow planting anywhere
+        lockCoords = false, -- Set to false to allow planting anywhere
         coordsLockRange = 50,
         coordsLockTolerance = 0.75,
         coordsLocks = {
@@ -115,7 +115,7 @@ Plants = {
             'farmer',
             'doctor'
         },
-        lockCoords = true, -- Set to false to allow planting anywhere
+        lockCoords = false, -- Set to false to allow planting anywhere
         coordsLockRange = 50,
         coordsLockTolerance = 0.75,
         coordsLocks = {
@@ -156,7 +156,7 @@ Plants = {
             'farmer',
             'doctor'
         },
-        lockCoords = true, -- Set to false to allow planting anywhere
+        lockCoords = false, -- Set to false to allow planting anywhere
         coordsLockRange = 50,
         coordsLockTolerance = 0.75,
         coordsLocks = {
@@ -197,7 +197,7 @@ Plants = {
             'farmer',
             'doctor'
         },
-        lockCoords = true, -- Set to false to allow planting anywhere
+        lockCoords = false, -- Set to false to allow planting anywhere
         coordsLockRange = 50,
         coordsLockTolerance = 0.75,
         coordsLocks = {
@@ -238,7 +238,7 @@ Plants = {
             'farmer',
             'doctor'
         },
-        lockCoords = true, -- Set to false to allow planting anywhere
+        lockCoords = false, -- Set to false to allow planting anywhere
         coordsLockRange = 50,
         coordsLockTolerance = 0.75,
         coordsLocks = {
@@ -279,7 +279,7 @@ Plants = {
             'farmer',
             'doctor'
         },
-        lockCoords = true, -- Set to false to allow planting anywhere
+        lockCoords = false, -- Set to false to allow planting anywhere
         coordsLockRange = 50,
         coordsLockTolerance = 0.75,
         coordsLocks = {
@@ -320,7 +320,7 @@ Plants = {
             'farmer',
             'doctor'
         },
-        lockCoords = true, -- Set to false to allow planting anywhere
+        lockCoords = false, -- Set to false to allow planting anywhere
         coordsLockRange = 50,
         coordsLockTolerance = 0.75,
         coordsLocks = {
@@ -361,7 +361,7 @@ Plants = {
             'farmer',
             'doctor'
         },
-        lockCoords = true, -- Set to false to allow planting anywhere
+        lockCoords = false, -- Set to false to allow planting anywhere
         coordsLockRange = 50,
         coordsLockTolerance = 0.75,
         coordsLocks = {
@@ -369,47 +369,7 @@ Plants = {
         }
     },
     -----------------------------------------------------
-    {
-        plantingToolRequired = true,       -- If true, the player will need a tool to plant the seed
-        plantingTool = 'hoe',              -- Item name for the planting tool (Durability starts at 100)
-        plantingToolUsage = 2,             -- Durability value removed from the tool when planting a seed
-        plantingDistance = 1.5,            -- Distance between plants
-        plantName = 'Hop',                  -- Name of the plant
-        seedName = 'hop_seed',             -- Item name for the seed
-        seedAmount = 1,                    -- Amount of soil required to plant the seed
-        plantProp = 'rdr2_bush_snakeweedflower', -- Prop for the plant to be spawned
-        soilRequired = false,              -- If true, the seed will require soil to be planted
-        soilAmount = 1,                    -- Amount of soil required to plant the seed
-        soilName = 'soil',                 -- Item name for the soil required to plant the seed
-        timeToGrow = 900,                   -- Time in seconds for the plant to grow
-        plantOffset = 1,                   -- If the plant is not on the ground properly you can use this setting
-        jobLocked = false,                 -- If true, only players with the job will be able to harvest the plant
-        smelling = true,                   -- PoliceJob can smell this plant
-        blips = {
-            enabled = true,                -- Set true to Enable Blips for Plants (Only shows to planter)
-            sprite = 'blip_mp_spawnpoint', -- Default: 'blip_mp_spawnpoint'
-            name = 'Hop',                  -- Name of Blip on Map
-            color = 'WHITE'                -- Blip Colors Shown in 'config.lua'
-        },
-        rewards = {
-            {
-                itemName = 'hop',
-                itemLabel = 'Hop',
-                amount = 1
-            }
-        },
-        jobs = {
-            'farmer',
-            'doctor'
-        },
-        lockCoords = true, -- Set to false to allow planting anywhere
-        coordsLockRange = 50,
-        coordsLockTolerance = 0.75,
-        coordsLocks = {
-            vector3(1306.07, -1903.26, 52.26)
-        }
-    },
-    -----------------------------------------------------
+
     {
         plantingToolRequired = true,       -- If true, the player will need a tool to plant the seed
         plantingTool = 'hoe',              -- Item name for the planting tool (Durability starts at 100)
@@ -443,7 +403,7 @@ Plants = {
             'farmer',
             'doctor'
         },
-        lockCoords = true, -- Set to false to allow planting anywhere
+        lockCoords = false, -- Set to false to allow planting anywhere
         coordsLockRange = 50,
         coordsLockTolerance = 0.75,
         coordsLocks = {
@@ -484,7 +444,7 @@ Plants = {
             'farmer',
             'doctor'
         },
-        lockCoords = true, -- Set to false to allow planting anywhere
+        lockCoords = false, -- Set to false to allow planting anywhere
         coordsLockRange = 50,
         coordsLockTolerance = 0.75,
         coordsLocks = {
@@ -525,7 +485,7 @@ Plants = {
             'farmer',
             'doctor'
         },
-        lockCoords = true, -- Set to false to allow planting anywhere
+        lockCoords = false, -- Set to false to allow planting anywhere
         coordsLockRange = 50,
         coordsLockTolerance = 0.75,
         coordsLocks = {
@@ -566,7 +526,7 @@ Plants = {
             'farmer',
             'doctor'
         },
-        lockCoords = true, -- Set to false to allow planting anywhere
+        lockCoords = false, -- Set to false to allow planting anywhere
         coordsLockRange = 50,
         coordsLockTolerance = 0.75,
         coordsLocks = {
@@ -606,7 +566,7 @@ Plants = {
         jobs = {
             'tabak',
         },
-        lockCoords = true, -- Set to false to allow planting anywhere
+        lockCoords = false, -- Set to false to allow planting anywhere
         coordsLockRange = 50,
         coordsLockTolerance = 0.75,
         coordsLocks = {
@@ -647,7 +607,7 @@ Plants = {
             'farmer',
             'doctor'
         },
-        lockCoords = true, -- Set to false to allow planting anywhere
+        lockCoords = false, -- Set to false to allow planting anywhere
         coordsLockRange = 50,
         coordsLockTolerance = 0.75,
         coordsLocks = {
@@ -688,7 +648,7 @@ Plants = {
             'farmer',
             'doctor'
         },
-        lockCoords = true, -- Set to false to allow planting anywhere
+        lockCoords = false, -- Set to false to allow planting anywhere
         coordsLockRange = 50,
         coordsLockTolerance = 0.75,
         coordsLocks = {
@@ -729,7 +689,7 @@ Plants = {
             'farmer',
             'doctor'
         },
-        lockCoords = true, -- Set to false to allow planting anywhere
+        lockCoords = false, -- Set to false to allow planting anywhere
         coordsLockRange = 50,
         coordsLockTolerance = 0.75,
         coordsLocks = {
@@ -770,7 +730,7 @@ Plants = {
             'farmer',
             'doctor'
         },
-        lockCoords = true, -- Set to false to allow planting anywhere
+        lockCoords = false, -- Set to false to allow planting anywhere
         coordsLockRange = 50,
         coordsLockTolerance = 0.75,
         coordsLocks = {
@@ -811,7 +771,7 @@ Plants = {
             'farmer',
             'doctor'
         },
-        lockCoords = true, -- Set to false to allow planting anywhere
+        lockCoords = false, -- Set to false to allow planting anywhere
         coordsLockRange = 50,
         coordsLockTolerance = 0.75,
         coordsLocks = {
@@ -852,7 +812,7 @@ Plants = {
             'farmer',
             'doctor'
         },
-        lockCoords = true, -- Set to false to allow planting anywhere
+        lockCoords = false, -- Set to false to allow planting anywhere
         coordsLockRange = 50,
         coordsLockTolerance = 0.75,
         coordsLocks = {
@@ -893,7 +853,7 @@ Plants = {
             'farmer',
             'doctor'
         },
-        lockCoords = true, -- Set to false to allow planting anywhere
+        lockCoords = false, -- Set to false to allow planting anywhere
         coordsLockRange = 50,
         coordsLockTolerance = 0.75,
         coordsLocks = {
@@ -934,7 +894,7 @@ Plants = {
             'farmer',
             'doctor'
         },
-        lockCoords = true, -- Set to false to allow planting anywhere
+        lockCoords = false, -- Set to false to allow planting anywhere
         coordsLockRange = 50,
         coordsLockTolerance = 0.75,
         coordsLocks = {
@@ -975,7 +935,7 @@ Plants = {
             'farmer',
             'doctor'
         },
-        lockCoords = true, -- Set to false to allow planting anywhere
+        lockCoords = false, -- Set to false to allow planting anywhere
         coordsLockRange = 50,
         coordsLockTolerance = 0.75,
         coordsLocks = {
@@ -1016,7 +976,7 @@ Plants = {
             'farmer',
             'doctor'
         },
-        lockCoords = true, -- Set to false to allow planting anywhere
+        lockCoords = false, -- Set to false to allow planting anywhere
         coordsLockRange = 50,
         coordsLockTolerance = 0.75,
         coordsLocks = {
@@ -1057,7 +1017,7 @@ Plants = {
             'farmer',
             'doctor'
         },
-        lockCoords = true, -- Set to false to allow planting anywhere
+        lockCoords = false, -- Set to false to allow planting anywhere
         coordsLockRange = 50,
         coordsLockTolerance = 0.75,
         coordsLocks = {
@@ -1098,7 +1058,7 @@ Plants = {
             'farmer',
             'doctor'
         },
-        lockCoords = true, -- Set to false to allow planting anywhere
+        lockCoords = false, -- Set to false to allow planting anywhere
         coordsLockRange = 50,
         coordsLockTolerance = 0.75,
         coordsLocks = {
@@ -1139,7 +1099,7 @@ Plants = {
             'farmer',
             'doctor'
         },
-        lockCoords = true, -- Set to false to allow planting anywhere
+        lockCoords = false, -- Set to false to allow planting anywhere
         coordsLockRange = 50,
         coordsLockTolerance = 0.75,
         coordsLocks = {
@@ -1180,7 +1140,7 @@ Plants = {
             'farmer',
             'doctor'
         },
-        lockCoords = true, -- Set to false to allow planting anywhere
+        lockCoords = false, -- Set to false to allow planting anywhere
         coordsLockRange = 50,
         coordsLockTolerance = 0.75,
         coordsLocks = {
@@ -1221,7 +1181,7 @@ Plants = {
             'farmer',
             'doctor'
         },
-        lockCoords = true, -- Set to false to allow planting anywhere
+        lockCoords = false, -- Set to false to allow planting anywhere
         coordsLockRange = 50,
         coordsLockTolerance = 0.75,
         coordsLocks = {
@@ -1262,7 +1222,7 @@ Plants = {
             'farmer',
             'doctor'
         },
-        lockCoords = true, -- Set to false to allow planting anywhere
+        lockCoords = false, -- Set to false to allow planting anywhere
         coordsLockRange = 50,
         coordsLockTolerance = 0.75,
         coordsLocks = {
@@ -1303,7 +1263,7 @@ Plants = {
             'farmer',
             'doctor'
         },
-        lockCoords = true, -- Set to false to allow planting anywhere
+        lockCoords = false, -- Set to false to allow planting anywhere
         coordsLockRange = 50,
         coordsLockTolerance = 0.75,
         coordsLocks = {
@@ -1344,7 +1304,7 @@ Plants = {
             'farmer',
             'doctor'
         },
-        lockCoords = true, -- Set to false to allow planting anywhere
+        lockCoords = false, -- Set to false to allow planting anywhere
         coordsLockRange = 50,
         coordsLockTolerance = 0.75,
         coordsLocks = {
