@@ -14,7 +14,7 @@
 - **Resource Management**:
   - Soil requirements with configurable amounts
   - Fertilizer system for growth acceleration
-  - Watering mechanics with bucket depletion (auto-replaced with empty buckets)
+  - Watering mechanics powered by bcc-water bucket use, durability, and depletion
 - **Ownership System**: Configurable plant locking (planter-only or public access)
 
 ### **🔧 Advanced Configuration**
@@ -48,10 +48,7 @@
 - [vorp_inventory](https://github.com/VORPCORE/vorp_inventory-lua)
 - [vorp_character](https://github.com/VORPCORE/vorp_character-lua)
 - [bcc-utils](https://github.com/BryceCanyonCounty/bcc-utils)
-
-### **Recommended Addon**
-
-- [bcc-water](https://github.com/BryceCanyonCounty/bcc-water) *(for bucket filling functionality)*
+- [bcc-water](https://github.com/BryceCanyonCounty/bcc-water) *(required for bucket use and filling)*
 
 ---
 
@@ -65,6 +62,7 @@ ensure vorp_core
 ensure vorp_inventory
 ensure vorp_character
 ensure bcc-utils
+ensure bcc-water
 ```
 
 ### **2. Install BCC Farming**
