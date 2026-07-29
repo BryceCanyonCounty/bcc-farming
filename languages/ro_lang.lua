@@ -29,7 +29,6 @@ Locales["ro_lang"] = {
     movedTooFar = "Te-ai indepartat prea mult",
     noCarry = "Nu poti cara: ",
     UsageLeft = "Durabilitate ramasa: ",
-    WaterUsesLeft = "Utilizari ramase de apa: ",
     FinishPlantingProcessFirst = "Finish growing the current plant first",
     needNewTool = "Ai nevoie de o noua unealta!",
     useBucket = "Foloseste galeata cu apa",
