@@ -43,7 +43,7 @@ local function CheckPlayerJob(src)
 end
 
 --- @param plantData table
---- @param plantCoords vector3
+--- @param plantCoords vector3|vector4|table
 RegisterNetEvent('bcc-farming:AddPlant', function(plantData, plantCoords)
     local src = source
     local user = Core.getUser(src)
@@ -74,13 +74,15 @@ RegisterNetEvent('bcc-farming:AddPlant', function(plantData, plantCoords)
     end
 
     local px, py, pz, heading = nil, nil, nil, nil
-    if type(coordsCandidate) == 'vector3' or type(coordsCandidate) == 'vector4' then
+    if type(coordsCandidate) == 'vector3' then
         px = coordsCandidate.x + 0.0
         py = coordsCandidate.y + 0.0
         pz = coordsCandidate.z + 0.0
-        if coordsCandidate.w or coordsCandidate.h then
-            heading = (coordsCandidate.w or coordsCandidate.h) + 0.0
-        end
+    elseif type(coordsCandidate) == 'vector4' then
+        px = coordsCandidate.x + 0.0
+        py = coordsCandidate.y + 0.0
+        pz = coordsCandidate.z + 0.0
+        heading = coordsCandidate.w + 0.0
     elseif type(coordsCandidate) == 'table' then
         if coordsCandidate.x and coordsCandidate.y and coordsCandidate.z then
             px = coordsCandidate.x + 0.0
@@ -410,53 +412,22 @@ Core.Callback.Register('bcc-farming:ManagePlantWateredStatus', function(source, 
         return cb(false)
     end
 
-    local fullWaterBucket = Config.fullWaterBucket
-    local waterBucketUses = Config.waterBucketUses or 1
-
-    -- Check for any full water bucket
-    for _, itemName in ipairs(fullWaterBucket) do
-        local waterItem = exports.vorp_inventory:getItem(src, itemName)
-
-        if waterItem then
-            local meta = waterItem.metadata or {}
-            local usesLeft = tonumber(meta.waterUsesLeft) or waterBucketUses
-            usesLeft = usesLeft - 1
-
-            if usesLeft <= 0 then
-                -- Remove the used bucket and replace with an empty one
-                local successRemove = exports.vorp_inventory:subItemById(src, waterItem.id, nil, nil, 1)
-                local successAdd = exports.vorp_inventory:addItem(src, Config.emptyWaterBucket, 1)
-                if not successRemove or not successAdd then
-                    DBG:Error('Failed to swap watering bucket for source: ' .. tostring(src))
-                    return cb(false)
-                end
-            else
-                -- Persist remaining uses on the bucket
-                meta.waterUsesLeft = usesLeft
-                meta.description = _U('WaterUsesLeft') .. usesLeft .. '/' .. waterBucketUses
-
-                local successMeta = exports.vorp_inventory:setItemMetadata(src, waterItem.id, meta)
-                if not successMeta then
-                    DBG:Error('Failed to update watering bucket metadata for source: ' .. tostring(src))
-                    return cb(false)
-                end
-            end
-
-            -- Update plant watered status in database
-            local successUpdate = MySQL.update.await('UPDATE `bcc_farming` SET `plant_watered` = ? WHERE `plant_id` = ?', { 'true', plantId })
-
-            if not successUpdate then
-                DBG:Error('Failed to update plant watered status in database for plantId: ' .. tostring(plantId))
-                return cb(false)
-            end
-
-            TriggerClientEvent('bcc-farming:UpdateClientPlantWateredStatus', -1, plantId)
-            return cb(true)
-        end
+    if not exports['bcc-water']:ConsumeBucket(src) then
+        DBG:Info('No usable water bucket found for source: ' .. tostring(src))
+        return cb(false)
     end
 
-    DBG:Error('No water bucket found for source: ' .. tostring(src))
-    cb(false)
+    local successUpdate = MySQL.update.await(
+        'UPDATE `bcc_farming` SET `plant_watered` = ? WHERE `plant_id` = ?',
+        { 'true', plantId }
+    )
+    if not successUpdate then
+        DBG:Error('Failed to update plant watered status for plantId: ' .. tostring(plantId))
+        return cb(false)
+    end
+
+    TriggerClientEvent('bcc-farming:UpdateClientPlantWateredStatus', -1, plantId)
+    cb(true)
 end)
 
 --- @param plantId number
