@@ -15,16 +15,7 @@ Config = {
     },
     -----------------------------------------------------
     Notify = "feather-menu", ----or use vorp-core
-    
-    -----------------------------------------------------
 
-    -- Item Names from Database
-    fullWaterBucket = {
-        'wateringcan',                      -- bucket of clean water
-        'wateringcan_dirtywater',           -- bucket of dirty water
-    },
-    emptyWaterBucket = 'wateringcan_empty', -- empty water bucket
-    waterBucketUses = 5, -- How many plants a full bucket can water before turning empty
     -----------------------------------------------------
 
     -- Script will use the one with the highest time reduction from the player's inventory
@@ -47,7 +38,7 @@ Config = {
     plantSetup = {
         lockedToPlanter = false, -- If true, only the player who planted the seed will be able to harvest it
         maxPlants = 10,          -- Maximum amount of plants a player can have
-        requireHouseOwnership = true, -- If true, planting must occur within one of the player's house plots
+        requireHouseOwnership = false, -- If true, planting must occur within one of the player's house plots
         houseRadiusPadding = 10       -- Extra meters added to the house radius when checking planting range
     },
     -----------------------------------------------------
