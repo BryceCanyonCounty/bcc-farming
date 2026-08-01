@@ -3,13 +3,13 @@ Config = {
     -----------------------------------------------------
 
     -- Do Not Enable on Live Server
-    DevMode = false, -- Shows Debug Prints in Client and Server Consoles
+    DevMode = true, -- Shows Debug Prints in Client and Server Consoles
     -----------------------------------------------------
 
     keys = {
-        fertYes = 0x4CC0E2FE, -- Default: 0x4CC0E2FE / B key
-        fertNo = 0x9959A6F0,  -- Default: 0x9959A6F0 / C key
+        fertNo = 0x80F28E95,  -- Default: 0x80F28E95 / L key
         water = 0x4CC0E2FE,   -- Default: 0x4CC0E2FE / B key
+        waterNo = 0x80F28E95, -- Default: 0x80F28E95 / L key
         harvest = 0x4CC0E2FE, -- Default: 0x4CC0E2FE / B key
         destroy = 0x27D1C284, -- Default: 0x27D1C284 / R key
     },
@@ -18,28 +18,56 @@ Config = {
 
     -----------------------------------------------------
 
-    -- Script will use the one with the highest time reduction from the player's inventory
+    -- Players can select any fertilizer they currently carry.
     fertilizerSetup = {
         {
-            fertName = 'fertilizer1', -- Item name used in the database
-            fertTimeReduction = 0.25, -- Default: 0.25 / 25% reduction in time
+            fertName = 'fertilizer1',   -- Item name used in the database
+            fertLabel = 'Grade C',
+            selectionKey = 0xE6F612E4,  -- 1 key
+            fertTimeReduction = 0.25,   -- Default: 0.25 / 25% reduction in time
+            fertYieldMultiplier = 1.50, -- 50% more produce
         },
         {
-            fertName = 'fertilizer2', -- Item name used in the database
-            fertTimeReduction = 0.50, -- Default: 0.50 / 50% reduction in time
+            fertName = 'fertilizer2',   -- Item name used in the database
+            fertLabel = 'Grade B',
+            selectionKey = 0x1CE6D9EB,  -- 2 key
+            fertTimeReduction = 0.50,   -- Default: 0.50 / 50% reduction in time
+            fertYieldMultiplier = 2.00, -- Double produce
         },
         {
-            fertName = 'fertilizer3', -- Item name used in the database
-            fertTimeReduction = 0.75, -- Default: 0.75 / 75% reduction in time
+            fertName = 'fertilizer3',   -- Item name used in the database
+            fertLabel = 'Grade A',
+            selectionKey = 0x4F49CC4C,  -- 3 key
+            fertTimeReduction = 0.75,   -- Default: 0.75 / 75% reduction in time
+            fertYieldMultiplier = 3.00, -- Triple produce
         }
     },
     -----------------------------------------------------
 
+    cropCare = {
+        dryGrowthRate = 0.50,         -- Dry plants grow at 50% of normal speed
+        dryYieldMultiplier = 0.50,    -- Dry harvests produce half yield
+        wateredYieldMultiplier = 1.0, -- Multiplier applied after fertilizer
+        wateredYieldBonus = 1,        -- Extra items for watering during growth
+        minimumYield = 1,             -- Successful harvests return at least this amount
+    },
+    -----------------------------------------------------
+
+    plantPlacementMarker = {
+        confirmKey = 0x07CE1E61, -- Left mouse / attack
+        cancelKey = 0x156F7119,  -- Backspace
+        distance = 0.75,         -- Distance in front of the player
+        size = 0.35,
+        color = { r = 80, g = 200, b = 120, a = 140 },
+        type = 0x94FDAE17,
+    },
+    -----------------------------------------------------
+
     plantSetup = {
-        lockedToPlanter = false, -- If true, only the player who planted the seed will be able to harvest it
-        maxPlants = 10,          -- Maximum amount of plants a player can have
+        lockedToPlanter = false,       -- If true, only the player who planted the seed will be able to harvest it
+        maxPlants = 10,                -- Maximum amount of plants a player can have
         requireHouseOwnership = false, -- If true, planting must occur within one of the player's house plots
-        houseRadiusPadding = 10       -- Extra meters added to the house radius when checking planting range
+        houseRadiusPadding = 10        -- Extra meters added to the house radius when checking planting range
     },
     -----------------------------------------------------
 
