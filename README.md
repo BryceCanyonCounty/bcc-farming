@@ -13,8 +13,9 @@
 - **Unlimited Custom Crops**: Create any number of plant types with unique growth cycles and yields
 - **Resource Management**:
   - Soil requirements with configurable amounts
-  - Fertilizer system for growth acceleration
-  - Watering mechanics powered by bcc-water bucket use, durability, and depletion
+  - Fertilizer grades that improve both growth speed and harvest yield
+    - Select owned fertilizer with `1` (Grade C), `2` (Grade B), or `3` (Grade A); use `L` for none
+  - Watering mechanics that improve growth speed and crop yield, powered by bcc-water
 - **Ownership System**: Configurable plant locking (planter-only or public access)
 
 ### **🔧 Advanced Configuration**
@@ -34,6 +35,7 @@
 ### **🎮 Gameplay Enhancements**
 
 - **Interactive UI**: Intuitive prompts for all farming actions
+- **Placement Preview**: Moveable ground marker with click-to-confirm planting
 - **Debug System**: Color-coded logging for easy troubleshooting
 
 *Every feature is configurable through simple, well-documented config files.*
@@ -78,6 +80,8 @@ ensure bcc-water
 
 Import the included SQL file: `bcc-farming.sql`
 
+Existing installations should import the file again to add the persisted fertilizer and yield columns. The item seed statements are safe to run more than once.
+
 ### **4. Asset Installation**
 
 Copy images to your inventory system:
@@ -89,6 +93,8 @@ Copy images to your inventory system:
 
 - Configure settings in `config.lua`
 - Restart your server
+
+When `Config.DevMode` is enabled, use `/farmreload` to manually rebuild client plant objects and restart any required client synchronization after a resource restart. The command is unavailable when DevMode is disabled.
 
 ---
 
