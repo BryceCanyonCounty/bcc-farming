@@ -205,25 +205,21 @@ CreateThread(function()
             end
             DBG:Success("Seeds and soil (if required) removed")
 
-            -- Find Best Fertilizer
-            DBG:Info("Finding best fertilizer...")
-            local bestFertilizer = nil
+            -- Find every fertilizer the player can choose from.
+            DBG:Info("Finding available fertilizers...")
+            local availableFertilizers = {}
             for _, fert in pairs(Config.fertilizerSetup) do
                 local fertCount = exports.vorp_inventory:getItemCount(src, nil, fert.fertName)
-                if fertCount > 0 and (not bestFertilizer or fert.fertTimeReduction > bestFertilizer.fertTimeReduction) then
-                    bestFertilizer = fert
+                if fertCount > 0 then
+                    table.insert(availableFertilizers, fert)
                 end
             end
 
-            if bestFertilizer then
-                DBG:Info("Best fertilizer found: " .. bestFertilizer.fertName)
-            else
-                DBG:Info("No suitable fertilizer found")
-            end
+            DBG:Info("Available fertilizer choices: " .. tostring(#availableFertilizers))
 
             -- Trigger Planting Event
             DBG:Info("Triggering planting event...")
-            TriggerClientEvent('bcc-farming:PlantingCrop', src, plantCfg, bestFertilizer, housePayload)
+            TriggerClientEvent('bcc-farming:PlantingCrop', src, plantCfg, availableFertilizers, housePayload)
         end, GetCurrentResourceName())
     end
 end)
