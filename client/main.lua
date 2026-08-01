@@ -1,9 +1,59 @@
---RegisterNetEvent('vorp:SelectedCharacter', function()
+local plantSyncRequest = 0
+local plantSyncCompleted = {}
+local smellingThreadStarted = false
+
+RegisterNetEvent('bcc-farming:PlantSyncComplete', function(requestId, success)
+    if success then
+        plantSyncCompleted[requestId] = true
+    end
+end)
+
+local function SyncPlants()
+    plantSyncRequest = plantSyncRequest + 1
+    local requestId = plantSyncRequest
+
+    CreateThread(function()
+        Wait(1000)
+
+        for _ = 1, 10 do
+            if requestId ~= plantSyncRequest then
+                plantSyncCompleted[requestId] = nil
+                return
+            end
+
+            TriggerServerEvent('bcc-farming:NewClientConnected', requestId)
+
+            local timeout = GetGameTimer() + 2000
+            while GetGameTimer() < timeout do
+                if plantSyncCompleted[requestId] then
+                    plantSyncCompleted[requestId] = nil
+                    return
+                end
+                Wait(100)
+            end
+        end
+
+        plantSyncCompleted[requestId] = nil
+        DBG:Error('Unable to synchronize plants after multiple attempts')
+    end)
+end
+
+RegisterNetEvent('vorp:SelectedCharacter', function()
+    SyncPlants()
+end)
+
 CreateThread(function()
-    TriggerServerEvent('bcc-farming:NewClientConnected')
+    SyncPlants()
     TriggerEvent('bcc-farming:ShowSmellingPlants')
 end)
---end)
+
+if Config.DevMode then
+    RegisterCommand('farmreload', function()
+        DBG:Info('Manually restarting farming client synchronization')
+        SyncPlants()
+        TriggerEvent('bcc-farming:ShowSmellingPlants')
+    end, false)
+end
 
 function PlayAnim(animDict, animName, time, raking, loopUntilTimeOver)
     -- Validate inputs
@@ -68,6 +118,12 @@ function PlayAnim(animDict, animName, time, raking, loopUntilTimeOver)
 end
 
 AddEventHandler('bcc-farming:ShowSmellingPlants', function()
+    if smellingThreadStarted then
+        DBG:Info('Smelling plant detection is already running')
+        return
+    end
+    smellingThreadStarted = true
+
     CreateThread(function()
         local blips = {}
         local lastNotificationTime = 0
