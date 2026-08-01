@@ -1,5 +1,5 @@
 local WaterPrompt = 0
-local DestroyPromptWG = 0
+local SkipWaterPrompt = 0
 local WaterGroup = GetRandomIntInRange(0, 0xffffff)
 
 local HarvestPrompt = 0
@@ -24,7 +24,7 @@ local function StartPrompts()
     end
 
     -- Validate config keys exist
-    if not Config.keys or not Config.keys.water or not Config.keys.harvest or not Config.keys.destroy then
+    if not Config.keys or not Config.keys.water or not Config.keys.waterNo or not Config.keys.harvest or not Config.keys.destroy then
         DBG:Error('Required keys are not defined in config')
         return false
     end
@@ -44,19 +44,19 @@ local function StartPrompts()
     UiPromptSetGroup(WaterPrompt, WaterGroup, 0)
     UiPromptRegisterEnd(WaterPrompt)
 
-    DestroyPromptWG = UiPromptRegisterBegin()
-    DBG:Info('Creating DestroyPromptWG...')
-    if not DestroyPromptWG or DestroyPromptWG == 0 then
-        DBG:Error('Failed to register DestroyPromptWG')
+    SkipWaterPrompt = UiPromptRegisterBegin()
+    DBG:Info('Creating SkipWaterPrompt...')
+    if not SkipWaterPrompt or SkipWaterPrompt == 0 then
+        DBG:Error('Failed to register SkipWaterPrompt')
         return false
     end
-    UiPromptSetControlAction(DestroyPromptWG, Config.keys.destroy)
-    UiPromptSetText(DestroyPromptWG, CreateVarString(10, 'LITERAL_STRING', _U('destroyPlant')))
-    UiPromptSetVisible(DestroyPromptWG, true)
-    UiPromptSetEnabled(DestroyPromptWG, true)
-    UiPromptSetHoldMode(DestroyPromptWG, 2000)
-    UiPromptSetGroup(DestroyPromptWG, WaterGroup, 0)
-    UiPromptRegisterEnd(DestroyPromptWG)
+    UiPromptSetControlAction(SkipWaterPrompt, Config.keys.waterNo)
+    UiPromptSetText(SkipWaterPrompt, CreateVarString(10, 'LITERAL_STRING', _U('no')))
+    UiPromptSetVisible(SkipWaterPrompt, true)
+    UiPromptSetEnabled(SkipWaterPrompt, true)
+    UiPromptSetHoldMode(SkipWaterPrompt, 1000)
+    UiPromptSetGroup(SkipWaterPrompt, WaterGroup, 0)
+    UiPromptRegisterEnd(SkipWaterPrompt)
 
     -- Create harvest-related prompts
     HarvestPrompt = UiPromptRegisterBegin()
@@ -190,7 +190,7 @@ RegisterNetEvent('bcc-farming:PlantPlanted', function(plantId, plantData, plantC
     -- Position and freeze plant
     SetEntityCollision(plantObj, false, false)
     SetEntityCoords(plantObj, plantCoords.x, plantCoords.y, plantCoords.z - plantData.plantOffset, false, false, false, false)
-    SetEntityHeading(plantObj, GetEntityHeading(PlayerPedId()))
+    SetEntityHeading(plantObj, plantCoords.w or plantCoords.heading or GetEntityHeading(PlayerPedId()))
     FreezeEntityPosition(plantObj, true)
     SetEntityCollision(plantObj, true, true)
 
@@ -199,6 +199,7 @@ RegisterNetEvent('bcc-farming:PlantPlanted', function(plantId, plantData, plantC
         plantId = plantId,
         removePlant = false,
         watered = tostring(watered),
+        waterDeclined = false,
         object = plantObj,
         coords = plantCoords
     }
@@ -223,14 +224,13 @@ RegisterNetEvent('bcc-farming:PlantPlanted', function(plantId, plantData, plantC
     -- Create thread for time synchronization
     CreateThread(function()
         while tonumber(timeLeft) > 0 and Crops[plantId] and not Crops[plantId].removePlant do
-            if Crops[plantId].watered == 'true' then
-                Wait(1000)
-                timeLeft = timeLeft - 1
-                if Crops[plantId] then
-                    Crops[plantId].timeLeft = timeLeft
-                end
-            else
-                Wait(200)
+            Wait(1000)
+            local growthRate = Crops[plantId].watered == 'true'
+                and 1.0
+                or (tonumber((Config.cropCare or {}).dryGrowthRate) or 0.5)
+            timeLeft = math.max(0, timeLeft - math.max(0, growthRate))
+            if Crops[plantId] then
+                Crops[plantId].timeLeft = timeLeft
             end
         end
     end)
@@ -244,46 +244,48 @@ RegisterNetEvent('bcc-farming:PlantPlanted', function(plantId, plantData, plantC
         if dist <= 1.5 then
             sleep = 0
 
-            -- Handle watered plants
-            if tostring(Crops[plantId].watered) ~= 'false' then
-                if tonumber(timeLeft) > 0 then
-                    UiPromptSetEnabled(HarvestPrompt, false)
-                    local minutes = math.floor(timeLeft / 60)
-                    local seconds = timeLeft % 60
-                    local noHarvest = _U('plant') .. ': ' .. plantData.plantName..' | ' .. _U('secondsUntilharvest')..string.format('%02d:%02d', minutes, seconds)
+            local remaining = tonumber(timeLeft) or 0
+            local isWatered = tostring(Crops[plantId].watered) == 'true'
+            local isRaining = GetRainLevel() > 0
+            local waterChoiceActive = not isWatered and remaining > 0 and not Crops[plantId].waterDeclined and not isRaining
+            local noHarvest = nil
+
+            if remaining > 0 then
+                UiPromptSetEnabled(HarvestPrompt, false)
+                local displayTime = math.ceil(remaining)
+                local minutes = math.floor(displayTime / 60)
+                local seconds = displayTime % 60
+                noHarvest = _U('plant') .. ': ' .. plantData.plantName .. ' | ' .. _U('secondsUntilharvest') .. string.format('%02d:%02d', minutes, seconds)
+                if not waterChoiceActive then
                     UiPromptSetActiveGroupThisFrame(HarvestGroup, CreateVarString(10, 'LITERAL_STRING', noHarvest), 1, 0, 0, 0)
-
-                    -- Handle harvest prompt
-                elseif tonumber(timeLeft) <= 0 then
-                    UiPromptSetEnabled(HarvestPrompt, true)
-                    local harvest = _U('plant') .. ': ' .. plantData.plantName..' ' .. _U('secondsUntilharvestOver')
-                    UiPromptSetActiveGroupThisFrame(HarvestGroup, CreateVarString(10, 'LITERAL_STRING', harvest), 1, 0, 0, 0)
-
-                    if Citizen.InvokeNative(0xE0F65F0640EF0617, HarvestPrompt) then -- UiPromptHasHoldModeCompleted
-                        DBG:Info('Harvest prompt completed...')
-                        -- Play harvest animation first, then trigger server logic so notifications appear after the anim
-                        PlayAnim('mech_pickup@plant@berries', 'base', 2500, false, true)
-                        Core.Callback.TriggerAwait('bcc-farming:HarvestCheck', plantId, plantData, false)
-                    end
                 end
+            else
+                UiPromptSetEnabled(HarvestPrompt, true)
+                local harvest = _U('plant') .. ': ' .. plantData.plantName .. ' ' .. _U('secondsUntilharvestOver')
+                UiPromptSetActiveGroupThisFrame(HarvestGroup, CreateVarString(10, 'LITERAL_STRING', harvest), 1, 0, 0, 0)
 
-                -- Handle destroy prompt for watered plants
-                if Citizen.InvokeNative(0xE0F65F0640EF0617, DestroyPromptHG) then -- UiPromptHasHoldModeCompleted
-                    DBG:Info('Destroy prompt completed...')
-                    local canDestroy = Core.Callback.TriggerAwait('bcc-farming:HarvestCheck', plantId, plantData, true)
-                    if canDestroy then
-                        PlayAnim('amb_camp@world_camp_fire@stomp@male_a@wip_base', 'wip_base', 8000, false, true)
-                    end
+                if Citizen.InvokeNative(0xE0F65F0640EF0617, HarvestPrompt) then
+                    DBG:Info('Harvest prompt completed...')
+                    PlayAnim('mech_pickup@plant@berries', 'base', 2500, false, true)
+                    Core.Callback.TriggerAwait('bcc-farming:HarvestCheck', plantId, false)
                 end
             end
 
-            -- Handle unwatered plants
-            if tostring(Crops[plantId].watered) == 'false' then
-                local isRaining = GetRainLevel()
-                if isRaining > 0 then
+            if not waterChoiceActive and Citizen.InvokeNative(0xE0F65F0640EF0617, DestroyPromptHG) then
+                DBG:Info('Destroy prompt completed...')
+                local canDestroy = Core.Callback.TriggerAwait('bcc-farming:HarvestCheck', plantId, true)
+                if canDestroy then
+                    PlayAnim('amb_camp@world_camp_fire@stomp@male_a@wip_base', 'wip_base', 8000, false, true)
+                end
+            end
+
+            -- Water can improve crop quality only while the plant is still growing.
+            if not isWatered and remaining > 0 and not Crops[plantId].waterDeclined then
+                if isRaining then
                     TriggerServerEvent('bcc-farming:UpdatePlantWateredStatus', plantId)
                 else
-                    UiPromptSetActiveGroupThisFrame(WaterGroup, CreateVarString(10, 'LITERAL_STRING', _U('waterPlant')), 1, 0, 0, 0)
+                    local waterTitle = noHarvest .. ' | ' .. _U('waterPlant')
+                    UiPromptSetActiveGroupThisFrame(WaterGroup, CreateVarString(10, 'LITERAL_STRING', waterTitle), 1, 0, 0, 0)
 
                     if Citizen.InvokeNative(0xE0F65F0640EF0617, WaterPrompt) then -- UiPromptHasHoldModeCompleted
                         DBG:Info('Water prompt completed...')
@@ -297,13 +299,11 @@ RegisterNetEvent('bcc-farming:PlantPlanted', function(plantId, plantData, plantC
                         end
                     end
 
-                    if Citizen.InvokeNative(0xE0F65F0640EF0617, DestroyPromptWG) then -- UiPromptHasHoldModeCompleted
-                        DBG:Info('Destroy prompt completed...')
-                        local canDestroy = Core.Callback.TriggerAwait('bcc-farming:HarvestCheck', plantId, plantData, true)
-                        if canDestroy then
-                            PlayAnim('amb_camp@world_camp_fire@stomp@male_a@wip_base', 'wip_base', 8000, false, true)
-                        end
+                    if Citizen.InvokeNative(0xE0F65F0640EF0617, SkipWaterPrompt) then
+                        Crops[plantId].waterDeclined = true
+                        DBG:Info('Player declined watering plant: ' .. tostring(plantId))
                     end
+
                 end
             end
         end
@@ -320,6 +320,22 @@ RegisterNetEvent('bcc-farming:PlantPlanted', function(plantId, plantData, plantC
         end
         Crops[plantId] = nil
     end
+end)
+
+-- Clear locally spawned plants before the server rebuilds the synchronized list.
+RegisterNetEvent('bcc-farming:ResetClientPlants', function()
+    for _, crop in pairs(Crops) do
+        crop.removePlant = true
+
+        if crop.blip then
+            RemoveBlip(crop.blip)
+        end
+        if crop.object and DoesEntityExist(crop.object) then
+            DeleteObject(crop.object)
+        end
+    end
+
+    Crops = {}
 end)
 
 -- Remove a plant from the client
