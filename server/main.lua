@@ -412,7 +412,7 @@ Core.Callback.Register('bcc-farming:ManagePlantWateredStatus', function(source, 
         return cb(false)
     end
 
-    if not exports['bcc-water']:ConsumeBucket(src) then
+    if not exports['bcc-water']:ConsumeContainer(src, 'bucket') then
         DBG:Info('No usable water bucket found for source: ' .. tostring(src))
         return cb(false)
     end
