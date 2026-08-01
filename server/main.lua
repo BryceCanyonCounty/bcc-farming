@@ -1,4 +1,5 @@
 local AllPlants = {} -- AllPlants will contain all the plants in the server
+local PlantsLoaded = false
 local DEFAULT_LOCK_RANGE = 2.5
 
 function GetPlayerHouses(charIdentifier)
@@ -44,7 +45,8 @@ end
 
 --- @param plantData table
 --- @param plantCoords vector3|vector4|table
-RegisterNetEvent('bcc-farming:AddPlant', function(plantData, plantCoords)
+--- @param fertilizerName string|nil
+RegisterNetEvent('bcc-farming:AddPlant', function(plantData, plantCoords, fertilizerName)
     local src = source
     local user = Core.getUser(src)
 
@@ -66,6 +68,20 @@ RegisterNetEvent('bcc-farming:AddPlant', function(plantData, plantCoords)
         DBG:Error('Incomplete plant data from source: ' .. tostring(src))
         return
     end
+
+    -- Never trust client-supplied plant settings. Resolve the configured plant by seed name.
+    local configuredPlant = nil
+    for _, plantCfg in pairs(Plants) do
+        if plantCfg.seedName == plantData.seedName then
+            configuredPlant = plantCfg
+            break
+        end
+    end
+    if not configuredPlant then
+        DBG:Error('Unknown plant type from source: ' .. tostring(src))
+        return
+    end
+    plantData = configuredPlant
 
     local finalCoords
     local coordsCandidate = plantCoords
@@ -261,12 +277,36 @@ RegisterNetEvent('bcc-farming:AddPlant', function(plantData, plantCoords)
         return
     end
 
-    -- Insert plant into database
-    local plantId = MySQL.insert.await('INSERT INTO `bcc_farming` (plant_coords, plant_type, plant_watered, time_left, plant_owner) VALUES (?, ?, ?, ?, ?)',
-    { json.encode(finalCoords), plantData.seedName, 'false', plantData.timeToGrow, character.charIdentifier })
+    local growthTime = plantData.timeToGrow
+    local yieldMultiplier = 1.0
+    local appliedFertilizer = nil
+
+    if fertilizerName then
+        for _, fertilizer in pairs(Config.fertilizerSetup) do
+            if fertilizer.fertName == fertilizerName then
+                local fertilizerCount = exports.vorp_inventory:getItemCount(src, nil, fertilizer.fertName)
+                if fertilizerCount > 0 then
+                    local removed = exports.vorp_inventory:subItem(src, fertilizer.fertName, 1)
+                    if removed ~= false then
+                        appliedFertilizer = fertilizer.fertName
+                        growthTime = math.max(1, math.floor(growthTime * (1.0 - (fertilizer.fertTimeReduction or 0))))
+                        yieldMultiplier = math.max(0, tonumber(fertilizer.fertYieldMultiplier) or 1.0)
+                    end
+                end
+                break
+            end
+        end
+    end
+
+    -- Insert plant into database with its server-validated care modifiers.
+    local plantId = MySQL.insert.await('INSERT INTO `bcc_farming` (plant_coords, plant_type, plant_watered, time_left, fertilizer, yield_multiplier, plant_owner) VALUES (?, ?, ?, ?, ?, ?, ?)',
+    { json.encode(finalCoords), plantData.seedName, 'false', growthTime, appliedFertilizer, yieldMultiplier, character.charIdentifier })
 
     if not plantId then
         DBG:Error('Failed to insert plant into database.')
+        if appliedFertilizer and exports.vorp_inventory:canCarryItem(src, appliedFertilizer, 1) then
+            exports.vorp_inventory:addItem(src, appliedFertilizer, 1)
+        end
         if plantData.seedName and plantData.seedAmount and plantData.seedAmount > 0 then
             if exports.vorp_inventory:canCarryItem(src, plantData.seedName, plantData.seedAmount) then
                 exports.vorp_inventory:addItem(src, plantData.seedName, plantData.seedAmount)
@@ -289,13 +329,15 @@ RegisterNetEvent('bcc-farming:AddPlant', function(plantData, plantCoords)
         plant_coords = json.encode(finalCoords),
         plant_type = plantData.seedName,
         plant_watered = 'false',
-        time_left = plantData.timeToGrow,
+        time_left = growthTime,
+        fertilizer = appliedFertilizer,
+        yield_multiplier = yieldMultiplier,
         plant_owner = character.charIdentifier
     })
 
     -- Trigger client event
     local target = Config.plantSetup.lockedToPlanter and src or -1
-    TriggerClientEvent('bcc-farming:PlantPlanted', target, plantId, plantData, finalCoords, plantData.timeToGrow, false, src)
+    TriggerClientEvent('bcc-farming:PlantPlanted', target, plantId, plantData, finalCoords, growthTime, false, src)
 end)
 
 --- @param plantData table
@@ -348,38 +390,44 @@ RegisterNetEvent('bcc-farming:PlantToolUsage',function (plantData)
     end
 end)
 
-RegisterNetEvent('bcc-farming:NewClientConnected', function()
+RegisterNetEvent('bcc-farming:NewClientConnected', function(requestId)
     local src = source
     local user = Core.getUser(src)
 
     -- Check if the user exists
     if not user then
         DBG:Error('User not found for source: ' .. tostring(src))
+        TriggerClientEvent('bcc-farming:PlantSyncComplete', src, requestId, false)
         return
     end
 
     local character = user.getUsedCharacter
     local charid = character.charIdentifier
 
-    -- Check if AllPlants is empty
-    if not AllPlants or #AllPlants <= 0 then
-        DBG:Error('No plants to sync for source: ' .. tostring(src))
+    if not PlantsLoaded then
+        DBG:Info('Plant cache is not ready for source: ' .. tostring(src))
+        TriggerClientEvent('bcc-farming:PlantSyncComplete', src, requestId, false)
         return
     end
 
-    -- Loop through all plants on the server
     if type(Plants) ~= 'table' then
         DBG:Error('Plants configuration table is missing or invalid')
+        TriggerClientEvent('bcc-farming:PlantSyncComplete', src, requestId, false)
         return
     end
 
+    TriggerClientEvent('bcc-farming:ResetClientPlants', src)
+
+    -- Loop through all plants on the server
     for _, currentPlants in pairs(AllPlants) do
-        if Config.plantSetup.lockedToPlanter and currentPlants.plant_owner ~= charid then
+        local ownsPlant = tostring(currentPlants.plant_owner) == tostring(charid)
+
+        if Config.plantSetup.lockedToPlanter and not ownsPlant then
             goto END
         end
 
         -- If player owns plant add to their max plants count
-        if currentPlants.plant_owner == charid then
+        if ownsPlant then
             TriggerClientEvent('bcc-farming:MaxPlantsAmount', src, 1)
         end
 
@@ -387,12 +435,15 @@ RegisterNetEvent('bcc-farming:NewClientConnected', function()
         for _, plantCfg in pairs(Plants) do
             if currentPlants.plant_type == plantCfg.seedName then
                 local plantCoords = json.decode(currentPlants.plant_coords)
-                TriggerClientEvent('bcc-farming:PlantPlanted', src, currentPlants.plant_id, plantCfg, plantCoords, currentPlants.time_left, currentPlants.plant_watered, src)
+                local planterSource = ownsPlant and src or 0
+                TriggerClientEvent('bcc-farming:PlantPlanted', src, currentPlants.plant_id, plantCfg, plantCoords, currentPlants.time_left, currentPlants.plant_watered, planterSource)
                 break
             end
         end
         ::END::
     end
+
+    TriggerClientEvent('bcc-farming:PlantSyncComplete', src, requestId, true)
 end)
 
 --- @param plantId number
@@ -460,9 +511,8 @@ RegisterNetEvent('bcc-farming:UpdatePlantWateredStatus', function(plantId)
 end)
 
 --- @param plantId number
---- @param plantData table
 --- @param destroy boolean
-Core.Callback.Register('bcc-farming:HarvestCheck', function(source, cb, plantId, plantData, destroy)
+Core.Callback.Register('bcc-farming:HarvestCheck', function(source, cb, plantId, destroy)
     local src = source
     local user = Core.getUser(src)
 
@@ -472,26 +522,60 @@ Core.Callback.Register('bcc-farming:HarvestCheck', function(source, cb, plantId,
         return cb(false)
     end
 
-    -- Validate plantId and plantData
-    if not plantId or not plantData then
-        DBG:Error('Invalid plant ID or plant data for source: ' .. tostring(src))
+    if not plantId then
+        DBG:Error('Invalid plant ID for source: ' .. tostring(src))
         return cb(false)
     end
 
-    -- If not destroying, check if player can carry all rewards
-    if not destroy then
-        local itemsToAdd = {}
+    local rows = MySQL.query.await('SELECT * FROM `bcc_farming` WHERE `plant_id` = ? LIMIT 1', { plantId })
+    local storedPlant = rows and rows[1]
+    if not storedPlant then
+        DBG:Warning('Plant not found for harvest: ' .. tostring(plantId))
+        return cb(false)
+    end
 
-        -- Check if all items can be carried
-        for _, reward in pairs(plantData.rewards) do
+    local configuredPlant = nil
+    for _, plantCfg in pairs(Plants) do
+        if plantCfg.seedName == storedPlant.plant_type then
+            configuredPlant = plantCfg
+            break
+        end
+    end
+    if not configuredPlant then
+        DBG:Error('Missing configuration for plant type: ' .. tostring(storedPlant.plant_type))
+        return cb(false)
+    end
+
+    local itemsToAdd = {}
+    if not destroy then
+        if (tonumber(storedPlant.time_left) or 1) > 0 then
+            DBG:Warning('Player attempted to harvest an immature plant: ' .. tostring(plantId))
+            return cb(false)
+        end
+
+        local careConfig = Config.cropCare or {}
+        local fertilizerMultiplier = tonumber(storedPlant.yield_multiplier) or 1.0
+        local waterMultiplier = tostring(storedPlant.plant_watered) == 'true'
+            and (tonumber(careConfig.wateredYieldMultiplier) or 1.0)
+            or (tonumber(careConfig.dryYieldMultiplier) or 0.5)
+        local finalMultiplier = math.max(0, fertilizerMultiplier * waterMultiplier)
+        local waterBonus = tostring(storedPlant.plant_watered) == 'true'
+            and math.max(0, math.floor(tonumber(careConfig.wateredYieldBonus) or 0))
+            or 0
+        local minimumYield = math.max(0, math.floor(tonumber(careConfig.minimumYield) or 1))
+
+        -- Rewards are calculated exclusively from server configuration and saved crop care.
+        for _, reward in pairs(configuredPlant.rewards or {}) do
             local itemName = reward.itemName
             local itemLabel = reward.itemLabel
-            local amount = reward.amount
+            local baseAmount = tonumber(reward.amount)
 
-            if not itemName or not itemLabel or not amount then
+            if not itemName or not itemLabel or not baseAmount then
                 DBG:Error('Invalid reward data for plant ID: ' .. tostring(plantId))
                 return cb(false)
             end
+
+            local amount = math.max(minimumYield, math.floor((baseAmount * finalMultiplier) + 0.5) + waterBonus)
 
             local canCarry = exports.vorp_inventory:canCarryItem(src, itemName, amount)
             if not canCarry then
@@ -502,25 +586,23 @@ Core.Callback.Register('bcc-farming:HarvestCheck', function(source, cb, plantId,
 
             table.insert(itemsToAdd, { itemName = itemName, itemLabel = itemLabel, amount = amount })
         end
-
-        -- Add items if can be carried
-        for _, item in ipairs(itemsToAdd) do
-            local success = exports.vorp_inventory:addItem(src, item.itemName, item.amount)
-            if not success then
-                DBG:Warning('Failed to add item to inventory for source: ' .. tostring(src) .. ', item: ' .. item.itemName)
-            else
-                NotifyClient(src, _U('harvested') .. item.amount .. ' ' .. item.itemLabel, "success", 4000)
-                DBG:Success('Successfully added item to inventory for source: ' .. tostring(src) .. ', item: ' .. item.itemName)
-            end
-        end
     end
 
-    -- Update plant status in database and remove plant from clients
-    local result = MySQL.query.await('DELETE FROM `bcc_farming` WHERE `plant_id` = ?', { plantId })
-
-    if not result or (result and result.affectedRows and result.affectedRows == 0) then
+    -- Claim the plant before granting rewards to prevent duplicate harvests.
+    local affectedRows = MySQL.update.await('DELETE FROM `bcc_farming` WHERE `plant_id` = ?', { plantId })
+    if not affectedRows or affectedRows < 1 then
         DBG:Error('Failed to delete plant with ID: ' .. tostring(plantId) .. ' from database')
         return cb(false)
+    end
+
+    for _, item in ipairs(itemsToAdd) do
+        local success = exports.vorp_inventory:addItem(src, item.itemName, item.amount)
+        if not success then
+            DBG:Warning('Failed to add item to inventory for source: ' .. tostring(src) .. ', item: ' .. item.itemName)
+        else
+            NotifyClient(src, _U('harvested') .. item.amount .. ' ' .. item.itemLabel, "success", 4000)
+            DBG:Success('Successfully added item to inventory for source: ' .. tostring(src) .. ', item: ' .. item.itemName)
+        end
     end
 
     DBG:Success('Successfully deleted plant with ID: ' .. tostring(plantId) .. ' from database')
@@ -529,40 +611,6 @@ Core.Callback.Register('bcc-farming:HarvestCheck', function(source, cb, plantId,
     TriggerClientEvent('bcc-farming:RemovePlantClient', -1, plantId)
 
     cb(true)
-end)
-
---- @param fertilizerName string
-RegisterNetEvent('bcc-farming:RemoveFertilizer', function(fertilizerName)
-    local src = source
-    local user = Core.getUser(src)
-
-    -- Check if the user exists
-    if not user then
-        DBG:Error('User not found for source: ' .. tostring(src))
-        return
-    end
-
-    -- Validate fertilizerName
-    if not fertilizerName then
-        DBG:Error('No fertilizer name provided by source: ' .. tostring(src))
-        return
-    end
-
-    -- Check if player has the fertilizer
-    local fertCount = exports.vorp_inventory:getItemCount(src, nil, fertilizerName)
-    DBG:Info('Player ' .. tostring(src) .. ' has ' .. tostring(fertCount) .. ' of ' .. fertilizerName)
-
-    if fertCount >= 1 then
-        -- Remove 1 fertilizer from inventory
-        local success = exports.vorp_inventory:subItem(src, fertilizerName, 1)
-        if success then
-            DBG:Success('Successfully removed 1 of ' .. fertilizerName .. ' from inventory for source: ' .. tostring(src))
-        else
-            DBG:Warning('Failed to remove 1 of ' .. fertilizerName .. ' from inventory for source: ' .. tostring(src))
-        end
-    else
-        DBG:Info('Player ' .. tostring(src) .. ' does not have any of ' .. fertilizerName .. ' in inventory')
-    end
 end)
 
 --- @param seedName string
@@ -635,6 +683,7 @@ CreateThread(function()
 
         -- Update global AllPlants table
         AllPlants = allPlants
+        PlantsLoaded = true
         --DBG:Info('Fetched ' .. tostring(#allPlants) .. ' plants from database.')
 
         -- Process each plant
@@ -648,9 +697,12 @@ CreateThread(function()
 
                 timeLeft = tonumber(plant.time_left)
 
-                -- Only process watered plants with time left
-                if plant.plant_watered == 'true' and timeLeft > 0 then
-                    local newTime = timeLeft - 1
+                -- Dry plants continue growing slowly and produce a smaller harvest.
+                if timeLeft > 0 then
+                    local growthRate = plant.plant_watered == 'true'
+                        and 1.0
+                        or (tonumber((Config.cropCare or {}).dryGrowthRate) or 0.5)
+                    local newTime = math.max(0, timeLeft - math.max(0, growthRate))
                     --DBG:Info('Updating plant ID: ' .. tostring(plant.plant_id) .. ', time left: ' .. tostring(newTime))
 
                     -- Update plant time in database
@@ -659,8 +711,6 @@ CreateThread(function()
 
                     if not success then
                         DBG:Warning('Failed to update time for plant ID: ' .. tostring(plant.plant_id))
-                    else
-                        DBG:Info('Successfully updated time for plant ID: ' .. tostring(plant.plant_id))
                     end
                 end
                 ::continuePlant::
