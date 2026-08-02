@@ -5,4 +5,5 @@
 - Added selectable fertilizer tiers plus water and fertilizer yield effects.
 - Improved persistent plant synchronization, database timers, prompts, and owner-only blips.
 - Added bcc-water availability checks, rain watering, inventory icons, and safe MariaDB upgrades.
+- Persisted declined watering choices across reconnects and resource restarts.
 - Updated configuration comments, explicit manifest ordering, localization, and documentation.
