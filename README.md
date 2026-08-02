@@ -115,6 +115,8 @@ You do not need to copy water-container images from this resource; those are sup
 
 If planting is cancelled or fails, the resource returns the reserved seed and soil as long as the player has room to carry them.
 
+Watering decisions are persistent. Choosing No stores the declined state on the plant, so the watering prompt does not return after reconnecting or restarting the resource.
+
 ## Helpful development command
 
 When `Config.DevMode` is enabled:
