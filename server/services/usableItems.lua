@@ -211,7 +211,8 @@ CreateThread(function()
             for _, fert in pairs(Config.fertilizerSetup) do
                 local fertCount = exports.vorp_inventory:getItemCount(src, nil, fert.fertName)
                 if fertCount > 0 then
-                    table.insert(availableFertilizers, fert)
+                    -- Send only inventory identity; display settings and control hashes stay client-local.
+                    table.insert(availableFertilizers, fert.fertName)
                 end
             end
 
