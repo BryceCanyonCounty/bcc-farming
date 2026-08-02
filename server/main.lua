@@ -118,7 +118,8 @@ RegisterNetEvent('bcc-farming:AddPlant', function(plantData, plantCoords, fertil
     end
 
     if px and py and pz then
-        finalCoords = { x = px, y = py, z = pz }
+        -- Placement preview coordinates are already snapped to the terrain.
+        finalCoords = { x = px, y = py, z = pz, grounded = true }
         if heading then
             finalCoords.w = heading
         end
@@ -446,6 +447,38 @@ RegisterNetEvent('bcc-farming:NewClientConnected', function(requestId)
     TriggerClientEvent('bcc-farming:PlantSyncComplete', src, requestId, true)
 end)
 
+--- Return authoritative persisted state for client countdown and interaction checks.
+Core.Callback.Register('bcc-farming:GetPlantStatus', function(source, cb, plantId)
+    if not plantId then
+        return cb(false)
+    end
+
+    local rows = MySQL.query.await(
+        'SELECT `time_left`, `plant_watered` FROM `bcc_farming` WHERE `plant_id` = ? LIMIT 1',
+        { plantId }
+    )
+    local plant = rows and rows[1]
+    if not plant then
+        return cb(false)
+    end
+
+    local hasWaterBucket = false
+    local exportOk, exportResult = pcall(function()
+        return exports['bcc-water']:HasContainer(source, 'bucket')
+    end)
+    if exportOk then
+        hasWaterBucket = exportResult == true
+    else
+        DBG:Warning('Unable to check bcc-water bucket availability: ' .. tostring(exportResult))
+    end
+
+    cb({
+        timeLeft = tonumber(plant.time_left) or 0,
+        watered = tostring(plant.plant_watered),
+        hasWaterBucket = hasWaterBucket
+    })
+end)
+
 --- @param plantId number
 Core.Callback.Register('bcc-farming:ManagePlantWateredStatus', function(source, cb, plantId)
     local src = source
@@ -499,15 +532,20 @@ RegisterNetEvent('bcc-farming:UpdatePlantWateredStatus', function(plantId)
     end
 
     -- Update plant watered status in database
-    local result = MySQL.update.await('UPDATE `bcc_farming` SET `plant_watered` = ? WHERE `plant_id` = ?', { 'true', plantId })
+    local result = MySQL.update.await(
+        'UPDATE `bcc_farming` SET `plant_watered` = ? WHERE `plant_id` = ? AND `plant_watered` <> ?',
+        { 'true', plantId, 'true' }
+    )
 
-    if not result then
+    if result == nil then
         DBG:Error('Failed to update plant watered status in database for plantId: ' .. tostring(plantId))
         return
     end
 
-    DBG:Success('Successfully updated watered status for plant ID: ' .. tostring(plantId))
-    TriggerClientEvent('bcc-farming:UpdateClientPlantWateredStatus', -1, plantId)
+    if tonumber(result) and tonumber(result) > 0 then
+        DBG:Success('Successfully updated watered status for plant ID: ' .. tostring(plantId))
+        TriggerClientEvent('bcc-farming:UpdateClientPlantWateredStatus', -1, plantId)
+    end
 end)
 
 --- @param plantId number
