@@ -1,116 +1,145 @@
-# BCC Farming 🌱
+# BCC Farming
 
-*Advanced Agricultural System for RedM*
+Welcome to BCC Farming, a persistent and highly configurable farming system for RedM servers using the VORP framework.
 
-**Transform your RedM server with immersive farming mechanics** - from planting seeds to harvesting crops, with realistic gameplay elements.
+The resource is designed to give your players an easy-to-understand planting experience while giving you full control over crops, growth times, tools, fertilizer, watering, yields, jobs, planting locations, ownership, and limits. Plants are stored in the database and validated by the server, so they remain available through reconnects and restarts.
 
----
+## Features
 
-## 🌟 Key Features
+- Persistent plants that survive player reconnects, resource restarts, and server restarts
+- Server-authoritative planting, watering, harvesting, ownership, proximity, and inventory checks
+- Ground-level placement marker controlled with the mouse
+- Automatic player movement to the selected planting position
+- Configurable planting tools and durability usage
+- Optional soil requirements per crop
+- Three configurable fertilizer tiers
+- Fertilizer selection prompts that remain visible but are disabled when an item is unavailable
+- Fertilizer effects on growth time and harvest quantity
+- Water-container support through `bcc-water`
+- Reduced growth speed and yield for dry plants
+- Automatic watering when rain is detected
+- Database-validated harvest readiness
+- Public or planter-only crops
+- Maximum plant limits per character
+- Job-restricted crops
+- Coordinate-locked planting areas
+- Optional house-property planting requirements
+- Town planting restrictions
+- Optional smell notifications and temporary map blips for configured jobs
+- Owner-only crop blips
+- Multiple languages
+- Development logging and client resynchronization command
 
-### **🌿 Core Farming System**
+## Before you install
 
-- **Unlimited Custom Crops**: Create any number of plant types with unique growth cycles and yields
-- **Resource Management**:
-  - Soil requirements with configurable amounts
-  - Fertilizer grades that improve both growth speed and harvest yield
-    - Select owned fertilizer with `B` (Grade C), `G` (Grade B), or `R` (Grade A); use `L` for none
-  - Watering mechanics that improve growth speed and crop yield, powered by bcc-water
-- **Ownership System**: Configurable plant locking (planter-only or public access)
-
-### **🔧 Advanced Configuration**
-
-- **Job Restrictions**: Lock plants to specific professions (farmer, outlaw, etc.)
-- **Zone Control**: Town proximity restrictions with adjustable radii
-- **Tool Requirements**: Specify required equipment per crop type
-- **Economic Balancing**: Configure required seed and soil amounts as well as harvest yields
-- **Player Limits**: Set maximum plants per player
-
-### **💻 Technical Implementation**
-
-- **Database Backed**: Persistent storage across server restarts
-- **Localization Ready**: Full multilingual support
-- **Update Notifications**: Built-in version checker
-
-### **🎮 Gameplay Enhancements**
-
-- **Interactive UI**: Intuitive prompts for all farming actions
-- **Placement Preview**: Moveable ground marker with click-to-confirm planting
-- **Debug System**: Color-coded logging for easy troubleshooting
-
-*Every feature is configurable through simple, well-documented config files.*
-
----
-
-## 📋 Requirements
-
-### **Core Dependencies**
+Required resources:
 
 - [vorp_core](https://github.com/VORPCORE/vorp-core-lua)
 - [vorp_inventory](https://github.com/VORPCORE/vorp_inventory-lua)
 - [vorp_character](https://github.com/VORPCORE/vorp_character-lua)
 - [bcc-utils](https://github.com/BryceCanyonCounty/bcc-utils)
-- [bcc-water](https://github.com/BryceCanyonCounty/bcc-water) *(required for bucket use and filling)*
+- [bcc-water](https://github.com/BryceCanyonCounty/bcc-water)
 
----
+Notification providers:
 
-## 🛠 Installation Guide
+- `vorp-core` uses VORP right-tip notifications and requires no additional resource.
+- `feather-menu` requires [feather-menu](https://github.com/FeatherFramework/feather-menu) to be installed and started before `bcc-farming`.
 
-### **1. Prepare Your Server**
+You only need housing support if you enable `Config.plantSetup.requireHouseOwnership`. In that case, your database needs a compatible [bcc-housing](https://github.com/BryceCanyonCounty/bcc-housing) table with `house_coords`, `house_radius_limit`, and `charidentifier` columns.
 
-```bash
-# Ensure all dependencies are installed and updated
+## Installation
+
+1. Install the required resources listed above.
+2. Copy the `bcc-farming` folder into your server's resources directory.
+3. Make a database backup. It is a good habit even though the included upgrade statements are designed to preserve existing data.
+4. Run `bcc-farming.sql`.
+5. Review `configs/config.lua` for server-wide settings.
+6. Review `configs/plants.lua` for crop-specific settings.
+7. Copy either the color or grayscale icons into VORP Inventory.
+8. Add the resources to `server.cfg` in the order shown below.
+
+Recommended `server.cfg` order:
+
+```cfg
+ensure oxmysql
 ensure vorp_core
 ensure vorp_inventory
 ensure vorp_character
+ensure feather-menu (optional)
 ensure bcc-utils
 ensure bcc-water
+ensure bcc-housing (optional)
+ensure bcc-farming
 ```
 
-### **2. Install BCC Farming**
+If you prefer VORP notifications, set `Config.Notify` to `vorp-core` and leave Feather Menu out unless another resource needs it.
 
-1. Place the `bcc-farming` folder in your `resources` directory
-2. Add to your `server.cfg`:
+## Choosing inventory images
 
-   ```cfg
-   ensure bcc-farming
-   ```
+Two 96x96 icon sets are included:
 
-### **3. Database Setup**
-
-Import the included SQL file: `bcc-farming.sql`
-
-Existing installations should import the file again to add the persisted fertilizer and yield columns. The item seed statements are safe to run more than once.
-
-### **4. Asset Installation**
-
-Choose either the `color` or `grayscale` 96x96 farming icon set, then copy that folder's PNG files to your inventory system:
-```
-img\color\*.png
-# or
-img\grayscale\*.png
-
--> \vorp_inventory\html\img\items\
+```text
+img/color/
+img/grayscale/
 ```
 
-Water-container icons are supplied by `bcc-water`. Seed, harvested crop, soil, and hoe icons are not bundled with this resource and must already exist in your inventory image collection or be supplied separately.
+Each set contains:
 
-### **5. Final Steps**
+- `fertilizer1.png`
+- `fertilizer2.png`
+- `fertilizer3.png`
+- `hoe.png`
+- `soil.png`
 
-- Configure settings in `config.lua`
-- Restart your server
+Choose the style that best matches your server, then copy that complete set into the VORP Inventory item image directory:
 
-When `Config.DevMode` is enabled, use `/farmreload` to manually rebuild client plant objects and restart any required client synchronization after a resource restart. The command is unavailable when DevMode is disabled.
+```text
+vorp_inventory/html/img/items/
+```
 
----
+You do not need to copy water-container images from this resource; those are supplied by `bcc-water`. Seed and harvested-crop images are not bundled, so you can use the artwork already included with your inventory pack or add your own.
 
-## 🙏 Credits & Inspiration
+## What your players will experience
 
-Original concept inspired by 'prp_farming' - completely rebuilt with enhanced features and optimizations.
+1. The player uses a configured seed from inventory.
+2. The server verifies their character, job, planting limit, town restrictions, coordinate locks, property rules, tool, seed, and soil.
+3. The seed and required soil are reserved and removed.
+4. A ground marker appears in front of the player.
+5. The player moves the marker with the mouse and clicks to confirm the position.
+6. The player automatically walks to the selected position and performs the planting animation.
+7. Available fertilizer tiers are shown. Fertilizers the player does not possess remain visible but disabled.
+8. The player selects a fertilizer or declines fertilizer.
+9. The server validates the final location again and creates the persistent plant.
+10. The player may water the plant, decline watering, or allow rain to water it.
+11. When the database timer reaches zero, the harvest prompt becomes available.
 
-**Maintained by:** [BryceCanyonCounty](https://github.com/BryceCanyonCounty)
+If planting is cancelled or fails, the resource returns the reserved seed and soil as long as the player has room to carry them.
 
----
-*For support, issues, or contributions, visit our [Discord](https://discord.gg/bNDpwruqwX) or [GitHub repository](https://github.com/BryceCanyonCounty/bcc-farming)*
+## Helpful development command
 
----
+When `Config.DevMode` is enabled:
+
+```text
+/farmreload
+```
+
+This asks the client to rebuild synchronized plants and makes sure smell detection is running. It is handy after restarting `bcc-farming` while testing. The command is intentionally unavailable when development mode is disabled.
+
+## Export
+
+Server export:
+
+```lua
+local houses = exports['bcc-farming']:GetPlayerHouses(charIdentifier)
+```
+
+Returns the compatible houses found for the supplied character identifier. Each result contains property coordinates and radius.
+
+## Need help?
+
+BCC Farming is maintained by [Bryce Canyon County](https://github.com/BryceCanyonCounty). If you run into an issue, please include your resource version, relevant configuration, and the client or server console message when asking for help.
+
+- [Discord](https://discord.gg/bNDpwruqwX)
+- [GitHub](https://github.com/BryceCanyonCounty/bcc-farming)
+
+Original concept inspired by `prp_farming` and rebuilt for the BCC ecosystem.
