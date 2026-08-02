@@ -1,6 +1,196 @@
-local AllPlants = {} -- AllPlants will contain all the plants in the server
+local AllPlants = {}
+local PlantCacheById = {}
+local PlantConfigBySeed = {}
+local FertilizerByName = {}
+local PendingPlantings = {}
+local WateringLocks = {}
 local PlantsLoaded = false
+
+local DEFAULT_HOUSE_RADIUS = 20.0
 local DEFAULT_LOCK_RANGE = 2.5
+local INTERACTION_DISTANCE = 3.0
+local NOTIFY_DURATION = 4000
+
+local function rebuildConfigIndexes()
+    PlantConfigBySeed = {}
+    for _, plantCfg in ipairs(Plants or {}) do
+        if plantCfg.seedName then
+            PlantConfigBySeed[plantCfg.seedName] = plantCfg
+        end
+    end
+
+    FertilizerByName = {}
+    for _, fertilizer in ipairs(Config.fertilizerSetup or {}) do
+        if fertilizer.fertName then
+            FertilizerByName[fertilizer.fertName] = fertilizer
+        end
+    end
+end
+
+rebuildConfigIndexes()
+
+local function getUserCharacter(src)
+    local user = Core.getUser(src)
+    if not user then
+        return nil, nil
+    end
+    return user, user.getUsedCharacter
+end
+
+local function isWatered(value)
+    return value == true or value == 1 or value == '1' or tostring(value):lower() == 'true'
+end
+
+local function decodeCoords(encoded)
+    if type(encoded) == 'table' then
+        return encoded
+    end
+    if type(encoded) ~= 'string' then
+        return nil
+    end
+
+    local ok, coords = pcall(json.decode, encoded)
+    if not ok or type(coords) ~= 'table' then
+        return nil
+    end
+    return coords
+end
+
+local function normalizeCoords(candidate)
+    if type(candidate) == 'table' and rawget(candidate, 'coords') then
+        candidate = rawget(candidate, 'coords')
+    end
+
+    local candidateType = type(candidate)
+    local x, y, z, heading
+
+    if candidateType == 'vector3' or candidateType == 'vector4' then
+        x, y, z = candidate.x, candidate.y, candidate.z
+        heading = candidate.w or candidate.h
+    elseif candidateType == 'table' then
+        x = rawget(candidate, 'x') or candidate[1]
+        y = rawget(candidate, 'y') or candidate[2]
+        z = rawget(candidate, 'z') or candidate[3]
+        heading = rawget(candidate, 'w') or rawget(candidate, 'h') or rawget(candidate, 'heading') or candidate[4]
+    end
+
+    x, y, z = tonumber(x), tonumber(y), tonumber(z)
+    if not x or not y or not z then
+        return nil
+    end
+
+    local normalized = { x = x, y = y, z = z, grounded = true }
+    if tonumber(heading) then
+        normalized.w = tonumber(heading)
+    end
+    return normalized
+end
+
+local function normalizeLock(lock)
+    local normalized = lock
+    local radius
+    local heading
+
+    if type(lock) == 'table' then
+        radius = tonumber(rawget(lock, 'radius') or rawget(lock, 'range'))
+        heading = tonumber(rawget(lock, 'heading'))
+        normalized = rawget(lock, 'coords') or lock
+    end
+
+    local coords = normalizeCoords(normalized)
+    if not coords then
+        return nil, radius, heading
+    end
+    heading = heading or tonumber(coords.w)
+    return vector3(coords.x, coords.y, coords.z), radius, heading
+end
+
+local function notify(src, messageKey, notifyType)
+    NotifyClient(src, _U(messageKey), notifyType or 'error', NOTIFY_DURATION)
+end
+
+local function returnInventoryItem(src, itemName, amount, reason)
+    amount = tonumber(amount)
+    if not itemName or not amount or amount <= 0 then
+        return false
+    end
+    if not exports.vorp_inventory:canCarryItem(src, itemName, amount) then
+        DBG:Warning(('Player %d cannot carry returned item %s (%s)')
+            :format(src, tostring(itemName), tostring(reason)))
+        return false
+    end
+    local added = exports.vorp_inventory:addItem(src, itemName, amount)
+    if added == false then
+        DBG:Warning(('Failed to return %d %s to player %d (%s)')
+            :format(amount, tostring(itemName), src, tostring(reason)))
+        return false
+    end
+    return true
+end
+
+local function cachePlant(row)
+    if not row or not row.plant_id then
+        return
+    end
+    local key = tostring(row.plant_id)
+    local existing = PlantCacheById[key]
+    if existing then
+        for field, value in pairs(row) do
+            existing[field] = value
+        end
+        return
+    end
+    AllPlants[#AllPlants + 1] = row
+    PlantCacheById[key] = row
+end
+
+local function removeCachedPlant(plantId)
+    local key = tostring(plantId)
+    local cached = PlantCacheById[key]
+    if not cached then
+        return
+    end
+    PlantCacheById[key] = nil
+    for index = #AllPlants, 1, -1 do
+        if tostring(AllPlants[index].plant_id) == key then
+            table.remove(AllPlants, index)
+            break
+        end
+    end
+end
+
+local function rebuildPlantCache(rows)
+    AllPlants = {}
+    PlantCacheById = {}
+    for _, row in ipairs(rows or {}) do
+        cachePlant(row)
+    end
+end
+
+local function getPlantCoords(row)
+    if not row then
+        return nil
+    end
+    if row._decodedCoords then
+        return row._decodedCoords
+    end
+    local coords = decodeCoords(row.plant_coords)
+    if coords and tonumber(coords.x) and tonumber(coords.y) and tonumber(coords.z) then
+        row._decodedCoords = coords
+        return coords
+    end
+    return nil
+end
+
+local function isPlayerNearPlant(src, row)
+    local ped = GetPlayerPed(src)
+    local coords = getPlantCoords(row)
+    if not ped or ped == 0 or not coords then
+        return false
+    end
+    local playerCoords = GetEntityCoords(ped)
+    return #(playerCoords - vector3(coords.x + 0.0, coords.y + 0.0, coords.z + 0.0)) <= INTERACTION_DISTANCE
+end
 
 function GetPlayerHouses(charIdentifier)
     if not charIdentifier then
@@ -8,34 +198,30 @@ function GetPlayerHouses(charIdentifier)
         return {}
     end
 
+    local rows = MySQL.query.await(
+        'SELECT `house_coords`, `house_radius_limit` FROM `bcchousing` WHERE `charidentifier` = ?',
+        { charIdentifier }
+    )
     local houses = {}
-    local rows = MySQL.query.await('SELECT house_coords, house_radius_limit FROM `bcchousing` WHERE `charidentifier` = ?', { charIdentifier })
-
-    if not rows or #rows == 0 then
-        return houses
-    end
-
-    for _, row in ipairs(rows) do
-        if row.house_coords then
-            local ok, coords = pcall(json.decode, row.house_coords)
-            if ok and type(coords) == 'table' and coords.x and coords.y and coords.z then
-                local radius = tonumber(row.house_radius_limit) or 20.0
-                table.insert(houses, {
-                    coords = vector3(coords.x + 0.0, coords.y + 0.0, coords.z + 0.0),
-                    radius = radius
-                })
-            else
-                DBG:Warning('Invalid house coordinates for charidentifier ' .. tostring(charIdentifier))
-            end
+    for _, row in ipairs(rows or {}) do
+        local coords = decodeCoords(row.house_coords)
+        if coords and tonumber(coords.x) and tonumber(coords.y) and tonumber(coords.z) then
+            houses[#houses + 1] = {
+                coords = vector3(coords.x + 0.0, coords.y + 0.0, coords.z + 0.0),
+                radius = tonumber(row.house_radius_limit) or DEFAULT_HOUSE_RADIUS
+            }
+        else
+            DBG:Warning('Invalid house coordinates for charidentifier ' .. tostring(charIdentifier))
         end
     end
-
     return houses
 end
 
-local function CheckPlayerJob(src)
-    local character = Core.getUser(src).getUsedCharacter
-    for _, job in ipairs(Config.smelling.jobs) do
+local function checkPlayerJob(character)
+    if not character then
+        return false
+    end
+    for _, job in ipairs((Config.smelling or {}).jobs or {}) do
         if character.job == job then
             return true
         end
@@ -43,412 +229,262 @@ local function CheckPlayerJob(src)
     return false
 end
 
---- @param plantData table
---- @param plantCoords vector3|vector4|table
---- @param fertilizerName string|nil
-RegisterNetEvent('bcc-farming:AddPlant', function(plantData, plantCoords, fertilizerName)
-    local src = source
-    local user = Core.getUser(src)
+local function validatePlantingArea(character, finalCoords, plantCfg)
+    local plantingVector = vector3(finalCoords.x, finalCoords.y, finalCoords.z)
+    local withinHouse = false
 
-    -- Check if the user exists
-    if not user then
+    if Config.plantSetup.requireHouseOwnership then
+        local houses = GetPlayerHouses(character.charIdentifier)
+        if #houses == 0 then
+            return false, 'needHouseOwnership'
+        end
+        local padding = tonumber(Config.plantSetup.houseRadiusPadding) or 0.0
+        for _, house in ipairs(houses) do
+            if #(plantingVector - house.coords) <= (house.radius + padding) then
+                withinHouse = true
+                break
+            end
+        end
+    end
+
+    local lockRequired = plantCfg.lockCoords
+        and type(plantCfg.coordsLocks) == 'table'
+        and next(plantCfg.coordsLocks) ~= nil
+    local withinLock = false
+
+    if lockRequired then
+        local baseRadius = tonumber(plantCfg.coordsLockRange) or DEFAULT_LOCK_RANGE
+        local tolerance = tonumber(plantCfg.coordsLockTolerance) or 0.0
+        for _, lock in ipairs(plantCfg.coordsLocks) do
+            local lockCoords, customRadius, heading = normalizeLock(lock)
+            if lockCoords and #(plantingVector - lockCoords) <= ((customRadius or baseRadius) + tolerance) then
+                withinLock = true
+                if heading then
+                    finalCoords.w = heading
+                end
+                break
+            end
+        end
+
+        if not withinLock and not (Config.plantSetup.requireHouseOwnership and withinHouse) then
+            return false, 'mustUseLockedSpot'
+        end
+    end
+
+    if Config.plantSetup.requireHouseOwnership and not withinHouse and not withinLock then
+        return false, 'needHousePlot'
+    end
+    return true
+end
+
+function BeginPlantingProcess(src, plantCfg)
+    src = tonumber(src)
+    if not src or not plantCfg or not plantCfg.seedName then
+        return false
+    end
+    PendingPlantings[src] = { seedName = plantCfg.seedName }
+    return true
+end
+
+local function clearPendingPlanting(src)
+    PendingPlantings[src] = nil
+end
+
+local function refundPendingPlanting(src, reason)
+    local pending = PendingPlantings[src]
+    if not pending then
+        return false
+    end
+    PendingPlantings[src] = nil
+
+    local plantCfg = PlantConfigBySeed[pending.seedName]
+    if not plantCfg then
+        DBG:Error('Cannot refund unknown pending seed: ' .. tostring(pending.seedName))
+        return false
+    end
+
+    returnInventoryItem(src, plantCfg.seedName, plantCfg.seedAmount, reason)
+    if plantCfg.soilRequired then
+        returnInventoryItem(src, plantCfg.soilName, plantCfg.soilAmount, reason)
+    end
+    return true
+end
+
+local function applyFertilizer(src, fertilizerName, baseGrowthTime)
+    local growthTime = math.max(1, tonumber(baseGrowthTime) or 1)
+    if not fertilizerName then
+        return growthTime, nil, 1.0
+    end
+
+    local fertilizer = FertilizerByName[fertilizerName]
+    if not fertilizer then
+        DBG:Warning('Rejected unknown fertilizer: ' .. tostring(fertilizerName))
+        return growthTime, nil, 1.0
+    end
+
+    if exports.vorp_inventory:getItemCount(src, nil, fertilizer.fertName) < 1 then
+        return growthTime, nil, 1.0
+    end
+    if exports.vorp_inventory:subItem(src, fertilizer.fertName, 1) == false then
+        return growthTime, nil, 1.0
+    end
+
+    local reduction = math.min(0.99, math.max(0.0, tonumber(fertilizer.fertTimeReduction) or 0.0))
+    local multiplier = math.max(0.0, tonumber(fertilizer.fertYieldMultiplier) or 1.0)
+    return math.max(1, math.floor(growthTime * (1.0 - reduction))), fertilizer.fertName, multiplier
+end
+
+RegisterNetEvent('bcc-farming:AddPlant', function(clientPlantData, plantCoords, fertilizerName)
+    local src = source
+    local _, character = getUserCharacter(src)
+    if not character then
         DBG:Error('User not found for source: ' .. tostring(src))
         return
     end
 
-    local character = user.getUsedCharacter
-    local playerHouses = nil
-
-    -- Validate plant data and coordinates
-    if not plantData or not plantCoords then
-        DBG:Error('Invalid plant data or coordinates from source: ' .. tostring(src))
-        return
-    end
-    if not plantData.seedName or not plantData.timeToGrow then
-        DBG:Error('Incomplete plant data from source: ' .. tostring(src))
+    local requestedSeed = clientPlantData and clientPlantData.seedName
+    local pending = PendingPlantings[src]
+    if not pending or pending.seedName ~= requestedSeed then
+        DBG:Warning('Rejected AddPlant without matching pending planting for source: ' .. tostring(src))
         return
     end
 
-    -- Never trust client-supplied plant settings. Resolve the configured plant by seed name.
-    local configuredPlant = nil
-    for _, plantCfg in pairs(Plants) do
-        if plantCfg.seedName == plantData.seedName then
-            configuredPlant = plantCfg
-            break
-        end
-    end
-    if not configuredPlant then
-        DBG:Error('Unknown plant type from source: ' .. tostring(src))
-        return
-    end
-    plantData = configuredPlant
-
-    local finalCoords
-    local coordsCandidate = plantCoords
-    if type(coordsCandidate) == 'table' and coordsCandidate.coords then
-        coordsCandidate = coordsCandidate.coords
-    end
-
-    local px, py, pz, heading = nil, nil, nil, nil
-    if type(coordsCandidate) == 'vector3' then
-        px = coordsCandidate.x + 0.0
-        py = coordsCandidate.y + 0.0
-        pz = coordsCandidate.z + 0.0
-    elseif type(coordsCandidate) == 'vector4' then
-        px = coordsCandidate.x + 0.0
-        py = coordsCandidate.y + 0.0
-        pz = coordsCandidate.z + 0.0
-        heading = coordsCandidate.w + 0.0
-    elseif type(coordsCandidate) == 'table' then
-        if coordsCandidate.x and coordsCandidate.y and coordsCandidate.z then
-            px = coordsCandidate.x + 0.0
-            py = coordsCandidate.y + 0.0
-            pz = coordsCandidate.z + 0.0
-            if coordsCandidate.w or coordsCandidate.h or coordsCandidate.heading then
-                heading = (coordsCandidate.w or coordsCandidate.h or coordsCandidate.heading) + 0.0
-            end
-        elseif coordsCandidate[1] and coordsCandidate[2] and coordsCandidate[3] then
-            px = coordsCandidate[1] + 0.0
-            py = coordsCandidate[2] + 0.0
-            pz = coordsCandidate[3] + 0.0
-            if coordsCandidate[4] then
-                heading = coordsCandidate[4] + 0.0
-            end
-        end
-    end
-
-    if px and py and pz then
-        -- Placement preview coordinates are already snapped to the terrain.
-        finalCoords = { x = px, y = py, z = pz, grounded = true }
-        if heading then
-            finalCoords.w = heading
-        end
-    else
-        DBG:Error('Unable to normalize plant coordinates for source: ' .. tostring(src))
-        NotifyClient(src, _U('mustUseLockedSpot'), "error", 4000)
-        if plantData.seedName and plantData.seedAmount and plantData.seedAmount > 0 then
-            if exports.vorp_inventory:canCarryItem(src, plantData.seedName, plantData.seedAmount) then
-                exports.vorp_inventory:addItem(src, plantData.seedName, plantData.seedAmount)
-            else
-                DBG:Warning('Player ' .. tostring(src) .. ' could not carry returned seeds: ' .. tostring(plantData.seedName))
-            end
-        end
-        if plantData.soilRequired and plantData.soilName and plantData.soilAmount and plantData.soilAmount > 0 then
-            if exports.vorp_inventory:canCarryItem(src, plantData.soilName, plantData.soilAmount) then
-                exports.vorp_inventory:addItem(src, plantData.soilName, plantData.soilAmount)
-            else
-                DBG:Warning('Player ' .. tostring(src) .. ' could not carry returned soil: ' .. tostring(plantData.soilName))
-            end
-        end
+    local plantCfg = PlantConfigBySeed[pending.seedName]
+    local finalCoords = normalizeCoords(plantCoords)
+    if not plantCfg or not finalCoords then
+        notify(src, 'mustUseLockedSpot')
+        refundPendingPlanting(src, 'invalid planting coordinates')
         return
     end
 
-    local withinHouseRadius = false
-
-    if Config.plantSetup.requireHouseOwnership then
-        playerHouses = GetPlayerHouses(character.charIdentifier)
-        if not playerHouses or #playerHouses == 0 then
-            NotifyClient(src, _U('needHouseOwnership'), "error", 4000)
-            if plantData.seedName and plantData.seedAmount and plantData.seedAmount > 0 then
-                if exports.vorp_inventory:canCarryItem(src, plantData.seedName, plantData.seedAmount) then
-                    exports.vorp_inventory:addItem(src, plantData.seedName, plantData.seedAmount)
-                else
-                    DBG:Warning('Player ' .. tostring(src) .. ' could not carry returned seeds: ' .. tostring(plantData.seedName))
-                end
-            end
-            if plantData.soilRequired and plantData.soilName and plantData.soilAmount and plantData.soilAmount > 0 then
-                if exports.vorp_inventory:canCarryItem(src, plantData.soilName, plantData.soilAmount) then
-                    exports.vorp_inventory:addItem(src, plantData.soilName, plantData.soilAmount)
-                else
-                    DBG:Warning('Player ' .. tostring(src) .. ' could not carry returned soil: ' .. tostring(plantData.soilName))
-                end
-            end
-            return
-        end
-
-        local padding = Config.plantSetup.houseRadiusPadding or 0.0
-        local plantingVector = vector3(finalCoords.x, finalCoords.y, finalCoords.z)
-        for _, house in ipairs(playerHouses) do
-            if house.coords and #(plantingVector - house.coords) <= ((house.radius or 0.0) + padding) then
-                withinHouseRadius = true
-                break
-            end
-        end
-
-    end
-
-    local lockRequired = plantData.lockCoords and type(plantData.coordsLocks) == 'table' and next(plantData.coordsLocks)
-    local withinLock = false
-
-    if lockRequired then
-        local plantingVector = vector3(finalCoords.x, finalCoords.y, finalCoords.z)
-        local baseRadius = plantData.coordsLockRange or DEFAULT_LOCK_RANGE
-        local radiusPadding = plantData.coordsLockTolerance or 0.0
-        for _, lock in ipairs(plantData.coordsLocks) do
-            local normalized = lock
-            local lradius
-            local lheading
-            if type(lock) == 'table' then
-                if lock.radius or lock.range then
-                    lradius = lock.radius or lock.range
-                end
-                if lock.heading then
-                    lheading = lock.heading + 0.0
-                end
-                if lock.coords then
-                    normalized = lock.coords
-                end
-            end
-
-            local lx, ly, lz, lh
-            if type(normalized) == 'vector3' or type(normalized) == 'vector4' then
-                lx = normalized.x + 0.0
-                ly = normalized.y + 0.0
-                lz = normalized.z + 0.0
-                if normalized.w or normalized.h then
-                    lh = (normalized.w or normalized.h) + 0.0
-                end
-            elseif type(normalized) == 'table' then
-                if normalized.x and normalized.y and normalized.z then
-                    lx = normalized.x + 0.0
-                    ly = normalized.y + 0.0
-                    lz = normalized.z + 0.0
-                    if normalized.w or normalized.h or normalized.heading then
-                        lh = (normalized.w or normalized.h or normalized.heading) + 0.0
-                    end
-                elseif normalized[1] and normalized[2] and normalized[3] then
-                    lx = normalized[1] + 0.0
-                    ly = normalized[2] + 0.0
-                    lz = normalized[3] + 0.0
-                    if normalized[4] then
-                        lh = normalized[4] + 0.0
-                    end
-                end
-            end
-
-            if lx and ly and lz then
-                local allowedRadius = (lradius or baseRadius) + radiusPadding
-                if #(plantingVector - vector3(lx, ly, lz)) <= allowedRadius then
-                    withinLock = true
-                    if lheading or lh then
-                        finalCoords.w = lheading or lh
-                    end
-                    break
-                end
-            end
-        end
-
-        if not withinLock and not (Config.plantSetup.requireHouseOwnership and withinHouseRadius) then
-            DBG:Error('Player ' .. tostring(src) .. ' attempted to plant outside of locked coordinates.')
-            NotifyClient(src, _U('mustUseLockedSpot'), "error", 4000)
-            if plantData.seedName and plantData.seedAmount and plantData.seedAmount > 0 then
-                if exports.vorp_inventory:canCarryItem(src, plantData.seedName, plantData.seedAmount) then
-                    exports.vorp_inventory:addItem(src, plantData.seedName, plantData.seedAmount)
-                else
-                    DBG:Warning('Player ' .. tostring(src) .. ' could not carry returned seeds: ' .. tostring(plantData.seedName))
-                end
-            end
-            if plantData.soilRequired and plantData.soilName and plantData.soilAmount and plantData.soilAmount > 0 then
-                if exports.vorp_inventory:canCarryItem(src, plantData.soilName, plantData.soilAmount) then
-                    exports.vorp_inventory:addItem(src, plantData.soilName, plantData.soilAmount)
-                else
-                    DBG:Warning('Player ' .. tostring(src) .. ' could not carry returned soil: ' .. tostring(plantData.soilName))
-                end
-            end
-            return
-        end
-    end
-
-    if Config.plantSetup.requireHouseOwnership and not withinHouseRadius and not withinLock then
-        NotifyClient(src, _U('needHousePlot'), "error", 4000)
-        if plantData.seedName and plantData.seedAmount and plantData.seedAmount > 0 then
-            if exports.vorp_inventory:canCarryItem(src, plantData.seedName, plantData.seedAmount) then
-                exports.vorp_inventory:addItem(src, plantData.seedName, plantData.seedAmount)
-            else
-                DBG:Warning('Player ' .. tostring(src) .. ' could not carry returned seeds: ' .. tostring(plantData.seedName))
-            end
-        end
-        if plantData.soilRequired and plantData.soilName and plantData.soilAmount and plantData.soilAmount > 0 then
-            if exports.vorp_inventory:canCarryItem(src, plantData.soilName, plantData.soilAmount) then
-                exports.vorp_inventory:addItem(src, plantData.soilName, plantData.soilAmount)
-            else
-                DBG:Warning('Player ' .. tostring(src) .. ' could not carry returned soil: ' .. tostring(plantData.soilName))
-            end
-        end
+    local areaValid, messageKey = validatePlantingArea(character, finalCoords, plantCfg)
+    if not areaValid then
+        notify(src, messageKey)
+        refundPendingPlanting(src, 'server planting-area validation failed')
         return
     end
 
-    local growthTime = plantData.timeToGrow
-    local yieldMultiplier = 1.0
-    local appliedFertilizer = nil
-
-    if fertilizerName then
-        for _, fertilizer in pairs(Config.fertilizerSetup) do
-            if fertilizer.fertName == fertilizerName then
-                local fertilizerCount = exports.vorp_inventory:getItemCount(src, nil, fertilizer.fertName)
-                if fertilizerCount > 0 then
-                    local removed = exports.vorp_inventory:subItem(src, fertilizer.fertName, 1)
-                    if removed ~= false then
-                        appliedFertilizer = fertilizer.fertName
-                        growthTime = math.max(1, math.floor(growthTime * (1.0 - (fertilizer.fertTimeReduction or 0))))
-                        yieldMultiplier = math.max(0, tonumber(fertilizer.fertYieldMultiplier) or 1.0)
-                    end
-                end
-                break
-            end
-        end
+    local plantCount = tonumber(MySQL.scalar.await(
+        'SELECT COUNT(*) FROM `bcc_farming` WHERE `plant_owner` = ?',
+        { character.charIdentifier }
+    ))
+    if not plantCount or plantCount >= (tonumber(Config.plantSetup.maxPlants) or 0) then
+        notify(src, 'maxPlantsReached')
+        refundPendingPlanting(src, 'maximum plants reached')
+        return
     end
 
-    -- Insert plant into database with its server-validated care modifiers.
-    local plantId = MySQL.insert.await('INSERT INTO `bcc_farming` (plant_coords, plant_type, plant_watered, time_left, fertilizer, yield_multiplier, plant_owner) VALUES (?, ?, ?, ?, ?, ?, ?)',
-    { json.encode(finalCoords), plantData.seedName, 'false', growthTime, appliedFertilizer, yieldMultiplier, character.charIdentifier })
+    local growthTime, appliedFertilizer, yieldMultiplier =
+        applyFertilizer(src, fertilizerName, plantCfg.timeToGrow)
+    local encodedCoords = json.encode(finalCoords)
+    local plantId = MySQL.insert.await(
+        'INSERT INTO `bcc_farming` (`plant_coords`, `plant_type`, `plant_watered`, `time_left`, `fertilizer`, `yield_multiplier`, `plant_owner`) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        { encodedCoords, plantCfg.seedName, 'false', growthTime, appliedFertilizer, yieldMultiplier,
+            character.charIdentifier }
+    )
 
     if not plantId then
-        DBG:Error('Failed to insert plant into database.')
-        if appliedFertilizer and exports.vorp_inventory:canCarryItem(src, appliedFertilizer, 1) then
-            exports.vorp_inventory:addItem(src, appliedFertilizer, 1)
+        DBG:Error('Failed to insert plant into database')
+        if appliedFertilizer then
+            returnInventoryItem(src, appliedFertilizer, 1, 'plant insert failed')
         end
-        if plantData.seedName and plantData.seedAmount and plantData.seedAmount > 0 then
-            if exports.vorp_inventory:canCarryItem(src, plantData.seedName, plantData.seedAmount) then
-                exports.vorp_inventory:addItem(src, plantData.seedName, plantData.seedAmount)
-            else
-                DBG:Warning('Player ' .. tostring(src) .. ' could not carry returned seeds: ' .. tostring(plantData.seedName))
-            end
-        end
-        if plantData.soilRequired and plantData.soilName and plantData.soilAmount and plantData.soilAmount > 0 then
-            if exports.vorp_inventory:canCarryItem(src, plantData.soilName, plantData.soilAmount) then
-                exports.vorp_inventory:addItem(src, plantData.soilName, plantData.soilAmount)
-            else
-                DBG:Warning('Player ' .. tostring(src) .. ' could not carry returned soil: ' .. tostring(plantData.soilName))
-            end
-        end
+        refundPendingPlanting(src, 'plant insert failed')
         return
     end
 
-    table.insert(AllPlants, {
+    clearPendingPlanting(src)
+    cachePlant({
         plant_id = plantId,
-        plant_coords = json.encode(finalCoords),
-        plant_type = plantData.seedName,
+        plant_coords = encodedCoords,
+        plant_type = plantCfg.seedName,
         plant_watered = 'false',
         time_left = growthTime,
         fertilizer = appliedFertilizer,
         yield_multiplier = yieldMultiplier,
-        plant_owner = character.charIdentifier
+        plant_owner = character.charIdentifier,
+        _decodedCoords = finalCoords
     })
 
-    -- Trigger client event
     local target = Config.plantSetup.lockedToPlanter and src or -1
-    TriggerClientEvent('bcc-farming:PlantPlanted', target, plantId, plantData, finalCoords, growthTime, false, src)
+    TriggerClientEvent('bcc-farming:PlantPlanted', target, plantId, plantCfg, finalCoords, growthTime, false, src)
 end)
 
---- @param plantData table
-RegisterNetEvent('bcc-farming:PlantToolUsage',function (plantData)
+RegisterNetEvent('bcc-farming:PlantToolUsage', function(clientPlantData)
     local src = source
-    local user = Core.getUser(src)
-
-    -- Check if the user exists
-    if not user then
-        DBG:Error('User not found for source: ' .. tostring(src))
+    local _, character = getUserCharacter(src)
+    local pending = PendingPlantings[src]
+    if not character or not pending then
         return
     end
 
-    local toolItem = plantData.plantingTool
-    local toolUsage = plantData.plantingToolUsage
+    local requestedSeed = clientPlantData and clientPlantData.seedName
+    if requestedSeed ~= pending.seedName then
+        DBG:Warning('Rejected mismatched tool usage for source: ' .. tostring(src))
+        return
+    end
 
-    -- Check if the tool exists in the player's inventory
-    local tool = exports.vorp_inventory:getItem(src, toolItem)
+    local plantCfg = PlantConfigBySeed[pending.seedName]
+    if not plantCfg or not plantCfg.plantingToolRequired then
+        return
+    end
+
+    local toolUsage = math.max(0, tonumber(plantCfg.plantingToolUsage) or 0)
+    local tool = exports.vorp_inventory:getItem(src, plantCfg.plantingTool)
     if not tool then
-        DBG:Error('Tool not found in inventory for source: ' .. tostring(src))
+        DBG:Error('Planting tool not found for source: ' .. tostring(src))
         return
     end
 
-    local toolMeta = tool.metadata or {}
-
-    -- If tool has no durability metadata, initialize it
-    if not toolMeta.durability then
-        exports.vorp_inventory:setItemMetadata(src, tool.id, {
-            description = _U('UsageLeft') .. 100 - toolUsage .. '%',
-            durability = 100 - toolUsage
-        })
-        DBG:Info('Initialized durability for tool: ' .. toolItem .. ', durability: ' .. tostring(100 - toolUsage))
-    else
-        -- Subtract durability
-        local durabilityValue = toolMeta.durability - toolUsage
-
-        -- Update the tool's metadata
-        if durabilityValue >= toolUsage then
-            exports.vorp_inventory:setItemMetadata(src, tool.id, {
-                description = _U('UsageLeft') .. durabilityValue .. '%',
-                durability = durabilityValue
-            })
-            DBG:Info('Updated tool durability for source: ' .. tostring(src) .. ', tool: ' .. toolItem .. ', durability: ' .. durabilityValue)
-        else
-            -- Remove the tool if durability is exhausted
-            exports.vorp_inventory:subItemById(src, tool.id, nil, nil, 1)
-            NotifyClient(src, _U('needNewTool'), "error", 4000)
-            DBG:Info('Removed broken tool for source: ' .. tostring(src) .. ', tool: ' .. toolItem)
-        end
+    local metadata = tool.metadata or {}
+    local currentDurability = tonumber(metadata.durability) or 100
+    local newDurability = math.max(0, currentDurability - toolUsage)
+    if newDurability < toolUsage then
+        exports.vorp_inventory:subItemById(src, tool.id, nil, nil, 1)
+        notify(src, 'needNewTool')
+        return
     end
+
+    exports.vorp_inventory:setItemMetadata(src, tool.id, {
+        description = _U('UsageLeft') .. newDurability .. '%',
+        durability = newDurability
+    })
 end)
 
 RegisterNetEvent('bcc-farming:NewClientConnected', function(requestId)
     local src = source
-    local user = Core.getUser(src)
-
-    -- Check if the user exists
-    if not user then
-        DBG:Error('User not found for source: ' .. tostring(src))
-        TriggerClientEvent('bcc-farming:PlantSyncComplete', src, requestId, false)
-        return
-    end
-
-    local character = user.getUsedCharacter
-    local charid = character.charIdentifier
-
-    if not PlantsLoaded then
-        DBG:Info('Plant cache is not ready for source: ' .. tostring(src))
-        TriggerClientEvent('bcc-farming:PlantSyncComplete', src, requestId, false)
-        return
-    end
-
-    if type(Plants) ~= 'table' then
-        DBG:Error('Plants configuration table is missing or invalid')
+    local _, character = getUserCharacter(src)
+    if not character or not PlantsLoaded then
         TriggerClientEvent('bcc-farming:PlantSyncComplete', src, requestId, false)
         return
     end
 
     TriggerClientEvent('bcc-farming:ResetClientPlants', src)
+    local ownedCount = 0
 
-    -- Loop through all plants on the server
-    for _, currentPlants in pairs(AllPlants) do
-        local ownsPlant = tostring(currentPlants.plant_owner) == tostring(charid)
-
-        if Config.plantSetup.lockedToPlanter and not ownsPlant then
-            goto END
-        end
-
-        -- If player owns plant add to their max plants count
+    for _, storedPlant in ipairs(AllPlants) do
+        local ownsPlant = tostring(storedPlant.plant_owner) == tostring(character.charIdentifier)
         if ownsPlant then
-            TriggerClientEvent('bcc-farming:MaxPlantsAmount', src, 1)
+            ownedCount = ownedCount + 1
         end
 
-        -- Get plant configuration and send to client
-        for _, plantCfg in pairs(Plants) do
-            if currentPlants.plant_type == plantCfg.seedName then
-                local plantCoords = json.decode(currentPlants.plant_coords)
-                local planterSource = ownsPlant and src or 0
-                TriggerClientEvent('bcc-farming:PlantPlanted', src, currentPlants.plant_id, plantCfg, plantCoords, currentPlants.time_left, currentPlants.plant_watered, planterSource)
-                break
+        if not Config.plantSetup.lockedToPlanter or ownsPlant then
+            local plantCfg = PlantConfigBySeed[storedPlant.plant_type]
+            local coords = getPlantCoords(storedPlant)
+            if plantCfg and coords then
+                TriggerClientEvent('bcc-farming:PlantPlanted', src, storedPlant.plant_id, plantCfg, coords,
+                    storedPlant.time_left, storedPlant.plant_watered, ownsPlant and src or 0)
             end
         end
-        ::END::
     end
 
+    if ownedCount > 0 then
+        TriggerClientEvent('bcc-farming:MaxPlantsAmount', src, ownedCount)
+    end
     TriggerClientEvent('bcc-farming:PlantSyncComplete', src, requestId, true)
 end)
 
---- Return authoritative persisted state for client countdown and interaction checks.
 Core.Callback.Register('bcc-farming:GetPlantStatus', function(source, cb, plantId)
+    plantId = tonumber(plantId)
     if not plantId then
         return cb(false)
     end
@@ -474,367 +510,222 @@ Core.Callback.Register('bcc-farming:GetPlantStatus', function(source, cb, plantI
 
     cb({
         timeLeft = tonumber(plant.time_left) or 0,
-        watered = tostring(plant.plant_watered),
+        watered = isWatered(plant.plant_watered),
         hasWaterBucket = hasWaterBucket
     })
 end)
 
---- @param plantId number
-Core.Callback.Register('bcc-farming:ManagePlantWateredStatus', function(source, cb, plantId)
-    local src = source
-    local user = Core.getUser(src)
-
-    -- Check if the user exists
-    if not user then
-        DBG:Error('User not found for source: ' .. tostring(src))
-        return cb(false)
-    end
-
-    -- Check if plantId is valid
-    if not plantId then
-        DBG:Error('Invalid plantId from source: ' .. tostring(src))
-        return cb(false)
-    end
-
-    if not exports['bcc-water']:ConsumeContainer(src, 'bucket') then
-        DBG:Info('No usable water bucket found for source: ' .. tostring(src))
-        return cb(false)
-    end
-
-    local successUpdate = MySQL.update.await(
-        'UPDATE `bcc_farming` SET `plant_watered` = ? WHERE `plant_id` = ?',
-        { 'true', plantId }
-    )
-    if not successUpdate then
-        DBG:Error('Failed to update plant watered status for plantId: ' .. tostring(plantId))
-        return cb(false)
-    end
-
-    TriggerClientEvent('bcc-farming:UpdateClientPlantWateredStatus', -1, plantId)
-    cb(true)
-end)
-
---- @param plantId number
-RegisterNetEvent('bcc-farming:UpdatePlantWateredStatus', function(plantId)
-    local src = source
-    local user = Core.getUser(src)
-
-    -- Check if the user exists
-    if not user then
-        DBG:Error('User not found for source: ' .. tostring(src))
-        return
-    end
-
-    -- Check if plantId is valid
-    if not plantId then
-        DBG:Error('Invalid plantId from source: ' .. tostring(src))
-        return
-    end
-
-    -- Update plant watered status in database
-    local result = MySQL.update.await(
+local function markPlantWatered(plantId)
+    local affected = MySQL.update.await(
         'UPDATE `bcc_farming` SET `plant_watered` = ? WHERE `plant_id` = ? AND `plant_watered` <> ?',
         { 'true', plantId, 'true' }
     )
-
-    if result == nil then
-        DBG:Error('Failed to update plant watered status in database for plantId: ' .. tostring(plantId))
-        return
-    end
-
-    if tonumber(result) and tonumber(result) > 0 then
-        DBG:Success('Successfully updated watered status for plant ID: ' .. tostring(plantId))
+    if affected and tonumber(affected) and tonumber(affected) > 0 then
+        local cached = PlantCacheById[tostring(plantId)]
+        if cached then
+            cached.plant_watered = 'true'
+        end
         TriggerClientEvent('bcc-farming:UpdateClientPlantWateredStatus', -1, plantId)
+        return true
     end
-end)
+    return false
+end
 
---- @param plantId number
---- @param destroy boolean
-Core.Callback.Register('bcc-farming:HarvestCheck', function(source, cb, plantId, destroy)
+Core.Callback.Register('bcc-farming:ManagePlantWateredStatus', function(source, cb, plantId)
     local src = source
-    local user = Core.getUser(src)
-
-    -- Check if the user exists
-    if not user then
-        DBG:Error('User not found for source: ' .. tostring(src))
+    plantId = tonumber(plantId)
+    if not plantId then
+        return cb(false)
+    end
+    local _, character = getUserCharacter(src)
+    local cached = PlantCacheById[tostring(plantId)]
+    if not character or not cached or isWatered(cached.plant_watered) or not isPlayerNearPlant(src, cached) then
+        return cb(false)
+    end
+    if WateringLocks[plantId] then
         return cb(false)
     end
 
+    WateringLocks[plantId] = true
+    local consumed = exports['bcc-water']:ConsumeContainer(src, 'bucket')
+    local watered = consumed and markPlantWatered(plantId) or false
+    WateringLocks[plantId] = nil
+    cb(watered)
+end)
+
+RegisterNetEvent('bcc-farming:UpdatePlantWateredStatus', function(plantId)
+    local src = source
+    plantId = tonumber(plantId)
     if not plantId then
-        DBG:Error('Invalid plant ID for source: ' .. tostring(src))
+        return
+    end
+    local _, character = getUserCharacter(src)
+    local cached = PlantCacheById[tostring(plantId)]
+    if not character or not cached or isWatered(cached.plant_watered)
+        or WateringLocks[plantId] or not isPlayerNearPlant(src, cached) then
+        return
+    end
+    WateringLocks[plantId] = true
+    markPlantWatered(plantId)
+    WateringLocks[plantId] = nil
+end)
+
+local function calculateHarvestItems(storedPlant, plantCfg)
+    local careConfig = Config.cropCare or {}
+    local watered = isWatered(storedPlant.plant_watered)
+    local fertilizerMultiplier = tonumber(storedPlant.yield_multiplier) or 1.0
+    local waterMultiplier = watered
+        and (tonumber(careConfig.wateredYieldMultiplier) or 1.0)
+        or (tonumber(careConfig.dryYieldMultiplier) or 0.5)
+    local finalMultiplier = math.max(0.0, fertilizerMultiplier * waterMultiplier)
+    local waterBonus = watered and math.max(0, math.floor(tonumber(careConfig.wateredYieldBonus) or 0)) or 0
+    local minimumYield = math.max(0, math.floor(tonumber(careConfig.minimumYield) or 1))
+    local items = {}
+
+    for _, reward in ipairs(plantCfg.rewards or {}) do
+        local baseAmount = tonumber(reward.amount)
+        if not reward.itemName or not reward.itemLabel or not baseAmount then
+            return nil
+        end
+        items[#items + 1] = {
+            itemName = reward.itemName,
+            itemLabel = reward.itemLabel,
+            amount = math.max(minimumYield, math.floor((baseAmount * finalMultiplier) + 0.5) + waterBonus)
+        }
+    end
+    return items
+end
+
+Core.Callback.Register('bcc-farming:HarvestCheck', function(source, cb, plantId, destroy)
+    local src = source
+    plantId = tonumber(plantId)
+    local _, character = getUserCharacter(src)
+    if not character or not plantId then
         return cb(false)
     end
 
     local rows = MySQL.query.await('SELECT * FROM `bcc_farming` WHERE `plant_id` = ? LIMIT 1', { plantId })
     local storedPlant = rows and rows[1]
-    if not storedPlant then
-        DBG:Warning('Plant not found for harvest: ' .. tostring(plantId))
+    local plantCfg = storedPlant and PlantConfigBySeed[storedPlant.plant_type]
+    if not storedPlant or not plantCfg or not isPlayerNearPlant(src, storedPlant) then
+        return cb(false)
+    end
+    if Config.plantSetup.lockedToPlanter
+        and tostring(storedPlant.plant_owner) ~= tostring(character.charIdentifier) then
         return cb(false)
     end
 
-    local configuredPlant = nil
-    for _, plantCfg in pairs(Plants) do
-        if plantCfg.seedName == storedPlant.plant_type then
-            configuredPlant = plantCfg
-            break
-        end
-    end
-    if not configuredPlant then
-        DBG:Error('Missing configuration for plant type: ' .. tostring(storedPlant.plant_type))
-        return cb(false)
-    end
-
-    local itemsToAdd = {}
+    ---@type table|nil
+    local itemsToAdd
     if not destroy then
         if (tonumber(storedPlant.time_left) or 1) > 0 then
-            DBG:Warning('Player attempted to harvest an immature plant: ' .. tostring(plantId))
             return cb(false)
         end
-
-        local careConfig = Config.cropCare or {}
-        local fertilizerMultiplier = tonumber(storedPlant.yield_multiplier) or 1.0
-        local waterMultiplier = tostring(storedPlant.plant_watered) == 'true'
-            and (tonumber(careConfig.wateredYieldMultiplier) or 1.0)
-            or (tonumber(careConfig.dryYieldMultiplier) or 0.5)
-        local finalMultiplier = math.max(0, fertilizerMultiplier * waterMultiplier)
-        local waterBonus = tostring(storedPlant.plant_watered) == 'true'
-            and math.max(0, math.floor(tonumber(careConfig.wateredYieldBonus) or 0))
-            or 0
-        local minimumYield = math.max(0, math.floor(tonumber(careConfig.minimumYield) or 1))
-
-        -- Rewards are calculated exclusively from server configuration and saved crop care.
-        for _, reward in pairs(configuredPlant.rewards or {}) do
-            local itemName = reward.itemName
-            local itemLabel = reward.itemLabel
-            local baseAmount = tonumber(reward.amount)
-
-            if not itemName or not itemLabel or not baseAmount then
-                DBG:Error('Invalid reward data for plant ID: ' .. tostring(plantId))
-                return cb(false)
-            end
-
-            local amount = math.max(minimumYield, math.floor((baseAmount * finalMultiplier) + 0.5) + waterBonus)
-
-            local canCarry = exports.vorp_inventory:canCarryItem(src, itemName, amount)
-            if not canCarry then
-                NotifyClient(src, _U('noCarry') .. itemName, "error", 4000)
-                DBG:Error('Player ' .. tostring(src) .. ' cannot carry item: ' .. itemName)
-                return cb(false)
-            end
-
-            table.insert(itemsToAdd, { itemName = itemName, itemLabel = itemLabel, amount = amount })
+        itemsToAdd = calculateHarvestItems(storedPlant, plantCfg)
+        if not itemsToAdd then
+            DBG:Error('Invalid reward configuration for plant: ' .. tostring(storedPlant.plant_type))
+            return cb(false)
         end
+        for _, item in ipairs(itemsToAdd) do
+            if not exports.vorp_inventory:canCarryItem(src, item.itemName, item.amount) then
+                NotifyClient(src, _U('noCarry') .. item.itemName, 'error', NOTIFY_DURATION)
+                return cb(false)
+            end
+        end
+    else
+        itemsToAdd = {}
     end
 
-    -- Claim the plant before granting rewards to prevent duplicate harvests.
-    local affectedRows = MySQL.update.await('DELETE FROM `bcc_farming` WHERE `plant_id` = ?', { plantId })
-    if not affectedRows or affectedRows < 1 then
-        DBG:Error('Failed to delete plant with ID: ' .. tostring(plantId) .. ' from database')
+    local affected = MySQL.update.await('DELETE FROM `bcc_farming` WHERE `plant_id` = ?', { plantId })
+    if not affected or tonumber(affected) < 1 then
         return cb(false)
     end
+    removeCachedPlant(plantId)
 
     for _, item in ipairs(itemsToAdd) do
-        local success = exports.vorp_inventory:addItem(src, item.itemName, item.amount)
-        if not success then
-            DBG:Warning('Failed to add item to inventory for source: ' .. tostring(src) .. ', item: ' .. item.itemName)
+        if exports.vorp_inventory:addItem(src, item.itemName, item.amount) ~= false then
+            NotifyClient(src, _U('harvested') .. item.amount .. ' ' .. item.itemLabel, 'success', NOTIFY_DURATION)
         else
-            NotifyClient(src, _U('harvested') .. item.amount .. ' ' .. item.itemLabel, "success", 4000)
-            DBG:Success('Successfully added item to inventory for source: ' .. tostring(src) .. ', item: ' .. item.itemName)
+            DBG:Warning(('Failed to grant %s after claiming plant %d for source %d')
+                :format(tostring(item.itemName), plantId, src))
         end
     end
 
-    DBG:Success('Successfully deleted plant with ID: ' .. tostring(plantId) .. ' from database')
-
-    TriggerClientEvent('bcc-farming:MaxPlantsAmount', src, -1)
+    if tostring(storedPlant.plant_owner) == tostring(character.charIdentifier) then
+        TriggerClientEvent('bcc-farming:MaxPlantsAmount', src, -1)
+    end
     TriggerClientEvent('bcc-farming:RemovePlantClient', -1, plantId)
-
     cb(true)
 end)
 
---- @param seedName string
---- @param seedAmount number
---- @param soilRequired boolean
---- @param soilName string
---- @param soilAmount number
-RegisterNetEvent('bcc-farming:ReturnItems', function(seedName, seedAmount, soilRequired, soilName, soilAmount)
+RegisterNetEvent('bcc-farming:ReturnItems', function()
     local src = source
     local user = Core.getUser(src)
-
-    -- Check if the user exists
     if not user then
-        DBG:Error('User not found for source: ' .. tostring(src))
         return
     end
-
-    -- Return Seeds
-    if seedName and seedAmount and seedAmount > 0 then
-        DBG:Info('Returning ' .. tostring(seedAmount) .. ' of ' .. seedName .. ' to player ' .. tostring(src))
-        local canCarrySeed = exports.vorp_inventory:canCarryItem(src, seedName, seedAmount)
-        if canCarrySeed then
-            local success = exports.vorp_inventory:addItem(src, seedName, seedAmount)
-            if success then
-                DBG:Success('Successfully returned ' ..
-                tostring(seedAmount) .. ' of ' .. seedName .. ' to player ' .. tostring(src))
-            else
-                DBG:Warning('Failed to return ' ..
-                tostring(seedAmount) .. ' of ' .. seedName .. ' to player ' .. tostring(src))
-            end
-        else
-            DBG:Warning('Player ' .. tostring(src) .. ' could not carry returned seeds: ' .. seedName)
-        end
-    else
-        DBG:Info('No seeds to return or invalid seed data for player ' .. tostring(src))
+    if not refundPendingPlanting(src, 'planting cancelled') then
+        DBG:Warning('Ignored ReturnItems without pending planting for source: ' .. tostring(src))
     end
+end)
 
-    -- Return Soil if Required
-    if soilRequired and soilName and soilAmount and soilAmount > 0 then
-        local canCarrySoil = exports.vorp_inventory:canCarryItem(src, soilName, soilAmount)
-        if canCarrySoil then
-            local success = exports.vorp_inventory:addItem(src, soilName, soilAmount)
-            if success then
-                DBG:Success('Successfully returned ' ..
-                tostring(soilAmount) .. ' of ' .. soilName .. ' to player ' .. tostring(src))
-            else
-                DBG:Warning('Failed to return ' ..
-                tostring(soilAmount) .. ' of ' .. soilName .. ' to player ' .. tostring(src))
-            end
-        else
-            DBG:Warning('Player ' .. tostring(src) .. ' could not carry returned soil: ' .. soilName)
-        end
-    else
-        DBG:Info('No soil to return or invalid soil data for player ' .. tostring(src))
-    end
+AddEventHandler('playerDropped', function()
+    PendingPlantings[source] = nil
 end)
 
 CreateThread(function()
     while true do
-        Wait(1000)
-        local timeLeft
-
-        -- Fetch all plants from the database
-        local allPlants = MySQL.query.await('SELECT * FROM `bcc_farming`')
-        if not allPlants then
-            DBG:Warning('Failed to fetch plants from database. Will try again.')
-            Wait(5000)
-            goto continueThread
+        local rows = MySQL.query.await('SELECT * FROM `bcc_farming`')
+        if rows then
+            rebuildPlantCache(rows)
+            PlantsLoaded = true
+            break
         end
+        DBG:Warning('Failed to load plants; retrying in five seconds')
+        Wait(5000)
+    end
 
-        -- Update global AllPlants table
-        AllPlants = allPlants
-        PlantsLoaded = true
-        --DBG:Info('Fetched ' .. tostring(#allPlants) .. ' plants from database.')
-
-        -- Process each plant
-        if #allPlants > 0 then
-            for _, plant in pairs(allPlants) do
-                -- Validate plant data
-                if not plant or not plant.plant_id or not plant.time_left or not plant.plant_watered then
-                    DBG:Warning('Invalid plant data detected')
-                    goto continuePlant
+    local dryGrowthRate = math.max(0.0, tonumber((Config.cropCare or {}).dryGrowthRate) or 0.5)
+    while true do
+        Wait(1000)
+        local updated = MySQL.update.await(
+            'UPDATE `bcc_farming` SET `time_left` = GREATEST(0, `time_left` - IF(`plant_watered` = ?, 1, ?)) WHERE `time_left` > 0',
+            { 'true', dryGrowthRate }
+        )
+        if updated == nil then
+            DBG:Warning('Failed to update plant growth timers')
+        else
+            for _, plant in ipairs(AllPlants) do
+                local timeLeft = tonumber(plant.time_left)
+                if timeLeft and timeLeft > 0 then
+                    local rate = isWatered(plant.plant_watered) and 1.0 or dryGrowthRate
+                    plant.time_left = math.max(0, timeLeft - rate)
                 end
-
-                timeLeft = tonumber(plant.time_left)
-
-                -- Dry plants continue growing slowly and produce a smaller harvest.
-                if timeLeft > 0 then
-                    local growthRate = plant.plant_watered == 'true'
-                        and 1.0
-                        or (tonumber((Config.cropCare or {}).dryGrowthRate) or 0.5)
-                    local newTime = math.max(0, timeLeft - math.max(0, growthRate))
-                    --DBG:Info('Updating plant ID: ' .. tostring(plant.plant_id) .. ', time left: ' .. tostring(newTime))
-
-                    -- Update plant time in database
-                    local success = MySQL.update.await('UPDATE `bcc_farming` SET `time_left` = ? WHERE `plant_id` = ?',
-                        { newTime, plant.plant_id })
-
-                    if not success then
-                        DBG:Warning('Failed to update time for plant ID: ' .. tostring(plant.plant_id))
-                    end
-                end
-                ::continuePlant::
             end
         end
-        ::continueThread::
     end
 end)
 
---- @param playerCoords vector3
-Core.Callback.Register('bcc-farming:DetectSmellingPlants', function(source, cb, playerCoords)
+Core.Callback.Register('bcc-farming:DetectSmellingPlants', function(source, cb)
     local src = source
-    local user = Core.getUser(src)
-
-    -- Check if the user exists
-    if not user then
-        DBG:Error('User not found for source: ' .. tostring(src))
+    local _, character = getUserCharacter(src)
+    local playerPed = GetPlayerPed(src)
+    if not character or not checkPlayerJob(character) or not playerPed or playerPed == 0 or not PlantsLoaded then
         return cb(false)
     end
 
-    local hasJob = CheckPlayerJob(src)
-    if not hasJob then
-        --DBG:Warning('Player ' .. tostring(src) .. ' does not have the required job for smelling plants.')
-        return cb(false)
-    end
-
-    -- Validate player coordinates
-    if not playerCoords then
-        DBG:Error('Invalid player coordinates for source: ' .. tostring(src))
-        return cb(false)
-    end
-
-    -- Validate AllPlants and Plants tables
-    if not AllPlants or not Plants then
-        DBG:Error('AllPlants or Plants table is not defined')
-        return cb(false)
-    end
-
+    local playerCoords = GetEntityCoords(playerPed)
+    local smellDistance = tonumber((Config.smelling or {}).distance) or 0.0
     local smellingPlants = {}
-
-    -- Iterate through all plants
-    for _, allPlant in pairs(AllPlants) do
-        local distance
-        -- Validate plant data
-        if not allPlant or not allPlant.plant_type or not allPlant.plant_coords then
-            DBG:Warning('Invalid plant data detected in AllPlants')
-            goto continuePlant
+    for _, storedPlant in ipairs(AllPlants) do
+        local plantCfg = PlantConfigBySeed[storedPlant.plant_type]
+        local coords = plantCfg and plantCfg.smelling and getPlantCoords(storedPlant)
+        if coords and #(vector3(coords.x, coords.y, coords.z) - playerCoords) <= smellDistance then
+            smellingPlants[#smellingPlants + 1] = { coords = coords, plantName = plantCfg.plantName }
         end
-
-        -- Find matching plant configuration
-        for _, plant in pairs(Plants) do
-            -- Validate plant data
-            if not plant or not plant.seedName or not plant.plantName then
-                DBG:Warning('Invalid plant data detected in Plants')
-                goto continueConfig
-            end
-
-            -- Check if plant types match and if the plant can be smelled
-            if allPlant.plant_type == plant.seedName and plant.smelling then
-                -- Decode plant coordinates
-                local plantCoords = json.decode(allPlant.plant_coords)
-                if not plantCoords or not plantCoords.x or not plantCoords.y or not plantCoords.z then
-                    DBG:Warning('Invalid plant coordinates detected for plant: ' .. tostring(plant.seedName))
-                    goto continueConfig
-                end
-
-                -- Check if player is within smelling distance
-                distance = #(vector3(plantCoords.x, plantCoords.y, plantCoords.z) - playerCoords)
-                if distance <= Config.smelling.distance then
-                    DBG:Info('Player ' .. tostring(src) .. ' is within smelling distance of plant: ' .. plant.plantName)
-                    table.insert(smellingPlants, { coords = plantCoords, plantName = plant.plantName })
-                end
-            end
-            ::continueConfig::
-        end
-        ::continuePlant::
     end
 
-    -- Send smelling plants to client if any were found
-    if #smellingPlants > 0 then
-        DBG:Info('Sending ' .. tostring(#smellingPlants) .. ' smelling plants to player ' .. tostring(src))
-        cb(smellingPlants)
-    else
-        DBG:Info('No smelling plants found for player ' .. tostring(src))
-        cb(false)
-    end
+    cb(#smellingPlants > 0 and smellingPlants or false)
 end)
 
 BccUtils.Versioner.checkFile(GetCurrentResourceName(), 'https://github.com/BryceCanyonCounty/bcc-farming')
