@@ -7,15 +7,15 @@ Config = {
     -----------------------------------------------------
 
     keys = {
-        fertNo = 0x80F28E95,  -- Default: 0x80F28E95 / L key
-        water = 0x4CC0E2FE,   -- Default: 0x4CC0E2FE / B key
-        waterNo = 0x80F28E95, -- Default: 0x80F28E95 / L key
+        fertNo = 0x27D1C284,  -- Default: 0x80F28E95 / L key
+        waterNo = 0x4CC0E2FE, -- Default: 0x4CC0E2FE / B key
+        water = 0x80F28E95,   -- Default: 0x80F28E95 / L key
         harvest = 0x4CC0E2FE, -- Default: 0x4CC0E2FE / B key
         destroy = 0x27D1C284, -- Default: 0x27D1C284 / R key
     },
     -----------------------------------------------------
-    Notify = "feather-menu", ----or use vorp-core
 
+    Notify = "feather-menu", -- Use "feather-menu" or "vorp-core"
     -----------------------------------------------------
 
     -- Players can select any fertilizer they currently carry.
@@ -23,21 +23,21 @@ Config = {
         {
             fertName = 'fertilizer1',   -- Item name used in the database
             fertLabel = 'Grade C',
-            selectionKey = 0xE6F612E4,  -- 1 key
+            selectionKey = 0x4CC0E2FE,  -- B key
             fertTimeReduction = 0.25,   -- Default: 0.25 / 25% reduction in time
             fertYieldMultiplier = 1.50, -- 50% more produce
         },
         {
             fertName = 'fertilizer2',   -- Item name used in the database
             fertLabel = 'Grade B',
-            selectionKey = 0x1CE6D9EB,  -- 2 key
+            selectionKey = 0x80F28E95,  -- L key
             fertTimeReduction = 0.50,   -- Default: 0.50 / 50% reduction in time
             fertYieldMultiplier = 2.00, -- Double produce
         },
         {
             fertName = 'fertilizer3',   -- Item name used in the database
             fertLabel = 'Grade A',
-            selectionKey = 0x4F49CC4C,  -- 3 key
+            selectionKey = 0x760A9C6F,  -- G key
             fertTimeReduction = 0.75,   -- Default: 0.75 / 75% reduction in time
             fertYieldMultiplier = 3.00, -- Triple produce
         }
@@ -50,13 +50,19 @@ Config = {
         wateredYieldMultiplier = 1.0, -- Multiplier applied after fertilizer
         wateredYieldBonus = 1,        -- Extra items for watering during growth
         minimumYield = 1,             -- Successful harvests return at least this amount
+        statusSyncInterval = 5,       -- Seconds between database timer refreshes while nearby
     },
     -----------------------------------------------------
 
     plantPlacementMarker = {
         confirmKey = 0x07CE1E61, -- Left mouse / attack
         cancelKey = 0x156F7119,  -- Backspace
-        distance = 0.75,         -- Distance in front of the player
+        distance = 1.00,         -- Initial distance in front of the player
+        maxDistance = 3.0,       -- Maximum distance the marker can move from the player
+        mouseSensitivity = 0.035,-- Mouse placement speed (lower is finer)
+        stoppingDistance = 0.7,  -- How far from the seed the player stops before planting
+        walkSpeed = 1.0,         -- Movement speed while approaching the selected spot
+        walkTimeout = 10000,     -- Cancel if the selected spot cannot be reached in this time (ms)
         size = 0.35,
         color = { r = 80, g = 200, b = 120, a = 140 },
         type = 0x94FDAE17,
@@ -136,6 +142,7 @@ Config = {
             }
         }
     },
+    -----------------------------------------------------
 
     BlipColors = {
         LIGHT_BLUE    = 'BLIP_MODIFIER_MP_COLOR_1',
@@ -170,5 +177,5 @@ Config = {
         LIGHT_RED     = 'BLIP_MODIFIER_MP_COLOR_30',
         LIGHT_YELLOW3 = 'BLIP_MODIFIER_MP_COLOR_31',
         WHITE         = 'BLIP_MODIFIER_MP_COLOR_32'
-    },
+    }
 }
