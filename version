@@ -1,5 +1,8 @@
 <2.7.0>
-- Added `BccUtils.Debug` integration
-- Updated all debug calls to colon syntax as part of DebugAPI cleanup
-- Moved core dependencies (`bcc-utils`, `vorp_core`, etc.) into the init file
-- Added water bucket utilization logic
+
+- Refactored planting, planted-crop, notification, and client synchronization flows.
+- Added mouse-controlled ground placement with automatic walk-to-position behavior.
+- Added selectable fertilizer tiers plus water and fertilizer yield effects.
+- Improved persistent plant synchronization, database timers, prompts, and owner-only blips.
+- Added bcc-water availability checks, rain watering, inventory icons, and safe MariaDB upgrades.
+- Updated configuration comments, explicit manifest ordering, localization, and documentation.
