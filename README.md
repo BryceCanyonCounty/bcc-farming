@@ -84,10 +84,16 @@ Existing installations should import the file again to add the persisted fertili
 
 ### **4. Asset Installation**
 
-Copy images to your inventory system:
+Choose either the `color` or `grayscale` 96x96 fertilizer icon set, then copy that folder's PNG files to your inventory system:
 ```
-\vorp_inventory\html\img\items\*.png
+img\color\fertilizer*.png
+# or
+img\grayscale\fertilizer*.png
+
+-> \vorp_inventory\html\img\items\
 ```
+
+Water-container icons are supplied by `bcc-water`. Seed, harvested crop, soil, and hoe icons are not bundled with this resource and must already exist in your inventory image collection or be supplied separately.
 
 ### **5. Final Steps**
 
