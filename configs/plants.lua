@@ -539,7 +539,7 @@ Plants = {
         plantingTool = 'hoe',
         plantingToolUsage = 2,
         plantingDistance = 1.5,
-        plantName = 'Indian Tobbaco',
+        plantName = 'Indian Tobacco',
         seedName = 'Indian_Tobbaco_Seed',
         seedAmount = 1,
         plantProp = 's_indiantobacco01x',
@@ -553,13 +553,13 @@ Plants = {
         blips = {
             enabled = true,
             sprite = 'blip_mp_spawnpoint',
-            name = 'Indian Tobbaco',
+            name = 'Indian Tobacco',
             color = 'WHITE'
         },
         rewards = {
             {
                 itemName = 'Indian_Tobbaco',
-                itemLabel = 'Indian Tobbaco',
+                itemLabel = 'Indian Tobacco',
                 amount = 1
             }
         },
