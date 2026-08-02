@@ -25,7 +25,7 @@ Plants = {
             {
                 itemName = 'Agarita',      -- Reward inventory item name
                 itemLabel = 'Agarita',     -- Reward name displayed to the player
-                amount = 1                 -- Base reward quantity
+                amount = 2                 -- Base reward quantity
             }
         },
         jobs = {                              -- Jobs allowed to plant when jobLocked is enabled
@@ -67,7 +67,7 @@ Plants = {
             {
                 itemName = 'Yarrow',
                 itemLabel = 'Yarrow',
-                amount = 1
+                amount = 2
             }
         },
         jobs = {
@@ -108,7 +108,7 @@ Plants = {
             {
                 itemName = 'hop',
                 itemLabel = 'Hop',
-                amount = 1
+                amount = 2
             }
         },
         jobs = {
@@ -149,7 +149,7 @@ Plants = {
             {
                 itemName = 'Alaskan_Ginseng',
                 itemLabel = 'Alaskan Ginseng',
-                amount = 1
+                amount = 2
             }
         },
         jobs = {
@@ -190,7 +190,7 @@ Plants = {
             {
                 itemName = 'American_Ginseng',
                 itemLabel = 'American Ginseng',
-                amount = 1
+                amount = 2
             }
         },
         jobs = {
@@ -231,7 +231,7 @@ Plants = {
             {
                 itemName = 'Bay_Bolete',
                 itemLabel = 'Bay Bolete',
-                amount = 1
+                amount = 2
             }
         },
         jobs = {
@@ -272,7 +272,7 @@ Plants = {
             {
                 itemName = 'Bitter_Weed',
                 itemLabel = 'Bitter Weed',
-                amount = 1
+                amount = 2
             }
         },
         jobs = {
@@ -313,7 +313,7 @@ Plants = {
             {
                 itemName = 'Black_Berry',
                 itemLabel = 'Black Berry',
-                amount = 1
+                amount = 2
             }
         },
         jobs = {
@@ -354,7 +354,7 @@ Plants = {
             {
                 itemName = 'Black_Currant',
                 itemLabel = 'Black Currant',
-                amount = 1
+                amount = 2
             }
         },
         jobs = {
@@ -396,7 +396,7 @@ Plants = {
             {
                 itemName = 'cocoa',
                 itemLabel = 'Cocoa',
-                amount = 1
+                amount = 2
             }
         },
         jobs = {
@@ -437,7 +437,7 @@ Plants = {
             {
                 itemName = 'corn',
                 itemLabel = 'Corn',
-                amount = 1
+                amount = 2
             }
         },
         jobs = {
@@ -478,7 +478,7 @@ Plants = {
             {
                 itemName = 'Creekplum',
                 itemLabel = 'Creekplum',
-                amount = 1
+                amount = 2
             }
         },
         jobs = {
@@ -519,7 +519,7 @@ Plants = {
             {
                 itemName = 'Crows_Garlic',
                 itemLabel = 'Crows Garlic',
-                amount = 1
+                amount = 2
             }
         },
         jobs = {
@@ -560,7 +560,7 @@ Plants = {
             {
                 itemName = 'Indian_Tobbaco',
                 itemLabel = 'Indian Tobacco',
-                amount = 1
+                amount = 2
             }
         },
         jobs = {
@@ -600,7 +600,7 @@ Plants = {
             {
                 itemName = 'Milk_Weed',
                 itemLabel = 'Milk Weed',
-                amount = 1
+                amount = 2
             }
         },
         jobs = {
@@ -641,7 +641,7 @@ Plants = {
             {
                 itemName = 'Oleander_Sage',
                 itemLabel = 'Oleander Sage',
-                amount = 1
+                amount = 2
             }
         },
         jobs = {
@@ -682,7 +682,7 @@ Plants = {
             {
                 itemName = 'Parasol_Mushroom',
                 itemLabel = 'Parasol Mushroom',
-                amount = 1
+                amount = 2
             }
         },
         jobs = {
@@ -723,7 +723,7 @@ Plants = {
             {
                 itemName = 'Prairie_Poppy',
                 itemLabel = 'Prairie Poppy',
-                amount = 1
+                amount = 2
             }
         },
         jobs = {
@@ -764,7 +764,7 @@ Plants = {
             {
                 itemName = 'Rams_Head',
                 itemLabel = 'Rams Head',
-                amount = 1
+                amount = 2
             }
         },
         jobs = {
@@ -805,7 +805,7 @@ Plants = {
             {
                 itemName = 'Red_Raspberry',
                 itemLabel = 'Red Raspberry',
-                amount = 1
+                amount = 2
             }
         },
         jobs = {
@@ -846,7 +846,7 @@ Plants = {
             {
                 itemName = 'Red_Sage',
                 itemLabel = 'Red Sage',
-                amount = 1
+                amount = 2
             }
         },
         jobs = {
@@ -887,7 +887,7 @@ Plants = {
             {
                 itemName = 'Saltbush',
                 itemLabel = 'Saltbush',
-                amount = 1
+                amount = 2
             }
         },
         jobs = {
@@ -928,7 +928,7 @@ Plants = {
             {
                 itemName = 'sugar',
                 itemLabel = 'Sugar',
-                amount = 1
+                amount = 2
             }
         },
         jobs = {
@@ -969,7 +969,7 @@ Plants = {
             {
                 itemName = 'Wild_Carrot',
                 itemLabel = 'Wild Carrot',
-                amount = 1
+                amount = 2
             }
         },
         jobs = {
@@ -1010,7 +1010,7 @@ Plants = {
             {
                 itemName = 'Wild_Feverfew',
                 itemLabel = 'Wild Feverfew',
-                amount = 1
+                amount = 2
             }
         },
         jobs = {
@@ -1051,7 +1051,7 @@ Plants = {
             {
                 itemName = 'Wild_Mint',
                 itemLabel = 'Wild Mint',
-                amount = 1
+                amount = 2
             }
         },
         jobs = {
@@ -1092,7 +1092,7 @@ Plants = {
             {
                 itemName = 'Wild_Rhubarb',
                 itemLabel = 'Wild Rhubarb',
-                amount = 1
+                amount = 2
             }
         },
         jobs = {
@@ -1133,7 +1133,7 @@ Plants = {
             {
                 itemName = 'Wintergreen_Berry',
                 itemLabel = 'Wintergreen Berry',
-                amount = 1
+                amount = 2
             }
         },
         jobs = {
@@ -1174,7 +1174,7 @@ Plants = {
             {
                 itemName = 'potato',
                 itemLabel = 'Potato',
-                amount = 1
+                amount = 2
             }
         },
         jobs = {
@@ -1215,7 +1215,7 @@ Plants = {
             {
                 itemName = 'wheat',
                 itemLabel = 'Wheat',
-                amount = 1
+                amount = 2
             }
         },
         jobs = {
@@ -1256,7 +1256,7 @@ Plants = {
             {
                 itemName = 'apple',
                 itemLabel = 'Apple',
-                amount = 1
+                amount = 2
             }
         },
         jobs = {
@@ -1297,7 +1297,7 @@ Plants = {
             {
                 itemName = 'Hummingbird_Sage',
                 itemLabel = 'Hummingbird Sage',
-                amount = 1
+                amount = 2
             }
         },
         jobs = {
