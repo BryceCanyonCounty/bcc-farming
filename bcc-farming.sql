@@ -1,21 +1,41 @@
 CREATE TABLE IF NOT EXISTS `bcc_farming` (
-    `plant_id` INT(40) NOT NULL AUTO_INCREMENT,
+    `plant_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
     `plant_coords` LONGTEXT NOT NULL,
     `plant_type` VARCHAR(40) NOT NULL,
     `plant_watered` CHAR(6) NOT NULL DEFAULT 'false',
-    `time_left` VARCHAR(100) NOT NULL,
+    `time_left` DECIMAL(12,3) NOT NULL DEFAULT 0.000,
     `fertilizer` VARCHAR(40) DEFAULT NULL,
     `yield_multiplier` DECIMAL(6,3) NOT NULL DEFAULT 1.000,
     `plant_time` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    `plant_owner` INT(40) NOT NULL,
-    PRIMARY KEY (`plant_id`)
+    `plant_owner` BIGINT NOT NULL,
+    PRIMARY KEY (`plant_id`),
+    KEY `idx_bcc_farming_owner` (`plant_owner`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- Upgrade installations created before fertilizer yield tracking was added.
 ALTER TABLE `bcc_farming`
-    ADD COLUMN IF NOT EXISTS `fertilizer` VARCHAR(40) DEFAULT NULL,
-    ADD COLUMN IF NOT EXISTS `yield_multiplier` DECIMAL(6,3) NOT NULL DEFAULT 1.000;
+    ADD COLUMN IF NOT EXISTS `fertilizer` VARCHAR(40) DEFAULT NULL AFTER `time_left`,
+    ADD COLUMN IF NOT EXISTS `yield_multiplier` DECIMAL(6,3) NOT NULL DEFAULT 1.000 AFTER `fertilizer`;
 
-INSERT INTO `items`(`item`, `label`, `limit`, `can_remove`, `type`, `usable`, `desc`)
+-- Existing releases stored the countdown as text. Normalize unexpected legacy
+-- values before converting the column so an upgrade cannot fail or lose rows.
+UPDATE `bcc_farming`
+SET `time_left` = '0'
+WHERE `time_left` IS NULL
+   OR TRIM(`time_left`) = ''
+   OR TRIM(`time_left`) NOT REGEXP '^[0-9]+([.][0-9]+)?$';
+
+ALTER TABLE `bcc_farming`
+    MODIFY COLUMN `plant_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    MODIFY COLUMN `time_left` DECIMAL(12,3) NOT NULL DEFAULT 0.000,
+    MODIFY COLUMN `plant_owner` BIGINT NOT NULL;
+
+ALTER TABLE `bcc_farming`
+    ADD INDEX IF NOT EXISTS `idx_bcc_farming_owner` (`plant_owner`);
+
+-- Insert only missing inventory records. Existing server-specific labels,
+-- limits, descriptions, and other item customization remain untouched.
+INSERT IGNORE INTO `items`(`item`, `label`, `limit`, `can_remove`, `type`, `usable`, `desc`)
 VALUES
     ('Agarita_Seed', 'Agarita Seed', 20, 1, 'item_standard', 1, 'Seed used to grow Agarita.'),
     ('Agarita', 'Agarita', 20, 1, 'item_standard', 0, 'Harvested Agarita.'),
@@ -43,8 +63,8 @@ VALUES
     ('Creekplum', 'Creekplum', 20, 1, 'item_standard', 0, 'Harvested Creekplum.'),
     ('Crows_Garlic_Seed', 'Crows Garlic Seed', 20, 1, 'item_standard', 1, 'Seed used to grow Crows Garlic.'),
     ('Crows_Garlic', 'Crows Garlic', 20, 1, 'item_standard', 0, 'Harvested Crows Garlic.'),
-    ('Indian_Tobbaco_Seed', 'Indian Tobbaco Seed', 20, 1, 'item_standard', 1, 'Seed used to grow Indian Tobbaco.'),
-    ('Indian_Tobbaco', 'Indian Tobbaco', 20, 1, 'item_standard', 0, 'Harvested Indian Tobbaco.'),
+    ('Indian_Tobbaco_Seed', 'Indian Tobacco Seed', 20, 1, 'item_standard', 1, 'Seed used to grow Indian Tobacco.'),
+    ('Indian_Tobbaco', 'Indian Tobacco', 20, 1, 'item_standard', 0, 'Harvested Indian Tobacco.'),
     ('Milk_Weed_Seed', 'Milk Weed Seed', 20, 1, 'item_standard', 1, 'Seed used to grow Milk Weed.'),
     ('Milk_Weed', 'Milk Weed', 20, 1, 'item_standard', 0, 'Harvested Milk Weed.'),
     ('Oleander_Sage_Seed', 'Oleander Sage Seed', 20, 1, 'item_standard', 1, 'Seed used to grow Oleander Sage.'),
@@ -81,16 +101,36 @@ VALUES
     ('apple', 'Apple', 20, 1, 'item_standard', 0, 'Harvested Apple.'),
     ('Hummingbird_Sage_Seed', 'Hummingbird Sage Seed', 20, 1, 'item_standard', 1, 'Seed used to grow Hummingbird Sage.'),
     ('Hummingbird_Sage', 'Hummingbird Sage', 20, 1, 'item_standard', 0, 'Harvested Hummingbird Sage.'),
-    ('fertilizer1', 'Fertilizer Grade C', 10, 1, 'item_standard', 1, 'Low grade fertilizer.'),
-    ('fertilizer2', 'Fertilizer Grade B', 10, 1, 'item_standard', 1, 'Mid grade fertilizer.'),
-    ('fertilizer3', 'Fertilizer Grade A', 10, 1, 'item_standard', 1, 'High grade fertilizer.'),
-    ('soil', 'Soil', 10, 1, 'item_standard', 1, 'High grade soil.'),
-    ('hoe', 'Garden Hoe', 10, 1, 'item_standard', 1, 'A gardening tool with a thin metal blade.')
-ON DUPLICATE KEY UPDATE
-    `item` = VALUES(`item`),
-    `label` = VALUES(`label`),
-    `limit` = VALUES(`limit`),
-    `can_remove` = VALUES(`can_remove`),
-    `type` = VALUES(`type`),
-    `usable` = VALUES(`usable`),
-    `desc` = VALUES(`desc`);
+    ('fertilizer1', 'Fertilizer Grade C', 10, 1, 'item_standard', 0, 'Low grade fertilizer.'),
+    ('fertilizer2', 'Fertilizer Grade B', 10, 1, 'item_standard', 0, 'Mid grade fertilizer.'),
+    ('fertilizer3', 'Fertilizer Grade A', 10, 1, 'item_standard', 0, 'High grade fertilizer.'),
+    ('soil', 'Soil', 10, 1, 'item_standard', 0, 'High grade soil.'),
+    ('hoe', 'Garden Hoe', 10, 1, 'item_standard', 0, 'A gardening tool with a thin metal blade.');
+
+-- These supplies are selected or consumed by the farming flow rather than used
+-- directly from inventory. Apply the corrected flag to existing installations.
+UPDATE `items`
+SET `usable` = 0
+WHERE `item` IN ('fertilizer1', 'fertilizer2', 'fertilizer3', 'soil', 'hoe');
+
+-- Correct only the original default typo while retaining the legacy item IDs
+-- required by existing inventories, configured seeds, and planted crop rows.
+UPDATE `items`
+SET `label` = 'Indian Tobacco Seed'
+WHERE `item` = 'Indian_Tobbaco_Seed'
+  AND `label` = 'Indian Tobbaco Seed';
+
+UPDATE `items`
+SET `desc` = 'Seed used to grow Indian Tobacco.'
+WHERE `item` = 'Indian_Tobbaco_Seed'
+  AND `desc` = 'Seed used to grow Indian Tobbaco.';
+
+UPDATE `items`
+SET `label` = 'Indian Tobacco'
+WHERE `item` = 'Indian_Tobbaco'
+  AND `label` = 'Indian Tobbaco';
+
+UPDATE `items`
+SET `desc` = 'Harvested Indian Tobacco.'
+WHERE `item` = 'Indian_Tobbaco'
+  AND `desc` = 'Harvested Indian Tobbaco.';
