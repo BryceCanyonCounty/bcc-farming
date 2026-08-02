@@ -2,7 +2,7 @@ CREATE TABLE IF NOT EXISTS `bcc_farming` (
     `plant_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
     `plant_coords` LONGTEXT NOT NULL,
     `plant_type` VARCHAR(40) NOT NULL,
-    `plant_watered` CHAR(6) NOT NULL DEFAULT 'false',
+    `plant_watered` CHAR(6) NOT NULL DEFAULT 'false' COMMENT 'false=pending, no=declined, true=watered',
     `time_left` DECIMAL(12,3) NOT NULL DEFAULT 0.000,
     `fertilizer` VARCHAR(40) DEFAULT NULL,
     `yield_multiplier` DECIMAL(6,3) NOT NULL DEFAULT 1.000,
