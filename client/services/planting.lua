@@ -1,18 +1,65 @@
-local NoPrompt = 0
-local FertilizerPrompts = {}
-local FertilizerGroup = GetRandomIntInRange(0, 0xffffff)
-local PromptsStarted = false
 local PlantingProcess = false
+
+local function WalkToPlantLocation(playerPed, location)
+    local marker = Config.plantPlacementMarker or {}
+    local stoppingDistance = math.max(0.35, tonumber(marker.stoppingDistance) or 0.7)
+    local walkSpeed = tonumber(marker.walkSpeed) or 1.0
+    local timeout = math.max(1000, tonumber(marker.walkTimeout) or 10000)
+    local currentCoords = GetEntityCoords(playerPed)
+    local deltaX = currentCoords.x - location.x
+    local deltaY = currentCoords.y - location.y
+    local distance = math.sqrt((deltaX * deltaX) + (deltaY * deltaY))
+
+    if distance > stoppingDistance then
+        local targetX = location.x + ((deltaX / distance) * stoppingDistance)
+        local targetY = location.y + ((deltaY / distance) * stoppingDistance)
+        local heading = GetHeadingFromVector_2d(location.x - targetX, location.y - targetY)
+        local startedAt = GetGameTimer()
+
+        TaskGoStraightToCoord(playerPed, targetX, targetY, location.z, walkSpeed, timeout, heading, 0.1)
+        while PlantingProcess and not IsEntityDead(playerPed) do
+            local pedCoords = GetEntityCoords(playerPed)
+            local remainingX = pedCoords.x - targetX
+            local remainingY = pedCoords.y - targetY
+            local horizontalDistance = math.sqrt((remainingX * remainingX) + (remainingY * remainingY))
+            if horizontalDistance <= 0.25 then
+                ClearPedTasks(playerPed)
+                break
+            end
+            if GetGameTimer() - startedAt >= timeout then
+                ClearPedTasks(playerPed)
+                Notify('Unable to reach the selected planting spot.', 'error', 4000)
+                return false
+            end
+            Wait(100)
+        end
+    end
+
+    if not PlantingProcess or IsEntityDead(playerPed) then
+        ClearPedTasks(playerPed)
+        return false
+    end
+
+    TaskTurnPedToFaceCoord(playerPed, location.x, location.y, location.z, 750)
+    Wait(750)
+    return not IsEntityDead(playerPed)
+end
 
 local function SelectPlantLocation()
     local marker = Config.plantPlacementMarker or {}
     local confirmKey = marker.confirmKey or 0x07CE1E61 -- Left mouse / attack
     local cancelKey = marker.cancelKey or 0x156F7119 -- Backspace
     local distance = tonumber(marker.distance) or 0.75
+    local maxDistance = math.max(distance, tonumber(marker.maxDistance) or 3.0)
+    local mouseSensitivity = tonumber(marker.mouseSensitivity) or 0.035
     local size = tonumber(marker.size) or 0.35
     local color = marker.color or { r = 80, g = 200, b = 120, a = 140 }
+    local lookLeftRight = 0xA987235F
+    local lookUpDown = 0xD2047988
+    local lateralOffset = 0.0
+    local forwardOffset = distance
 
-    Notify('Move to choose a planting spot. Click to confirm or press Backspace to cancel.', 'info', 5000)
+    Notify('Move the mouse to position the seed. Click to confirm or press Backspace to cancel.', 'info', 5000)
     Wait(250) -- Do not treat the inventory click that used the seed as placement confirmation.
 
     while PlantingProcess do
@@ -21,7 +68,20 @@ local function SelectPlantLocation()
             return nil
         end
 
-        local x, y, z = table.unpack(GetOffsetFromEntityInWorldCoords(playerPed, 0.0, distance, 0.0))
+        DisableControlAction(0, lookLeftRight, true)
+        DisableControlAction(0, lookUpDown, true)
+
+        lateralOffset = lateralOffset + (GetDisabledControlNormal(0, lookLeftRight) * mouseSensitivity)
+        forwardOffset = forwardOffset - (GetDisabledControlNormal(0, lookUpDown) * mouseSensitivity)
+
+        local offsetDistance = math.sqrt((lateralOffset * lateralOffset) + (forwardOffset * forwardOffset))
+        if offsetDistance > maxDistance then
+            local scale = maxDistance / offsetDistance
+            lateralOffset = lateralOffset * scale
+            forwardOffset = forwardOffset * scale
+        end
+
+        local x, y, z = table.unpack(GetOffsetFromEntityInWorldCoords(playerPed, lateralOffset, forwardOffset, 0.0))
         local foundGround, groundZ = GetGroundZFor_3dCoord(x, y, z + 10.0, false)
         if foundGround then
             z = groundZ
@@ -45,69 +105,114 @@ local function SelectPlantLocation()
     return nil
 end
 
-local function StartPrompts()
-    DBG:Info('Starting fertilizer prompts...')
-    -- Check if prompts are already started
-    if PromptsStarted then
-        DBG:Success('Prompts are already started')
-        return true
+local function DeleteFertilizerPrompts(prompts)
+    for _, prompt in ipairs(prompts) do
+        if prompt and prompt ~= 0 then
+            Citizen.InvokeNative(0x00EDE88D4D13CF59, prompt) -- UiPromptDelete
+        end
+    end
+end
+
+local function CreateFertilizerPrompt(group, control, text, holdTime)
+    local prompt = UiPromptRegisterBegin()
+    if not prompt or prompt == 0 then
+        return nil
     end
 
-    -- Validate that prompt groups exist
-    if not FertilizerGroup then
-        DBG:Error('Prompt group is not initialized for Fertilizer')
-        return false
-    end
+    UiPromptSetControlAction(prompt, control)
+    UiPromptSetText(prompt, CreateVarString(10, 'LITERAL_STRING', text))
+    UiPromptSetVisible(prompt, true)
+    UiPromptSetEnabled(prompt, true)
+    UiPromptSetHoldMode(prompt, holdTime)
+    UiPromptSetGroup(prompt, group, 0)
+    UiPromptRegisterEnd(prompt)
+    return prompt
+end
 
-    -- Validate config keys exist
+local function SelectFertilizer(availableFertilizers, playerPed, plantingCoords)
     if not Config.keys or not Config.keys.fertNo then
-        DBG:Error('Required Fertilizer keys are not defined in config')
-        return false
+        DBG:Error('Missing fertilizer decline key')
+        return nil, false
+    end
+
+    local group = GetRandomIntInRange(0, 0xffffff)
+    local prompts = {}
+    local choices = {}
+    local availableNames = {}
+
+    for _, available in ipairs(type(availableFertilizers) == 'table' and availableFertilizers or {}) do
+        local fertilizerName = type(available) == 'table' and available.fertName or available
+        if fertilizerName then
+            availableNames[fertilizerName] = true
+        end
     end
 
     for _, fertilizer in ipairs(Config.fertilizerSetup or {}) do
-        if not fertilizer.fertName or not fertilizer.selectionKey then
-            DBG:Error('Fertilizer is missing fertName or selectionKey')
-            return false
+        if fertilizer.fertName and fertilizer.selectionKey then
+            local reduction = math.floor((tonumber(fertilizer.fertTimeReduction) or 0) * 100)
+            local multiplier = tonumber(fertilizer.fertYieldMultiplier) or 1.0
+            local label = string.format('%s | %d%% Faster | %.1fx Yield',
+                fertilizer.fertLabel or fertilizer.fertName, reduction, multiplier)
+            local prompt = CreateFertilizerPrompt(group, fertilizer.selectionKey, label, 1000)
+            if prompt then
+                local isAvailable = availableNames[fertilizer.fertName] == true
+                UiPromptSetEnabled(prompt, isAvailable)
+                table.insert(prompts, prompt)
+                table.insert(choices, {
+                    fertilizer = fertilizer,
+                    prompt = prompt,
+                    available = isAvailable
+                })
+                DBG:Info(string.format('Created fertilizer prompt: %s (control 0x%X)',
+                    fertilizer.fertName, fertilizer.selectionKey))
+            end
         end
-
-        local prompt = UiPromptRegisterBegin()
-        if not prompt or prompt == 0 then
-            DBG:Error('Failed to register fertilizer selection prompt')
-            return false
-        end
-
-        local reduction = math.floor((tonumber(fertilizer.fertTimeReduction) or 0) * 100)
-        local multiplier = tonumber(fertilizer.fertYieldMultiplier) or 1.0
-        local label = string.format('%s | %d%% Faster | %.1fx Yield', fertilizer.fertLabel or fertilizer.fertName, reduction, multiplier)
-        UiPromptSetControlAction(prompt, fertilizer.selectionKey)
-        UiPromptSetText(prompt, CreateVarString(10, 'LITERAL_STRING', label))
-        UiPromptSetVisible(prompt, false)
-        UiPromptSetEnabled(prompt, true)
-        UiPromptSetHoldMode(prompt, 1000)
-        UiPromptSetGroup(prompt, FertilizerGroup, 0)
-        UiPromptRegisterEnd(prompt)
-        FertilizerPrompts[fertilizer.fertName] = prompt
     end
 
-    -- Create Fertilizer No prompt
-    NoPrompt = UiPromptRegisterBegin()
-    DBG:Info('Creating NoPrompt...')
-    if not NoPrompt or NoPrompt == 0 then
-        DBG:Error('Failed to register NoPrompt')
-        return false
+    local declinePrompt = CreateFertilizerPrompt(group, Config.keys.fertNo, _U('no'), 1500)
+    if declinePrompt then
+        table.insert(prompts, declinePrompt)
     end
-    UiPromptSetControlAction(NoPrompt, Config.keys.fertNo)
-    UiPromptSetText(NoPrompt, CreateVarString(10, 'LITERAL_STRING', _U('no')))
-    UiPromptSetVisible(NoPrompt, true)
-    UiPromptSetEnabled(NoPrompt, true)
-    UiPromptSetHoldMode(NoPrompt, 2000)
-    UiPromptSetGroup(NoPrompt, FertilizerGroup, 0)
-    UiPromptRegisterEnd(NoPrompt)
 
-    PromptsStarted = true
-    DBG:Success('All fertilizer prompts started successfully')
-    return true
+    if #choices == 0 or not declinePrompt then
+        DeleteFertilizerPrompts(prompts)
+        DBG:Error('Failed to create fertilizer choice prompts')
+        return nil, false
+    end
+
+    while PlantingProcess do
+        if not DoesEntityExist(playerPed) or IsEntityDead(playerPed) then
+            DeleteFertilizerPrompts(prompts)
+            return nil, false
+        end
+        if #(plantingCoords - GetEntityCoords(playerPed)) >= 3 then
+            DeleteFertilizerPrompts(prompts)
+            Notify(_U('movedTooFar'), 'error', 4000)
+            return nil, false
+        end
+
+        UiPromptSetActiveGroupThisFrame(group, CreateVarString(10, 'LITERAL_STRING', _U('fertilize')), 1, 0, 0, 0)
+
+        for _, choice in ipairs(choices) do
+            if choice.available and Citizen.InvokeNative(0xE0F65F0640EF0617, choice.prompt) then
+                local selected = choice.fertilizer.fertName
+                DeleteFertilizerPrompts(prompts)
+                DBG:Info('Selected fertilizer: ' .. selected)
+                return selected, true
+            end
+        end
+
+        if Citizen.InvokeNative(0xE0F65F0640EF0617, declinePrompt) then
+            DeleteFertilizerPrompts(prompts)
+            DBG:Info('Fertilizer declined')
+            return nil, true
+        end
+
+        Wait(0)
+    end
+
+    DeleteFertilizerPrompts(prompts)
+    return nil, false
 end
 
 RegisterNetEvent('bcc-farming:PlantingCrop', function(plantData, availableFertilizers, houseLocks)
@@ -245,6 +350,12 @@ RegisterNetEvent('bcc-farming:PlantingCrop', function(plantData, availableFertil
     local selectedFertilizer = nil
     DBG:Info('Planting process started')
 
+    if not WalkToPlantLocation(playerPed, selectedLocation) then
+        PlantingProcess = false
+        TriggerServerEvent('bcc-farming:ReturnItems', plantData.seedName, plantData.seedAmount, plantData.soilRequired, plantData.soilName, plantData.soilAmount)
+        return
+    end
+
     -- Raking animation
     Notify(_U('raking'), "info", 16000)
     PlayAnim('amb_work@world_human_farmer_rake@male_a@idle_a', 'idle_a', 16000, true, true)
@@ -265,73 +376,12 @@ RegisterNetEvent('bcc-farming:PlantingCrop', function(plantData, availableFertil
 
     Notify(_U('plantingDone'), "success", 4000)
 
-    -- Start fertilizer prompts if not already started
-    if not PromptsStarted and not StartPrompts() then
-        DBG:Error('Failed to start prompts')
+    local fertilizerSelectionCompleted
+    selectedFertilizer, fertilizerSelectionCompleted = SelectFertilizer(availableFertilizers, playerPed, playerCoords)
+    if not fertilizerSelectionCompleted then
         PlantingProcess = false
         TriggerServerEvent('bcc-farming:ReturnItems', plantData.seedName, plantData.seedAmount, plantData.soilRequired, plantData.soilName, plantData.soilAmount)
         return
-    end
-
-    local availableByName = {}
-    for _, fertilizer in ipairs(availableFertilizers or {}) do
-        availableByName[fertilizer.fertName] = fertilizer
-    end
-
-    -- Changing prompt visibility every frame resets native hold progress.
-    for fertilizerName, prompt in pairs(FertilizerPrompts) do
-        UiPromptSetVisible(prompt, availableByName[fertilizerName] ~= nil)
-    end
-
-    -- Fertilizer prompt loop (skip it when the player carries no fertilizer).
-    DBG:Info('Entering fertilizer selection loop')
-    while PlantingProcess and next(availableByName) do
-        local sleep = 1000
-        local newPlayerCoords = GetEntityCoords(playerPed)
-
-        -- Check if player moved too far away
-        if #(playerCoords - newPlayerCoords) < 3 then
-            sleep = 0
-            UiPromptSetActiveGroupThisFrame(FertilizerGroup, CreateVarString(10, 'LITERAL_STRING', _U('fertilize')), 1, 0, 0, 0)
-
-            for fertilizerName, prompt in pairs(FertilizerPrompts) do
-                local availableFertilizer = availableByName[fertilizerName]
-
-                if availableFertilizer and Citizen.InvokeNative(0xE0F65F0640EF0617, prompt) then
-                    selectedFertilizer = fertilizerName
-                    DBG:Info('Selected fertilizer: ' .. fertilizerName)
-                    break
-                end
-            end
-
-            if selectedFertilizer then
-                break
-            end
-
-            if Citizen.InvokeNative(0xE0F65F0640EF0617, NoPrompt) then -- PromptHasHoldModeCompleted
-                DBG:Info('No prompt completed - skipping fertilizer')
-                break
-            end
-
-            -- Check if player died during fertilizer selection
-            if IsEntityDead(playerPed) then
-                Notify(_U('failed'), "error", 4000)
-                PlantingProcess = false
-                TriggerServerEvent('bcc-farming:ReturnItems', plantData.seedName, plantData.seedAmount, plantData.soilRequired, plantData.soilName, plantData.soilAmount)
-                return
-            end
-        else
-            -- Player moved too far away
-            Notify(_U('movedTooFar'), "error", 4000)
-            PlantingProcess = false
-            TriggerServerEvent('bcc-farming:ReturnItems', plantData.seedName, plantData.seedAmount, plantData.soilRequired, plantData.soilName, plantData.soilAmount)
-            return
-        end
-        Wait(sleep)
-    end
-
-    for _, prompt in pairs(FertilizerPrompts) do
-        UiPromptSetVisible(prompt, false)
     end
 
     -- Plant the crop if process is still active
