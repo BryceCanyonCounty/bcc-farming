@@ -21,6 +21,10 @@ local function IsPlantWatered(value)
     return value == true or value == 1 or value == '1' or tostring(value):lower() == 'true'
 end
 
+local function IsWaterDeclined(value)
+    return tostring(value):lower() == 'no'
+end
+
 local function HasPromptCompleted(prompt)
     return prompt ~= 0 and Citizen.InvokeNative(0xE0F65F0640EF0617, prompt)
 end
@@ -189,6 +193,7 @@ local function RefreshPlantStatus(plantId, crop)
 
     crop.timeLeft = math.max(0, tonumber(status.timeLeft) or crop.timeLeft or 0)
     crop.watered = IsPlantWatered(status.watered)
+    crop.waterDeclined = status.waterDeclined == true
     crop.rainWaterPending = false
     crop.hasWaterBucket = status.hasWaterBucket == true
     return status
@@ -278,6 +283,16 @@ local function HandleWater(plantId, crop)
     end
 end
 
+local function HandleWaterDecline(plantId, crop)
+    crop.busy = true
+    local declined = Core.Callback.TriggerAwait('bcc-farming:DeclinePlantWatering', plantId)
+
+    if Crops[plantId] == crop then
+        crop.waterDeclined = declined == true
+        crop.busy = false
+    end
+end
+
 RegisterNetEvent('bcc-farming:PlantPlanted', function(plantId, plantData, plantCoords, timeLeft, watered, source)
     if plantId == nil or type(plantData) ~= 'table' or not plantCoords or timeLeft == nil or watered == nil then
         DBG:Error('Invalid PlantPlanted data for plant: ' .. tostring(plantId))
@@ -328,7 +343,7 @@ RegisterNetEvent('bcc-farming:PlantPlanted', function(plantId, plantData, plantC
         plantId = plantId,
         plantName = plantData.plantName,
         watered = IsPlantWatered(watered),
-        waterDeclined = false,
+        waterDeclined = IsWaterDeclined(watered),
         rainWaterPending = false,
         hasWaterBucket = false,
         busy = false,
@@ -375,6 +390,18 @@ RegisterNetEvent('bcc-farming:UpdateClientPlantWateredStatus', function(plantId)
     end
 
     crop.watered = true
+    crop.waterDeclined = false
+    crop.rainWaterPending = false
+end)
+
+RegisterNetEvent('bcc-farming:UpdateClientPlantWaterDeclinedStatus', function(plantId)
+    local crop = Crops[NormalizePlantId(plantId)]
+    if not crop then
+        return
+    end
+
+    crop.watered = false
+    crop.waterDeclined = true
     crop.rainWaterPending = false
 end)
 
@@ -436,8 +463,7 @@ CreateThread(function()
                 if HasPromptCompleted(WaterPrompt) then
                     HandleWater(plantId, crop)
                 elseif HasPromptCompleted(SkipWaterPrompt) then
-                    crop.waterDeclined = true
-                    DBG:Info('Player declined watering plant: ' .. tostring(plantId))
+                    HandleWaterDecline(plantId, crop)
                 end
             else
                 SetHarvestGroupActive(title, remaining <= 0)
