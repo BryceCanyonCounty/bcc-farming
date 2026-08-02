@@ -1,5 +1,7 @@
-<2.7.0>
+<3.0.0>
 
+- Important: Run sql file to update database.
+- Config files have been updated.
 - Refactored planting, planted-crop, notification, and client synchronization flows.
 - Added mouse-controlled ground placement with automatic walk-to-position behavior.
 - Added selectable fertilizer tiers plus water and fertilizer yield effects.
