@@ -7,7 +7,7 @@ Config = {
     -----------------------------------------------------
 
     keys = {
-        fertNo = 0x27D1C284,  -- Default: 0x80F28E95 / L key
+        fertNo = 0x27D1C284,  -- Default: 0x80F28E95 / R key
         waterNo = 0x4CC0E2FE, -- Default: 0x4CC0E2FE / B key
         water = 0x80F28E95,   -- Default: 0x80F28E95 / L key
         harvest = 0x4CC0E2FE, -- Default: 0x4CC0E2FE / B key
