@@ -17,12 +17,15 @@ shared_scripts {
 server_scripts {
     '@oxmysql/lib/MySQL.lua',
     'server/main.lua',
-    'server/services/*.lua'
+    'server/services/notifications.lua',
+    'server/services/usableItems.lua'
 }
 
 client_scripts {
     'client/main.lua',
-    'client/services/*.lua'
+    'client/services/notification.lua',
+    'client/services/planted.lua',
+    'client/services/planting.lua'
 }
 
 dependencies {
