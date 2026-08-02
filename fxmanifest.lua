@@ -5,6 +5,7 @@ rdr3_warning 'I acknowledge that this is a prerelease build of RedM, and I am aw
 lua54 'yes'
 author 'BCC Team'
 description 'bcc-farming'
+version '2.7.0'
 
 shared_scripts {
     'configs/*.lua',
@@ -30,5 +31,3 @@ dependencies {
     'bcc-utils',
     'bcc-water'
 }
-
-version '2.7.0'
