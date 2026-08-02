@@ -3,7 +3,7 @@ Config = {
     -----------------------------------------------------
 
     -- Do Not Enable on Live Server
-    DevMode = true, -- Shows Debug Prints in Client and Server Consoles
+    DevMode = false, -- Shows Debug Prints in Client and Server Consoles
     -----------------------------------------------------
 
     keys = {
