@@ -41,6 +41,10 @@ local function isWatered(value)
     return value == true or value == 1 or value == '1' or tostring(value):lower() == 'true'
 end
 
+local function isWaterDeclined(value)
+    return tostring(value):lower() == 'no'
+end
+
 local function decodeCoords(encoded)
     if type(encoded) == 'table' then
         return encoded
@@ -498,27 +502,32 @@ Core.Callback.Register('bcc-farming:GetPlantStatus', function(source, cb, plantI
         return cb(false)
     end
 
+    local watered = isWatered(plant.plant_watered)
+    local waterDeclined = isWaterDeclined(plant.plant_watered)
     local hasWaterBucket = false
-    local exportOk, exportResult = pcall(function()
-        return exports['bcc-water']:HasContainer(source, 'bucket')
-    end)
-    if exportOk then
-        hasWaterBucket = exportResult == true
-    else
-        DBG:Warning('Unable to check bcc-water bucket availability: ' .. tostring(exportResult))
+    if not watered and not waterDeclined and (tonumber(plant.time_left) or 0) > 0 then
+        local exportOk, exportResult = pcall(function()
+            return exports['bcc-water']:HasContainer(source, 'bucket')
+        end)
+        if exportOk then
+            hasWaterBucket = exportResult == true
+        else
+            DBG:Warning('Unable to check bcc-water bucket availability: ' .. tostring(exportResult))
+        end
     end
 
     cb({
         timeLeft = tonumber(plant.time_left) or 0,
-        watered = isWatered(plant.plant_watered),
+        watered = watered,
+        waterDeclined = waterDeclined,
         hasWaterBucket = hasWaterBucket
     })
 end)
 
 local function markPlantWatered(plantId)
     local affected = MySQL.update.await(
-        'UPDATE `bcc_farming` SET `plant_watered` = ? WHERE `plant_id` = ? AND `plant_watered` <> ?',
-        { 'true', plantId, 'true' }
+        'UPDATE `bcc_farming` SET `plant_watered` = ? WHERE `plant_id` = ? AND `plant_watered` NOT IN (?, ?)',
+        { 'true', plantId, 'true', 'no' }
     )
     if affected and tonumber(affected) and tonumber(affected) > 0 then
         local cached = PlantCacheById[tostring(plantId)]
@@ -539,7 +548,8 @@ Core.Callback.Register('bcc-farming:ManagePlantWateredStatus', function(source, 
     end
     local _, character = getUserCharacter(src)
     local cached = PlantCacheById[tostring(plantId)]
-    if not character or not cached or isWatered(cached.plant_watered) or not isPlayerNearPlant(src, cached) then
+    if not character or not cached or isWatered(cached.plant_watered)
+        or isWaterDeclined(cached.plant_watered) or not isPlayerNearPlant(src, cached) then
         return cb(false)
     end
     if WateringLocks[plantId] then
@@ -553,6 +563,38 @@ Core.Callback.Register('bcc-farming:ManagePlantWateredStatus', function(source, 
     cb(watered)
 end)
 
+Core.Callback.Register('bcc-farming:DeclinePlantWatering', function(source, cb, plantId)
+    local src = source
+    plantId = tonumber(plantId)
+    if not plantId then
+        return cb(false)
+    end
+
+    local _, character = getUserCharacter(src)
+    local cached = PlantCacheById[tostring(plantId)]
+    if not character or not cached or isWatered(cached.plant_watered)
+        or isWaterDeclined(cached.plant_watered) or WateringLocks[plantId]
+        or (tonumber(cached.time_left) or 0) <= 0 or not isPlayerNearPlant(src, cached) then
+        return cb(false)
+    end
+
+    WateringLocks[plantId] = true
+    local affected = MySQL.update.await(
+        'UPDATE `bcc_farming` SET `plant_watered` = ? WHERE `plant_id` = ? AND `plant_watered` NOT IN (?, ?) AND `time_left` > 0',
+        { 'no', plantId, 'true', 'no' }
+    )
+
+    if not affected or tonumber(affected) < 1 then
+        WateringLocks[plantId] = nil
+        return cb(false)
+    end
+
+    cached.plant_watered = 'no'
+    TriggerClientEvent('bcc-farming:UpdateClientPlantWaterDeclinedStatus', -1, plantId)
+    WateringLocks[plantId] = nil
+    cb(true)
+end)
+
 RegisterNetEvent('bcc-farming:UpdatePlantWateredStatus', function(plantId)
     local src = source
     plantId = tonumber(plantId)
@@ -561,7 +603,7 @@ RegisterNetEvent('bcc-farming:UpdatePlantWateredStatus', function(plantId)
     end
     local _, character = getUserCharacter(src)
     local cached = PlantCacheById[tostring(plantId)]
-    if not character or not cached or isWatered(cached.plant_watered)
+    if not character or not cached or isWatered(cached.plant_watered) or isWaterDeclined(cached.plant_watered)
         or WateringLocks[plantId] or not isPlayerNearPlant(src, cached) then
         return
     end
