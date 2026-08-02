@@ -14,7 +14,7 @@
 - **Resource Management**:
   - Soil requirements with configurable amounts
   - Fertilizer grades that improve both growth speed and harvest yield
-    - Select owned fertilizer with `1` (Grade C), `2` (Grade B), or `3` (Grade A); use `L` for none
+    - Select owned fertilizer with `B` (Grade C), `G` (Grade B), or `R` (Grade A); use `L` for none
   - Watering mechanics that improve growth speed and crop yield, powered by bcc-water
 - **Ownership System**: Configurable plant locking (planter-only or public access)
 
