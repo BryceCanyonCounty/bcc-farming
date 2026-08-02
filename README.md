@@ -84,11 +84,11 @@ Existing installations should import the file again to add the persisted fertili
 
 ### **4. Asset Installation**
 
-Choose either the `color` or `grayscale` 96x96 fertilizer icon set, then copy that folder's PNG files to your inventory system:
+Choose either the `color` or `grayscale` 96x96 farming icon set, then copy that folder's PNG files to your inventory system:
 ```
-img\color\fertilizer*.png
+img\color\*.png
 # or
-img\grayscale\fertilizer*.png
+img\grayscale\*.png
 
 -> \vorp_inventory\html\img\items\
 ```
